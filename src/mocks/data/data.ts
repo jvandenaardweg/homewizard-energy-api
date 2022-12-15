@@ -1,4 +1,4 @@
-import { EnergySocketDataResponse, P1MeterDataResponse } from '../../types';
+import { EnergySocketDataResponse, P1MeterDataResponse, WaterMeterDataResponse } from '../../types';
 
 export const mockEnergySocketDataResponse: EnergySocketDataResponse = {
   wifi_ssid: 'SOME_WIFI_SSID',
@@ -24,4 +24,11 @@ export const mockP1MeterDataResponse: P1MeterDataResponse = {
   active_power_l3_w: 263,
   total_gas_m3: 6741.77,
   gas_timestamp: 221212222010,
+};
+
+export const mockWaterMeterDataResponse: WaterMeterDataResponse = {
+  wifi_ssid: 'My Wi-Fi',
+  wifi_strength: 100,
+  total_liter_m3: 123.456,
+  active_liter_lpm: 7.2,
 };

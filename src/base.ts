@@ -66,7 +66,7 @@ export class Base {
     });
   }
 
-  protected log(...args: unknown[]): void {
+  log(...args: unknown[]): void {
     if (!this.logger) return;
 
     return this.logger('[HomeWizard Energy API]: ', ...args);
