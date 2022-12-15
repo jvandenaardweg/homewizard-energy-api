@@ -16,14 +16,8 @@ import { EnergySocketApi } from 'homewizard-energy-api';
 
 const api = new EnergySocketApi('http://192.168.1.30');
 
-try {
-  // Turn the Energy Socket ON
-  const updatedState = await api.putState({ power_on: true });
-  
-  console.log(updatedState);
-} catch (error) {
-  // handle error
-}
+// Turn the Energy Socket ON
+const updatedState = await api.putState({ power_on: true });
 ```
 
 Get the power consumption or gas usage in your home from the P1 Meter:
@@ -33,13 +27,8 @@ import { P1MeterApi } from 'homewizard-energy-api';
 
 const api = new P1MeterApi('http://192.168.1.30');
 
-try {
-  const data = await api.getData();
-  
-  console.log(data);
-} catch (error) {
-  // handle error
-}
+// Get the active power and gas usage
+const data = await api.getData();
 ```
 
 Get the water consumption in your home from the Water Meter:
@@ -49,13 +38,8 @@ import { WaterMeterApi } from 'homewizard-energy-api';
 
 const api = new WaterMeterApi('http://192.168.1.30');
 
-try {
-  const data = await api.getData();
-  
-  console.log(data);
-} catch (error) {
-  // handle error
-}
+// Get the active water usage
+const data = await api.getData();
 ```
   
 
