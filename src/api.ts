@@ -13,7 +13,7 @@ export class HomeWizardEnergyApi extends Base {
   public p1Meter: P1MeterApi;
   public waterMeter: WaterMeterApi;
 
-  constructor(baseUrl: string, options: HomeWizardEnergyApiOptions) {
+  constructor(baseUrl: string, options?: HomeWizardEnergyApiOptions) {
     super(baseUrl, options);
 
     this.energySocket = new EnergySocketApi(baseUrl, options);

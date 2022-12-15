@@ -24,8 +24,10 @@ export class HomeWizardEnergyApiResponseError extends HomeWizardEnergyApiError {
 }
 
 export interface HomeWizardEnergyApiOptions {
+  /** The API version to be used. Defaults to `v1` */
   apiVersion?: 'v1' | undefined;
-  requestOptions?: Omit<RequestParameters[1], 'method'>;
+  /** Request options to be used in the HTTP request to the API. */
+  requestOptions?: RequestParameters[1];
   logger?: (...args: unknown[]) => void;
 }
 
@@ -35,17 +37,17 @@ export class Base {
   protected requestOptions: HomeWizardEnergyApiOptions['requestOptions'];
   protected logger: HomeWizardEnergyApiOptions['logger'];
 
-  constructor(baseUrl: string, options: HomeWizardEnergyApiOptions) {
+  constructor(baseUrl: string, options?: HomeWizardEnergyApiOptions) {
     this.baseUrl = baseUrl;
-    this.apiVersion = options.apiVersion || 'v1';
+    this.apiVersion = options?.apiVersion || 'v1';
     this.requestOptions = {
       bodyTimeout: 1000, // 1 seconds, we are on a local network, so all request should be fast
       headersTimeout: 1000,
       // Allow user to overwrite the defaults
-      ...options.requestOptions,
+      ...options?.requestOptions,
     };
 
-    this.logger = options.logger || console.log;
+    this.logger = options?.logger;
   }
 
   protected get endpoints() {

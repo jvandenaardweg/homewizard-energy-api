@@ -5,7 +5,7 @@ export class P1MeterApi extends Base {
   public getBasicInformation: () => Promise<BasicInformationResponse>;
   public getData: <T extends P1MeterDataResponse>() => Promise<T>;
 
-  constructor(baseUrl: string, options: HomeWizardEnergyApiOptions) {
+  constructor(baseUrl: string, options?: HomeWizardEnergyApiOptions) {
     super(baseUrl, options);
 
     this.getBasicInformation = super.getBasicInformation;

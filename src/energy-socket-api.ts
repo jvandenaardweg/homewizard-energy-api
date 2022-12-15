@@ -13,7 +13,7 @@ export class EnergySocketApi extends Base {
   public getBasicInformation: () => Promise<BasicInformationResponse>;
   public getData: <T extends EnergySocketDataResponse>() => Promise<T>;
 
-  constructor(baseUrl: string, options: HomeWizardEnergyApiOptions) {
+  constructor(baseUrl: string, options?: HomeWizardEnergyApiOptions) {
     super(baseUrl, options);
 
     this.getBasicInformation = super.getBasicInformation;

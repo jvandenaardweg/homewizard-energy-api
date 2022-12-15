@@ -16,9 +16,7 @@ let homeWizardEnergyApi: HomeWizardEnergyApi;
 
 describe('HomeWizardEnergyApi', () => {
   beforeEach(() => {
-    homeWizardEnergyApi = new HomeWizardEnergyApi(mockApiUrl, {
-      logger: vi.fn(),
-    });
+    homeWizardEnergyApi = new HomeWizardEnergyApi(mockApiUrl);
 
     mockApiAgent = new MockAgent({
       bodyTimeout: 10,
