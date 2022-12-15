@@ -1,4 +1,4 @@
-import { Base, HomeWizardEnergyApiError, HomeWizardEnergyApiOptions } from './base';
+import { Base, HomeWizardEnergyApiError, BaseApiOptions } from './base';
 import {
   BasicInformationResponse,
   EnergySocketDataResponse,
@@ -13,7 +13,7 @@ export class EnergySocketApi extends Base {
   public getBasicInformation: () => Promise<BasicInformationResponse>;
   public getData: <T extends EnergySocketDataResponse>() => Promise<T>;
 
-  constructor(baseUrl: string, options?: HomeWizardEnergyApiOptions) {
+  constructor(baseUrl: string, options?: BaseApiOptions) {
     super(baseUrl, options);
 
     this.getBasicInformation = super.getBasicInformation;

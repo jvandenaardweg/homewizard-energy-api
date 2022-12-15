@@ -1,11 +1,11 @@
-import { Base, HomeWizardEnergyApiOptions } from './base';
+import { Base, BaseApiOptions } from './base';
 import { BasicInformationResponse, P1MeterDataResponse } from './types';
 
 export class P1MeterApi extends Base {
   public getBasicInformation: () => Promise<BasicInformationResponse>;
   public getData: <T extends P1MeterDataResponse>() => Promise<T>;
 
-  constructor(baseUrl: string, options?: HomeWizardEnergyApiOptions) {
+  constructor(baseUrl: string, options?: BaseApiOptions) {
     super(baseUrl, options);
 
     this.getBasicInformation = super.getBasicInformation;

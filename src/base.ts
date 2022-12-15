@@ -23,7 +23,7 @@ export class HomeWizardEnergyApiResponseError extends HomeWizardEnergyApiError {
   }
 }
 
-export interface HomeWizardEnergyApiOptions {
+export interface BaseApiOptions {
   /** The API version to be used. Defaults to `v1` */
   apiVersion?: 'v1' | undefined;
   /** Request options to be used in the HTTP request to the API. */
@@ -33,11 +33,11 @@ export interface HomeWizardEnergyApiOptions {
 
 export class Base {
   protected readonly baseUrl: string;
-  protected readonly apiVersion: HomeWizardEnergyApiOptions['apiVersion'];
-  protected requestOptions: HomeWizardEnergyApiOptions['requestOptions'];
-  protected logger: HomeWizardEnergyApiOptions['logger'];
+  protected readonly apiVersion: BaseApiOptions['apiVersion'];
+  protected requestOptions: BaseApiOptions['requestOptions'];
+  protected logger: BaseApiOptions['logger'];
 
-  constructor(baseUrl: string, options?: HomeWizardEnergyApiOptions) {
+  constructor(baseUrl: string, options?: BaseApiOptions) {
     this.baseUrl = baseUrl;
     this.apiVersion = options?.apiVersion || 'v1';
     this.requestOptions = {
