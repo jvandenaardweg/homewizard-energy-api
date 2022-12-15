@@ -4,6 +4,63 @@ Full type-safe implementation of the HomeWizard Energy API in Node.
 
 Official documentation: https://homewizard-energy-api.readthedocs.io/index.html
 
+# Installation
+```
+npm install homewizard-energy-api
+```
+
+Control your Energy Socket:
+
+```typescript
+import { EnergySocketApi } from 'homewizard-energy-api';
+
+const api = new EnergySocketApi('http://192.168.1.30');
+
+try {
+  // Turn the Energy Socket ON
+  const updatedState = await api.putState({ power_on: true });
+  
+  console.log(updatedState);
+} catch (error) {
+  // handle error
+}
+```
+
+Get the power consumption or gas usage in your home from the P1 Meter:
+
+```typescript
+import { P1MeterApi } from 'homewizard-energy-api';
+
+const api = new P1MeterApi('http://192.168.1.30');
+
+try {
+  const data = await api.getData();
+  
+  console.log(data);
+} catch (error) {
+  // handle error
+}
+```
+
+Get the water consumption in your home from the Water Meter:
+
+```typescript
+import { WaterMeterApi } from 'homewizard-energy-api';
+
+const api = new WaterMeterApi('http://192.168.1.30');
+
+try {
+  const data = await api.getData();
+  
+  console.log(data);
+} catch (error) {
+  // handle error
+}
+```
+  
+
+
+
 ## About HomeWizard Energy
 With the HomeWizard Energy platform, you can get insights in your energy usage. Use the HomeWizard Wi-Fi P1 meter to access real-time data directly from your smart meter, the HomeWizard Wi-Fi Energy Socket to get energy insights from all your devices, the HomeWizard Wi-Fi kWh meter to measure devices such as solar panels and the HomeWizard Wi-Fi Watermeter to get insight in your water usage. With the open API you can integrate the data directly into your system of choice.
 
