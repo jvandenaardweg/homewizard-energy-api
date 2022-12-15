@@ -1,0 +1,113 @@
+{
+  "displayName": "HomeWizard Energy API",
+  "name": "homewizard-energy-api",
+  "version": "0.0.1",
+  "description": "Typesafe Node implementation of the HomeWizard Energy API",
+  "license": "MIT",
+  "author": {
+    "name": "Jordy van den Aardweg",
+    "url": "https://github.com/jvandenaardweg"
+  },
+  "homepage": "https://github.com/jvandenaardweg/homewizard-energy-api#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jvandenaardweg/homewizard-energy-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jvandenaardweg/homewizard-energy-api/issues"
+  },
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/jvandenaardweg"
+    },
+    {
+      "type": "paypal",
+      "url": "https://paypal.me/jvandenaardweg"
+    }
+  ],
+  "engines": {
+    "node": ">=14.18.1"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "lint": "eslint src/**.ts --max-warnings=0",
+    "build": "rimraf ./dist && tsc --project tsconfig.build.json && resolve-tspaths",
+    "prepublishOnly": "npm run lint && npm run build",
+    "pretest": "npm run lint && npm run type-check",
+    "update": "npx npm-check-updates --interactive",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "release": "dotenv npx release-it",
+    "type-check": "tsc --noEmit",
+    "prepare": "is-ci || husky install",
+    "lint-staged": "lint-staged"
+  },
+  "keywords": [
+    "homewizard",
+    "homewizard-energy",
+    "homewizard energy",
+    "homewizard-energy-socket",
+    "homewizard energy socket",
+    "homewizard-api",
+    "homewizard api",
+    "homewizard-energy-api",
+    "homewizard energy api"
+  ],
+  "devDependencies": {
+    "@types/node": "^18.11.15",
+    "@typescript-eslint/eslint-plugin": "^5.46.1",
+    "@typescript-eslint/parser": "^5.46.1",
+    "@vitest/coverage-c8": "^0.25.8",
+    "dotenv-cli": "^6.0.0",
+    "eslint": "^8.29.0",
+    "husky": "^8.0.2",
+    "is-ci": "^3.0.1",
+    "lint-staged": "^13.1.0",
+    "nodemon": "^2.0.20",
+    "prettier": "^2.8.1",
+    "release-it": "^15.5.1",
+    "resolve-tspaths": "^0.8.3",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.9.4",
+    "vitest": "^0.25.8"
+  },
+  "dependencies": {
+    "undici": "^5.14.0",
+    "validator": "^13.7.0",
+    "zod": "^3.20.2"
+  },
+  "release-it": {
+    "git": {
+      "commitMessage": "chore: release v${version}",
+      "changelog": "npx auto-changelog --stdout --commit-limit false --unreleased --template https://raw.githubusercontent.com/release-it/release-it/master/templates/changelog-compact.hbs"
+    },
+    "hooks": {
+      "after:bump": "npx auto-changelog -p --commit-limit false"
+    },
+    "npm": {
+      "publish": false
+    },
+    "github": {
+      "release": true,
+      "releaseName": "v${version}"
+    }
+  },
+  "lint-staged": {
+    "*.ts": [
+      "prettier --write"
+    ],
+    "*.js": [
+      "prettier --write"
+    ],
+    "*.json": [
+      "prettier --write"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "precommit": "lint-staged"
+    }
+  }
+}
