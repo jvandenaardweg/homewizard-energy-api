@@ -179,6 +179,12 @@ export interface ErrorResponse {
   };
 }
 
+/**
+ * The /api/v1/system endpoint can be used to configure system settings.
+ * Currently the only available option it to turn on and off all cloud communication.
+ *
+ * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system
+ */
 export interface SystemResponse {
   cloud_enabled: boolean;
 }
