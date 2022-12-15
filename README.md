@@ -6,7 +6,7 @@ Official documentation: https://homewizard-energy-api.readthedocs.io/index.html
 
 # Installation
 ```
-npm install homewizard-energy-api
+project needs to be published on npm first, just started
 ```
 
 Control your Energy Socket:
