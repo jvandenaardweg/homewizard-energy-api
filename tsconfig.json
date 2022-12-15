@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "target": "ES6",
+    "target": "ES2020",
     "module": "CommonJS",
-    "lib": ["es2015", "es2016", "es2017", "es2018"],
+    "lib": ["ES2020"], // support minimum node 14 lts
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -16,7 +16,7 @@
     "incremental": false,
     "moduleResolution": "node",
     "allowJs": false,
-    "removeComments": true,
+    "removeComments": false, // keep false, we want to have docs in dist
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": true,
