@@ -1,7 +1,7 @@
-import { HomeWizardEnergyApi } from './api';
+import { HomeWizardEnergyDiscovery } from './homewizard-energy-discovery';
 import { MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE } from './types';
 
-let homeWizardEnergyApi: HomeWizardEnergyApi;
+let discoveryService: HomeWizardEnergyDiscovery;
 
 const querySpy = vi.fn();
 const onSpy = vi.fn();
@@ -21,39 +21,35 @@ vi.mock('multicast-dns', () => {
   };
 });
 
-describe('HomeWizardEnergyApi', () => {
+describe('HomeWizardEnergyDiscovery', () => {
   beforeEach(() => {
-    homeWizardEnergyApi = new HomeWizardEnergyApi();
+    discoveryService = new HomeWizardEnergyDiscovery();
   });
 
   it('should create a new instance', () => {
-    expect(homeWizardEnergyApi).toBeTruthy();
-  });
-
-  it('should expose discovery', () => {
-    expect(homeWizardEnergyApi.discovery).toBeTruthy();
+    expect(discoveryService).toBeTruthy();
   });
 
   it('should expose discovery.start', () => {
-    expect(homeWizardEnergyApi.discovery.start).toBeTruthy();
+    expect(discoveryService.start).toBeTruthy();
   });
   it('should expose discovery.stop', () => {
-    expect(homeWizardEnergyApi.discovery.stop).toBeTruthy();
+    expect(discoveryService.stop).toBeTruthy();
   });
   it('should expose discovery.on', () => {
-    expect(homeWizardEnergyApi.discovery.on).toBeTruthy();
+    expect(discoveryService.on).toBeTruthy();
   });
 
-  it('should run mdns.query() when discovery.start() is invoked', () => {
-    homeWizardEnergyApi.discovery.start();
+  it('should run mdns.query() when start() is invoked', () => {
+    discoveryService.start();
 
     expect(querySpy).toHaveBeenCalledOnce();
     expect(querySpy).toHaveBeenCalledWith(MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE);
   });
 
-  it('should run mdns.removeAllListeners() and mdns.destroy() when discovery.stop() is invoked', () => {
-    homeWizardEnergyApi.discovery.start();
-    homeWizardEnergyApi.discovery.stop();
+  it('should run mdns.removeAllListeners() and mdns.destroy() when stop() is invoked', () => {
+    discoveryService.start();
+    discoveryService.stop();
 
     expect(removeAllListenersSpy).toHaveBeenCalledOnce();
     expect(destroySpy).toHaveBeenCalledOnce();
@@ -62,11 +58,11 @@ describe('HomeWizardEnergyApi', () => {
   it('should trigger the logger invoking a method', async () => {
     const loggerSpy = vi.fn();
 
-    const homeWizardEnergyApiWithLogger = new HomeWizardEnergyApi({
+    const discoveryServiceWithLogger = new HomeWizardEnergyDiscovery({
       logger: loggerSpy,
     });
 
-    homeWizardEnergyApiWithLogger.discovery.start();
+    discoveryServiceWithLogger.start();
 
     expect(loggerSpy).toHaveBeenCalled();
   });

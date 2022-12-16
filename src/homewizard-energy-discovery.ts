@@ -1,4 +1,3 @@
-import EventEmitter from 'events';
 import * as multicastDns from 'multicast-dns';
 import {
   MdnsTxtRecord,
@@ -16,50 +15,40 @@ interface DiscoveryResponse {
   txt: MdnsTxtRecord;
 }
 
-interface HomeWizardEnergyApiOptions {
+interface HomeWizardEnergyDiscoveryOptions {
   logger?: (...args: unknown[]) => void;
 }
 
 /**
- * HomeWizard Energy API
+ * HomeWizard Energy Discovery
  *
- * @link: https://homewizard-energy-api.readthedocs.io
+ * @link: https://homewizard-energy-api.readthedocs.io/discovery.html
  */
-export class HomeWizardEnergyApi extends EventEmitter {
+export class HomeWizardEnergyDiscovery {
   private mdns: multicastDns.MulticastDNS | null = null;
-  private logger: HomeWizardEnergyApiOptions['logger'];
+  private logger: HomeWizardEnergyDiscoveryOptions['logger'];
   private cachedDiscoveryResponses: DiscoveryResponse[] = [];
 
-  constructor(options?: HomeWizardEnergyApiOptions) {
-    super();
-
+  constructor(options?: HomeWizardEnergyDiscoveryOptions) {
     this.logger = options?.logger;
   }
 
-  log(...args: unknown[]): void {
+  protected log(...args: unknown[]): void {
     if (!this.logger) return;
 
     return this.logger('[HomeWizard Energy API]: ', ...args);
   }
 
-  get discovery() {
-    return {
-      start: this.discoveryStart.bind(this),
-      stop: this.discoveryStop.bind(this),
-      on: this.discoveryOn.bind(this),
-    };
-  }
-
-  protected discoveryStart() {
-    this.log('discoveryStart');
+  start() {
+    this.log('start');
 
     this.mdns = multicastDns.default();
 
     this.mdns.query(MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE);
   }
 
-  protected discoveryStop() {
-    this.log('discoveryStop');
+  stop() {
+    this.log('stop');
 
     if (this.mdns) {
       this.mdns.removeAllListeners();
@@ -68,14 +57,11 @@ export class HomeWizardEnergyApi extends EventEmitter {
     }
   }
 
-  protected discoveryOn(
-    event: 'response',
-    callback: (discoveryResponse: DiscoveryResponse) => void,
-  ): void;
-  protected discoveryOn(event: 'down', callback: (downResponse: DiscoveryResponse) => void): void;
-  protected discoveryOn(event: 'error', callback: (error: Error) => void): void;
-  protected discoveryOn(event: 'warning', callback: (error: Error) => void): void;
-  protected discoveryOn(
+  on(event: 'response', callback: (discoveryResponse: DiscoveryResponse) => void): void;
+  // on(event: 'down', callback: (downResponse: DiscoveryResponse) => void): void;
+  on(event: 'error', callback: (error: Error) => void): void;
+  on(event: 'warning', callback: (error: Error) => void): void;
+  on(
     event: 'response' | 'error' | 'warning' | 'down',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     callback: (d: any) => void,
@@ -84,10 +70,10 @@ export class HomeWizardEnergyApi extends EventEmitter {
       throw new Error('mDNS is not started, call discovery.start() first');
     }
 
-    if (event === 'down') {
-      this.on(event, this.handleMdnsDown(callback));
-      return;
-    }
+    // if (event === 'down') {
+    //   this.on(event, this.handleMdnsDown(callback));
+    //   return;
+    // }
 
     if (event === 'error') {
       this.mdns.on(event, this.handleMdnsError(callback));
@@ -103,14 +89,14 @@ export class HomeWizardEnergyApi extends EventEmitter {
   }
 
   // TODO: make this handler work
-  protected handleMdnsDown(callback: (goodbyeResponse: DiscoveryResponse) => void) {
-    return (response: multicastDns.ResponsePacket) => {
-      console.log('goodbye!', response);
+  // protected handleMdnsDown(callback: (goodbyeResponse: DiscoveryResponse) => void) {
+  //   return (response: multicastDns.ResponsePacket) => {
+  //     console.log('goodbye!', response);
 
-      // TODO: fix
-      callback(response as unknown as DiscoveryResponse);
-    };
-  }
+  //     // TODO: fix
+  //     callback(response as unknown as DiscoveryResponse);
+  //   };
+  // }
 
   protected isGoodbyeResponse(response: multicastDns.ResponsePacket): boolean {
     return response.answers.some(answer => {
@@ -258,7 +244,7 @@ export class HomeWizardEnergyApi extends EventEmitter {
 
         console.log('down!', cachedResponse);
 
-        this.emit('down', cachedResponse);
+        // this.emit('down', cachedResponse);
 
         // Remove the response from cache by using the fqdn, which is specific enough
         this.cachedDiscoveryResponses = this.cachedDiscoveryResponses.filter(

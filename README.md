@@ -129,17 +129,18 @@ const data = await api.getData();
 This library exposes a discovery method to discover HomeWizard Energy devices in your local network. Each HomeWizard device broadcasts itself on your local network using Multicast DNS. This allows you to use all the devices in your network without knowing the actual IP address of the device.
 
 ```typescript
-import { HomeWizardEnergyApi } from 'homewizard-energy-api';
+import { HomeWizardEnergyDiscovery } from 'homewizard-energy-api';
 
-const api = new HomeWizardEnergyApi();
+const homeWizardEnergyDiscovery = new HomeWizardEnergyDiscovery();
 
-api.discovery.start();
+homeWizardEnergyDiscovery.start();
 
-api.discovery.on('response', response => {
+homeWizardEnergyDiscovery.on('response', response => {
   // response:
   // {
   //   ip: '192.168.1.34',
   //   hostname: 'energysocket-25FF1A.local',
+  //   fqdn: 'energysocket-25FF1A._hwenergy._tcp.local',
   //   txt: {
   //     api_enabled: '1',
   //     path: '/api/v1',
