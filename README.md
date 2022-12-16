@@ -10,6 +10,14 @@ Official documentation: https://homewizard-energy-api.readthedocs.io/index.html
 project needs to be published on npm first, just started
 ```
 
+This library supports all devices from HomeWizard that expose an API. This includes:
+- Wi-Fi P1 meter `HWE-P1`
+- Wi-Fi Energy Socket `HWE-SKT`
+- Wi-Fi Watermeter (Only when powered over USB) `HWE-WTR`
+- Wi-Fi kWh meter (1 phase) `SDM230-wifi`
+- Wi-Fi kWh meter (3 phase) `SDM630-wifi`
+
+
 ## Energy Socket
 Control your [Wi-Fi Energy Socket](https://www.homewizard.com/shop/wi-fi-energy-socket/):
 
