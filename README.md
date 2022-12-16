@@ -73,6 +73,12 @@ const api = new WaterMeterApi('http://192.168.1.12');
 const data = await api.getData();
 ```
 
+
+| Method | API | Function | Description |
+| -- | -- | -- | -- |
+| GET | /api | `getBasic()` | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).
+| GET | /api/v1/data | `getData()` | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).
+
 ## kWh Meter 1-phase
 
 Get the power consumption from the [Wi-Fi kWh meter 1-phase MID](https://www.homewizard.com/shop/wi-fi-kwh-meter-1-phase/):
@@ -86,6 +92,11 @@ const api = new KwhMeter1PhaseApi('http://192.168.1.13');
 const data = await api.getData();
 ```
 
+| Method | API | Function | Description |
+| -- | -- | -- | -- |
+| GET | /api | `getBasic()` | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).
+| GET | /api/v1/data | `getData()` | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).
+
 ## kWh Meter 3-phase
 
 Get the power consumption from the [Wi-Fi kWh meter 3-phase MID](https://www.homewizard.com/shop/wi-fi-kwh-meter-3-phase/):
@@ -98,6 +109,11 @@ const api = new KwhMeter3PhaseApi('http://192.168.1.14');
 // Get the power usage from your Wi-Fi kWh meter 3-phase MID
 const data = await api.getData();
 ```
+
+| Method | API | Function | Description |
+| -- | -- | -- | -- |
+| GET | /api | `getBasic()` | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).
+| GET | /api/v1/data | `getData()` | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).
 
 Discover the HomeWizard devices in your network using Multicast DNS:
 
