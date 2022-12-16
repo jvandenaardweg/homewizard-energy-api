@@ -1,4 +1,4 @@
-import { BaseApi, HomeWizardEnergyApiError, BaseApiOptions } from './base';
+import { BaseApi, BaseApiOptions } from './base';
 import {
   BasicInformationResponse,
   EnergySocketDataResponse,
@@ -152,20 +152,7 @@ export class EnergySocketApi extends BaseApi {
    *
    * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#identify-api-v1-identify
    */
-  async identify(firmwareVersion: number | null): Promise<IdentifyResponse> {
-    if (!firmwareVersion) {
-      throw new HomeWizardEnergyApiError(
-        'Cannot identify this Energy Socket. The firmware version is not set.',
-      );
-    }
-
-    // Check the required firmware version, otherwise we cannot identify the device
-    if (firmwareVersion < 3) {
-      throw new HomeWizardEnergyApiError(
-        `Cannot identify this Energy Socket. Firmware version is ${firmwareVersion}. But the identify feature is only available on Energy Sockets with firmware version 3.00 or later.`,
-      );
-    }
-
+  async identify(): Promise<IdentifyResponse> {
     const url = this.endpoints.identify;
 
     this.log(`Fetching identify at ${url}`);
