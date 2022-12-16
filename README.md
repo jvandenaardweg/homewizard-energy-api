@@ -1,5 +1,5 @@
 # HomeWizard Energy API
-[![npm version](https://badge.fury.io/js/homewizard-energy-api.svg)](https://badge.fury.io/js/homewizard-energy-api) [![mit license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/LICENSE)
+[![npm version](https://badge.fury.io/js/homewizard-energy-api.svg)](https://badge.fury.io/js/homewizard-energy-api) ![build-and-test workflow](https://github.com/jvandenaardweg/homewizard-energy-api/actions/workflows/build-and-test.yml/badge.svg) [![mit license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/LICENSE)
 
 Full type-safe implementation of the HomeWizard Energy API in Node. Use the Local API of your HomeWizard devices with ease.
 
