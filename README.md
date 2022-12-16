@@ -5,20 +5,23 @@ Full type-safe implementation of the HomeWizard Energy API in Node. Use the Loca
 ## Features
 
 - Complete type-safety on all API methods, responses and errors
-- Exposes a `discovery` method to discover devices on your local network using Multicast DNS
+- Exposes a discovery method to discover devices on your local network using Multicast DNS
 
 Official documentation: https://homewizard-energy-api.readthedocs.io/index.html
 
 ## Getting started
 
 ```
-project needs to be published on npm first, just started
+npm install homewizard-energy-api
 ```
 
-## Requirements:
+## Requirements
 
 - Node 14 or higher
 - TypeScript 4.9 or higher
+- HomeWizard devices in your network with the `Local API` option enabled
+
+## Supported devices
 
 This library supports all devices from HomeWizard that expose an API. This includes:
 
