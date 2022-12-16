@@ -1,20 +1,20 @@
 import { mockApiUrl } from './mocks/api';
 
-import { Base, HomeWizardEnergyApiError, HomeWizardEnergyApiResponseError } from './base';
+import { BaseApi, HomeWizardEnergyApiError, HomeWizardEnergyApiResponseError } from './base';
 
-let base: Base;
+let baseApi: BaseApi;
 
 const loggerSpy = vi.fn();
 
 describe('Base', () => {
   beforeEach(() => {
-    base = new Base(mockApiUrl, {
+    baseApi = new BaseApi(mockApiUrl, {
       logger: loggerSpy,
     });
   });
 
   it('should be able to create a new instance', () => {
-    expect(base).toBeTruthy();
+    expect(baseApi).toBeTruthy();
   });
 
   it('should create a HomeWizardEnergyApiError instance', () => {

@@ -156,7 +156,7 @@ describe('EnergySocketApi', () => {
 
     const updatedPowerOn = true;
 
-    const state = await energySocketApi.putState({
+    const state = await energySocketApi.updateState({
       power_on: updatedPowerOn,
     });
 
@@ -175,7 +175,7 @@ describe('EnergySocketApi', () => {
       }));
 
     const responseFn = () =>
-      energySocketApi.putState({
+      energySocketApi.updateState({
         power_on: true,
       });
 
@@ -246,7 +246,7 @@ describe('EnergySocketApi', () => {
 
     const updatedCloudEnabled = false;
 
-    const system = await energySocketApi.putSystem({
+    const system = await energySocketApi.updateSystem({
       cloud_enabled: updatedCloudEnabled,
     });
 
@@ -265,7 +265,7 @@ describe('EnergySocketApi', () => {
       }));
 
     const responseFn = () =>
-      energySocketApi.putSystem({
+      energySocketApi.updateSystem({
         cloud_enabled: true,
       });
 
@@ -287,7 +287,7 @@ describe('EnergySocketApi', () => {
 
     const firmwareVersion = 3;
 
-    const identify = await energySocketApi.putIdentify(firmwareVersion);
+    const identify = await energySocketApi.identify(firmwareVersion);
 
     expect(identify).toStrictEqual(mockIdentifyResponse);
   });
@@ -303,7 +303,7 @@ describe('EnergySocketApi', () => {
         statusCode: 500,
       }));
 
-    const responseFn = () => energySocketApi.putIdentify(3);
+    const responseFn = () => energySocketApi.identify(3);
 
     expect(responseFn()).rejects.toThrowError(
       'Api PUT call at http://localhost/api/v1/identify failed with status 500 and response data: Server error!',
@@ -313,7 +313,7 @@ describe('EnergySocketApi', () => {
   it('should error when firmware version on PUT "identify" endpoint is too low', async () => {
     const firmwareVersion = 2;
 
-    const identifyFn = async () => energySocketApi.putIdentify(firmwareVersion);
+    const identifyFn = async () => energySocketApi.identify(firmwareVersion);
 
     expect(identifyFn()).rejects.toThrow(
       'Cannot identify this Energy Socket. Firmware version is 2. But the identify feature is only available on Energy Sockets with firmware version 3.00 or later.',
@@ -323,7 +323,7 @@ describe('EnergySocketApi', () => {
   it('should error when firmware version on PUT "identify" endpoint is null', async () => {
     const firmwareVersion = null;
 
-    const identifyFn = async () => energySocketApi.putIdentify(firmwareVersion);
+    const identifyFn = async () => energySocketApi.identify(firmwareVersion);
 
     expect(identifyFn()).rejects.toThrow(
       'Cannot identify this Energy Socket. The firmware version is not set.',
@@ -333,7 +333,7 @@ describe('EnergySocketApi', () => {
   it('should error when firmware version on PUT "identify" endpoint is 0', async () => {
     const firmwareVersion = 0;
 
-    const identifyFn = async () => energySocketApi.putIdentify(firmwareVersion);
+    const identifyFn = async () => energySocketApi.identify(firmwareVersion);
 
     expect(identifyFn()).rejects.toThrow(
       'Cannot identify this Energy Socket. The firmware version is not set.',

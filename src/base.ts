@@ -31,7 +31,7 @@ export interface BaseApiOptions {
   logger?: (...args: unknown[]) => void;
 }
 
-export class Base {
+export class BaseApi {
   protected readonly baseUrl: string;
   protected readonly apiVersion: BaseApiOptions['apiVersion'];
   protected requestOptions: BaseApiOptions['requestOptions'];

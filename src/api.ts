@@ -1,4 +1,4 @@
-import { Base, BaseApiOptions } from './base';
+import { BaseApi, BaseApiOptions } from './base';
 import { EnergySocketApi } from './energy-socket-api';
 import { P1MeterApi } from './p1-meter-api';
 import { WaterMeterApi } from './water-meter-api';
@@ -8,7 +8,7 @@ import { WaterMeterApi } from './water-meter-api';
  *
  * @link: https://homewizard-energy-api.readthedocs.io
  */
-export class HomeWizardEnergyApi extends Base {
+export class HomeWizardEnergyApi extends BaseApi {
   public energySocket: EnergySocketApi;
   public p1Meter: P1MeterApi;
   public waterMeter: WaterMeterApi;

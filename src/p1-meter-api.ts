@@ -1,7 +1,7 @@
-import { Base, BaseApiOptions } from './base';
+import { BaseApi, BaseApiOptions } from './base';
 import { BasicInformationResponse, P1MeterDataResponse } from './types';
 
-export class P1MeterApi extends Base {
+export class P1MeterApi extends BaseApi {
   public getBasicInformation: () => Promise<BasicInformationResponse>;
   public getData: <T extends P1MeterDataResponse>() => Promise<T>;
 

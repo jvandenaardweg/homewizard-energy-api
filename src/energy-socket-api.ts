@@ -1,4 +1,4 @@
-import { Base, HomeWizardEnergyApiError, BaseApiOptions } from './base';
+import { BaseApi, HomeWizardEnergyApiError, BaseApiOptions } from './base';
 import {
   BasicInformationResponse,
   EnergySocketDataResponse,
@@ -9,7 +9,7 @@ import {
   SystemResponse,
 } from './types';
 
-export class EnergySocketApi extends Base {
+export class EnergySocketApi extends BaseApi {
   public getBasicInformation: () => Promise<BasicInformationResponse>;
   public getData: <T extends EnergySocketDataResponse>() => Promise<T>;
 
@@ -62,7 +62,7 @@ export class EnergySocketApi extends Base {
    *
    * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#state-api-v1-state
    */
-  async putState<Keys extends keyof StateResponse>(
+  async updateState<Keys extends keyof StateResponse>(
     params: StatePutParams<Keys>,
   ): Promise<StatePutParams<Keys>> {
     const url = this.endpoints.state;
@@ -82,48 +82,6 @@ export class EnergySocketApi extends Base {
     const data = (await response.body.json()) as StatePutParams<Keys>;
 
     this.log(`Received updated state ${JSON.stringify(data)} from ${this.endpoints.state}`);
-
-    return data;
-  }
-
-  /**
-   * The /api/v1/identify endpoint can be used to let the user identify the device. The status light will blink for a few seconds after calling this endpoint.
-   *
-   * This feature is currently only available for HWE-SKT running firmware version 3.00 or later.
-   *
-   * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#identify-api-v1-identify
-   */
-  async putIdentify(firmwareVersion: number | null): Promise<IdentifyResponse> {
-    if (!firmwareVersion) {
-      throw new HomeWizardEnergyApiError(
-        'Cannot identify this Energy Socket. The firmware version is not set.',
-      );
-    }
-
-    // Check the required firmware version, otherwise we cannot identify the device
-    if (firmwareVersion < 3) {
-      throw new HomeWizardEnergyApiError(
-        `Cannot identify this Energy Socket. Firmware version is ${firmwareVersion}. But the identify feature is only available on Energy Sockets with firmware version 3.00 or later.`,
-      );
-    }
-
-    const url = this.endpoints.identify;
-
-    this.log(`Fetching identify at ${url}`);
-
-    const method = 'PUT';
-
-    const response = await this.request(url, {
-      method,
-    });
-
-    if (!this.isResponseOk(response)) {
-      return this.throwResponseError(url, method, response);
-    }
-
-    const data = (await response.body.json()) as IdentifyResponse;
-
-    this.log(`Energy Socket identified: ${JSON.stringify(data)}`);
 
     return data;
   }
@@ -165,7 +123,7 @@ export class EnergySocketApi extends Base {
    *
    * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system
    */
-  async putSystem(params: SystemPutParams): Promise<SystemResponse> {
+  async updateSystem(params: SystemPutParams): Promise<SystemResponse> {
     const url = this.endpoints.system;
 
     this.log(`Setting system state to ${JSON.stringify(params)} at ${this.endpoints.system}`);
@@ -183,6 +141,48 @@ export class EnergySocketApi extends Base {
     const data = (await response.body.json()) as SystemResponse;
 
     this.log(`Received updated system state ${JSON.stringify(data)} from ${this.endpoints.system}`);
+
+    return data;
+  }
+
+  /**
+   * The /api/v1/identify endpoint can be used to let the user identify the device. The status light will blink for a few seconds after calling this endpoint.
+   *
+   * This feature is currently only available for HWE-SKT running firmware version 3.00 or later.
+   *
+   * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#identify-api-v1-identify
+   */
+  async identify(firmwareVersion: number | null): Promise<IdentifyResponse> {
+    if (!firmwareVersion) {
+      throw new HomeWizardEnergyApiError(
+        'Cannot identify this Energy Socket. The firmware version is not set.',
+      );
+    }
+
+    // Check the required firmware version, otherwise we cannot identify the device
+    if (firmwareVersion < 3) {
+      throw new HomeWizardEnergyApiError(
+        `Cannot identify this Energy Socket. Firmware version is ${firmwareVersion}. But the identify feature is only available on Energy Sockets with firmware version 3.00 or later.`,
+      );
+    }
+
+    const url = this.endpoints.identify;
+
+    this.log(`Fetching identify at ${url}`);
+
+    const method = 'PUT';
+
+    const response = await this.request(url, {
+      method,
+    });
+
+    if (!this.isResponseOk(response)) {
+      return this.throwResponseError(url, method, response);
+    }
+
+    const data = (await response.body.json()) as IdentifyResponse;
+
+    this.log(`Energy Socket identified: ${JSON.stringify(data)}`);
 
     return data;
   }
