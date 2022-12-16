@@ -10,6 +10,8 @@ let mockApiAgent: MockAgent;
 let mockApiPool: Interceptable;
 let p1MeterApi: P1MeterApi;
 
+const mockBasicResponse = mockBasicInformationResponse['HWE-P1'];
+
 describe('HomeWizardEnergyApi', () => {
   beforeEach(() => {
     p1MeterApi = new P1MeterApi(mockApiUrl);
@@ -48,7 +50,7 @@ describe('HomeWizardEnergyApi', () => {
         method: 'GET',
       })
       .reply(() => ({
-        data: mockBasicInformationResponse,
+        data: mockBasicResponse,
         statusCode: 200,
       }));
 
@@ -65,13 +67,13 @@ describe('HomeWizardEnergyApi', () => {
         method: 'GET',
       })
       .reply(() => ({
-        data: mockBasicInformationResponse,
+        data: mockBasicResponse,
         statusCode: 200,
       }));
 
     const basicInformation = await p1MeterApi.getBasicInformation();
 
-    expect(basicInformation).toStrictEqual(mockBasicInformationResponse);
+    expect(basicInformation).toStrictEqual(mockBasicResponse);
   });
 
   it('should GET the "data" endpoint', async () => {

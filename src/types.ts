@@ -66,7 +66,7 @@ export type StatePutParams<Keys extends keyof StateResponse> = Pick<StateRespons
  */
 export interface BasicInformationResponse {
   /** The product type, see Supported devices. Make sure your application can handle other values for future products. Supported devices: https://homewizard-energy-api.readthedocs.io/getting-started.html#supported-devices */
-  product_type: string;
+  product_type: SupportedDevices;
   /** A fixed, user-friendly name. This name is not the same that is set by the user in the app. */
   product_name: string;
   /** Serial, also the MAC address. Consists of 12 hexadecimal values. */
@@ -129,6 +129,7 @@ export interface DataResponse {
   total_liter_m3?: number;
 }
 
+// HWE-SKT
 export type EnergySocketDataResponse = Omit<
   DataResponse,
   | 'smr_version'
@@ -143,8 +144,10 @@ export type EnergySocketDataResponse = Omit<
   | 'total_liter_m3'
 >;
 
+// HWE-P1
 export type P1MeterDataResponse = Omit<DataResponse, 'active_liter_lpm' | 'total_liter_m3'>;
 
+// HWE-WTR
 export type WaterMeterDataResponse = Omit<
   DataResponse,
   | 'smr_version'
@@ -159,6 +162,36 @@ export type WaterMeterDataResponse = Omit<
   | 'active_power_l3_w'
   | 'total_gas_m3'
   | 'gas_timestamp'
+>;
+
+// SDM230-wifi
+export type KwhMeter1PhaseResponse = Omit<
+  DataResponse,
+  | 'smr_version'
+  | 'meter_model'
+  | 'total_power_import_t2_kwh'
+  | 'total_power_export_t2_kwh'
+  | 'active_power_l2_w'
+  | 'active_power_l3_w'
+  | 'total_gas_m3'
+  | 'gas_timestamp'
+  | 'active_liter_lpm'
+  | 'total_liter_m3'
+>;
+
+// SDM630-wifi
+export type KwhMeter3PhaseResponse = Omit<
+  DataResponse,
+  | 'smr_version'
+  | 'meter_model'
+  | 'total_power_import_t2_kwh'
+  | 'total_power_export_t2_kwh'
+  | 'active_power_l2_w'
+  | 'active_power_l3_w'
+  | 'total_gas_m3'
+  | 'gas_timestamp'
+  | 'active_liter_lpm'
+  | 'total_liter_m3'
 >;
 
 /**

@@ -2,18 +2,18 @@ import { mockBasicInformationResponse } from './mocks/data/basic';
 
 import { mockApiUrl } from './mocks/api';
 import { Interceptable, MockAgent, setGlobalDispatcher } from 'undici';
-import { mockWaterMeterDataResponse } from './mocks/data/data';
-import { WaterMeterApi } from './water-meter-api';
+import { mockKwhMeter1PhaseResponse } from './mocks/data/data';
+import { KwhMeter1PhaseApi } from './kwh-meter-1-phase-api';
 
 let mockApiAgent: MockAgent;
 let mockApiPool: Interceptable;
-let waterMeterApi: WaterMeterApi;
+let kwhMeter1PhaseApi: KwhMeter1PhaseApi;
 
-const mockBasicResponse = mockBasicInformationResponse['HWE-WTR'];
+const mockBasicResponse = mockBasicInformationResponse['SDM230-wifi'];
 
-describe('WaterMeterApi', () => {
+describe('KwhMeter1PhaseApi', () => {
   beforeEach(() => {
-    waterMeterApi = new WaterMeterApi(mockApiUrl);
+    kwhMeter1PhaseApi = new KwhMeter1PhaseApi(mockApiUrl);
 
     mockApiAgent = new MockAgent({
       bodyTimeout: 10,
@@ -33,13 +33,13 @@ describe('WaterMeterApi', () => {
   });
 
   it('should be able to create a new instance', () => {
-    expect(waterMeterApi).toBeTruthy();
+    expect(kwhMeter1PhaseApi).toBeTruthy();
   });
 
   it('should trigger the logger when doing requests', async () => {
     const loggerSpy = vi.fn();
 
-    const waterMeterApiWithLogger = new WaterMeterApi(mockApiUrl, {
+    const kwhMeter1PhaseApiWithLogger = new KwhMeter1PhaseApi(mockApiUrl, {
       logger: loggerSpy,
     });
 
@@ -53,9 +53,9 @@ describe('WaterMeterApi', () => {
         statusCode: 200,
       }));
 
-    await waterMeterApiWithLogger.getBasicInformation();
+    await kwhMeter1PhaseApiWithLogger.getBasicInformation();
 
-    expect(waterMeterApiWithLogger).toBeTruthy();
+    expect(kwhMeter1PhaseApiWithLogger).toBeTruthy();
     expect(loggerSpy).toHaveBeenCalled();
   });
 
@@ -70,7 +70,7 @@ describe('WaterMeterApi', () => {
         statusCode: 200,
       }));
 
-    const basicInformation = await waterMeterApi.getBasicInformation();
+    const basicInformation = await kwhMeter1PhaseApi.getBasicInformation();
 
     expect(basicInformation).toStrictEqual(mockBasicResponse);
   });
@@ -82,12 +82,12 @@ describe('WaterMeterApi', () => {
         method: 'GET',
       })
       .reply(() => ({
-        data: mockWaterMeterDataResponse,
+        data: mockKwhMeter1PhaseResponse,
         statusCode: 200,
       }));
 
-    const data = await waterMeterApi.getData();
+    const data = await kwhMeter1PhaseApi.getData();
 
-    expect(data).toStrictEqual(mockWaterMeterDataResponse);
+    expect(data).toStrictEqual(mockKwhMeter1PhaseResponse);
   });
 });

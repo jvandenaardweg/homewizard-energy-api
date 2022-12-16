@@ -41,8 +41,8 @@ export class BaseApi {
     this.baseUrl = baseUrl;
     this.apiVersion = options?.apiVersion || 'v1';
     this.requestOptions = {
-      bodyTimeout: 1000, // 1 seconds, we are on a local network, so all request should be fast
-      headersTimeout: 1000,
+      bodyTimeout: 2000, // 2 seconds, we are on a local network, so all request should be fast
+      headersTimeout: 2000,
       // Allow user to overwrite the defaults
       ...options?.requestOptions,
     };

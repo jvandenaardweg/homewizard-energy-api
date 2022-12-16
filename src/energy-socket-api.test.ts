@@ -12,6 +12,8 @@ let mockApiAgent: MockAgent;
 let mockApiPool: Interceptable;
 let energySocketApi: EnergySocketApi;
 
+const mockBasicResponse = mockBasicInformationResponse['HWE-SKT'];
+
 describe('EnergySocketApi', () => {
   beforeEach(() => {
     energySocketApi = new EnergySocketApi(mockApiUrl);
@@ -50,7 +52,7 @@ describe('EnergySocketApi', () => {
         method: 'GET',
       })
       .reply(() => ({
-        data: mockBasicInformationResponse,
+        data: mockBasicResponse,
         statusCode: 200,
       }));
 
@@ -67,13 +69,13 @@ describe('EnergySocketApi', () => {
         method: 'GET',
       })
       .reply(() => ({
-        data: mockBasicInformationResponse,
+        data: mockBasicResponse,
         statusCode: 200,
       }));
 
     const basicInformation = await energySocketApi.getBasicInformation();
 
-    expect(basicInformation).toStrictEqual(mockBasicInformationResponse);
+    expect(basicInformation).toStrictEqual(mockBasicResponse);
   });
 
   it('should throw an error when GET the "basic" endpoint returns a server error', async () => {
