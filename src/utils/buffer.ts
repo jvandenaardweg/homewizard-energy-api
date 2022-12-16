@@ -8,3 +8,9 @@ export const bufferArrayToJSON = <T extends Record<string, any>>(buffers: Buffer
     return prev;
   }, {} as Record<string, unknown>) as T;
 };
+
+export const isBufferArray = (value: unknown): value is Buffer[] => {
+  if (!Array.isArray(value)) return false;
+
+  return value.every(v => Buffer.isBuffer(v));
+};

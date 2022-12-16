@@ -5,7 +5,7 @@ import {
   MDNS_DISCOVERY_TYPE,
   MDNS_DISCOVERY_QUERY_TYPE,
 } from '@/types';
-import { bufferArrayToJSON } from '@/utils/buffer';
+import { bufferArrayToJSON, isBufferArray } from '@/utils/buffer';
 import util from 'util';
 
 export interface DiscoveryResponse {
@@ -112,16 +112,6 @@ export class HomeWizardEnergyDiscovery {
     });
   }
 
-  protected isGoodbyeResponseSimple(response: multicastDns.ResponsePacket): boolean {
-    return response.answers.some(answer => {
-      if ('ttl' in answer) {
-        return answer.ttl === 0;
-      }
-
-      return false;
-    });
-  }
-
   /**
    * Find out if the response is a HomeWizard Energy response.
    */
@@ -137,12 +127,6 @@ export class HomeWizardEnergyDiscovery {
     );
   }
 
-  protected isBufferArray(value: unknown): value is Buffer[] {
-    if (!Array.isArray(value)) return false;
-
-    return value.every(v => Buffer.isBuffer(v));
-  }
-
   protected getTxtRecordFromResponse(response: multicastDns.ResponsePacket): MdnsTxtRecord | null {
     const txt = response.answers.find(answer => answer.type === 'TXT');
 
@@ -153,7 +137,7 @@ export class HomeWizardEnergyDiscovery {
     if (!('data' in txt)) return null;
 
     // data is not an array of buffers
-    if (!this.isBufferArray(txt.data)) return null;
+    if (!isBufferArray(txt.data)) return null;
 
     // txt.data must be an Array of Buffers when we end up here
 
@@ -215,7 +199,7 @@ export class HomeWizardEnergyDiscovery {
     return (response: multicastDns.ResponsePacket) => {
       const isHomeWizardEnergyResponse = this.isHomeWizardEnergyResponse(response);
 
-      this.log(`Received response from mDNS: ${JSON.stringify(response)}`);
+      console.log(`Received response from mDNS: ${JSON.stringify(response)}`);
 
       if (!isHomeWizardEnergyResponse) {
         this.log('Response from mDNS is not from HomeWizard Energy, ignoring.');
