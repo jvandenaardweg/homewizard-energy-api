@@ -12,7 +12,7 @@ export const MDNS_DISCOVERY_DOMAIN = `_${MDNS_DISCOVERY_TYPE}._${MDNS_DISCOVERY_
 /**
  * A list of device types that HomeWizard supports.
  *
- * We only support the Energy Socket for now.
+ * The supported devices are listed below. The device type is used as identifier within the API.
  *
  * @link https://homewizard-energy-api.readthedocs.io/getting-started.html#supported-devices
  */
@@ -36,7 +36,7 @@ export interface MdnsTxtRecord {
   /** The product name of this device. Example: `"Energy Socket"` */
   product_name: string;
   /** A device type identifier. Example: `"HWE-SKT"` */
-  product_type: string;
+  product_type: SupportedDevices;
 }
 
 /**
@@ -86,49 +86,51 @@ export interface BasicInformationResponse {
  */
 
 export interface DataResponse {
-  /** The DSMR version of the smart meter. Available for: HWE-P1 */
+  /** The DSMR version of the smart meter. Available for: `HWE-P1` */
   smr_version?: number;
-  /** The brand indification the smart meter. Available for: HWE-P1 */
+  /** The brand indification the smart meter. Available for: `HWE-P1` */
   meter_model?: string;
   /**
-   * The Wi-Fi network that the meter is connected to. Available for: HWE-P1, HWE-WTR, SDM630-wifi, SDM230-wifi
+   * The Wi-Fi network that the meter is connected to. Available for: `HWE-P1`, `HWE-WTR`, `SDM630-wifi`, `SDM230-wifi`
    *
-   * Note: docs says not available on HWE-SKT, but it is available on my HWE-SKT
+   * Note: docs says not available on `HWE-SKT`, but it is available on my HWE-SKT
    */
   wifi_ssid?: string;
   /**
-   * The strength of the Wi-Fi signal in %. Available for: HWE-P1, HWE-WTR, SDM630-wifi, SDM230-wifi
+   * The strength of the Wi-Fi signal in %. Available for: `HWE-P1`, `HWE-WTR`, `SDM630-wifi`, `SDM230-wifi`
    *
-   * Note: docs says not available on HWE-SKT, but it is available on my HWE-SKT
+   * Note: docs says not available on `HWE-SKT`, but it is available on my HWE-SKT
    */
   wifi_strength?: number;
-  /** The power usage meter reading for tariff 1 in kWh. Available for: HWE-P1, SDM230-wifi, SDM630-wifi */
+  /** The power usage meter reading for tariff 1 in kWh. Available for: `HWE-P1`, `SDM230-wifi`, `SDM630-wifi` */
   total_power_import_t1_kwh?: number;
-  /** The power usage meter reading for tariff 2 in kWh. Available for: HWE-P1 */
+  /** The power usage meter reading for tariff 2 in kWh. Available for: `HWE-P1` */
   total_power_import_t2_kwh?: number;
-  /** The power feed-in meter reading for tariff 1 in kWh. Available: HWE-P1, HWE-SKT, SDM230-wifi, SDM630-wifi */
+  /** The power feed-in meter reading for tariff 1 in kWh. Available: `HWE-P1`, `HWE-SKT`, `SDM230-wifi`, `SDM630-wifi` */
   total_power_export_t1_kwh?: number;
   /** The power feed-in meter reading for tariff 2 in kWh. Available for: HWE-P1 */
   total_power_export_t2_kwh?: number;
-  /** The total active usage in Watts: Available for: HWE-P1, HWE-SKT, SDM230-wifi, SDM630-wifi */
+  /** The total active usage in Watts: Available for: `HWE-P1`, `HWE-SKT`, SDM230-wifi, `SDM630-wifi` */
   active_power_w?: number;
-  /** The active usage for fase 1 in Watts. Abailable for: HWE-P1, HWE-SKT, SDM230-wifi, SDM630-wifi */
+  /** The active usage for fase 1 in Watts. Abailable for: `HWE-P1`, `HWE-SKT`, SDM230-wifi, `SDM630-wifi` */
   active_power_l1_w?: number;
-  /** The active usage for fase 2 in Watts. Available for: HWE-P1, SDM630-wifi */
+  /** The active usage for fase 2 in Watts. Available for: `HWE-P1`, `SDM630-wifi` */
   active_power_l2_w?: number;
-  /** The active usage for fase 3 in Watts. Available for: HWE-P1, SDM630-wifi  */
+  /** The active usage for fase 3 in Watts. Available for: `HWE-P1`, `SDM630-wifi`  */
   active_power_l3_w?: number;
-  /** The gas meter reading in m3. Available for: HWE-P1 */
+  /** The gas meter reading in m3. Available for: `HWE-P1` */
   total_gas_m3?: number;
-  /** The most recent gas update time stamp structured as YYMMDDhhmmss. Available for: HWE-P1 */
+  /** The most recent gas update time stamp structured as YYMMDDhhmmss. Available for: `HWE-P1` */
   gas_timestamp?: number;
-  /** Active water usage in liters per minute. Available for: HWE-WTR */
+  /** Active water usage in liters per minute. Available for: `HWE-WTR` */
   active_liter_lpm?: number;
-  /** Total water usage in cubic meters since installation. Available for: HWE-WTR */
+  /** Total water usage in cubic meters since installation. Available for: `HWE-WTR` */
   total_liter_m3?: number;
 }
 
-// HWE-SKT
+/**
+ * API /data response for `HWE-SKT`
+ */
 export type EnergySocketDataResponse = Omit<
   DataResponse,
   | 'smr_version'
@@ -143,10 +145,14 @@ export type EnergySocketDataResponse = Omit<
   | 'total_liter_m3'
 >;
 
-// HWE-P1
+/**
+ * API /data response for `HWE-P1`
+ */
 export type P1MeterDataResponse = Omit<DataResponse, 'active_liter_lpm' | 'total_liter_m3'>;
 
-// HWE-WTR
+/**
+ * API /data response for `HWE-WTR`
+ */
 export type WaterMeterDataResponse = Omit<
   DataResponse,
   | 'smr_version'
@@ -163,7 +169,9 @@ export type WaterMeterDataResponse = Omit<
   | 'gas_timestamp'
 >;
 
-// SDM230-wifi
+/**
+ * API /data response for `SDM230-wifi`
+ */
 export type KwhMeter1PhaseResponse = Omit<
   DataResponse,
   | 'smr_version'
@@ -178,7 +186,9 @@ export type KwhMeter1PhaseResponse = Omit<
   | 'total_liter_m3'
 >;
 
-// SDM630-wifi
+/**
+ * API /data response for `SDM630-wifi`
+ */
 export type KwhMeter3PhaseResponse = Omit<
   DataResponse,
   | 'smr_version'
