@@ -53,8 +53,7 @@ const api = new HomeWizardEnergyApi();
 api.discovery.start();
 
 api.discovery.on('response', response => {
-  console.log('response', response);
-
+  // response:
   // {
   //   ip: '192.168.1.34',
   //   hostname: 'energysocket-25FF1A.local',
