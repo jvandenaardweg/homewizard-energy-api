@@ -122,10 +122,10 @@ export const mockMdnsResponseChromecast: multicastDns.ResponsePacket = {
       ttl: 4500,
       class: 'IN',
       flush: false,
-      data: 'Chromecast-16091dcc0910b17a98b7a1bf523e7cc2 51D2._hap._tcp.local',
+      data: 'Chromecast-16093dce0910b27a98h7a1bf423e9cc2 51D2._hap._tcp.local',
     },
     {
-      name: 'Chromecast-16091dcc0910b17a98b7a1bf523e7cc2 51D2._hap._tcp.local',
+      name: 'Chromecast-16093dce0910b27a98h7a1bf423e9cc2 51D2._hap._tcp.local',
       type: 'SRV',
       ttl: 120,
       class: 'IN',
@@ -133,7 +133,7 @@ export const mockMdnsResponseChromecast: multicastDns.ResponsePacket = {
       data: { priority: 0, weight: 0, port: 40987, target: 'B4_F4_BD_66_A4_51.local' },
     },
     {
-      name: 'Chromecast-16091dcc0910b17a98b7a1bf523e7cc2 51D2._hap._tcp.local',
+      name: 'Chromecast-16093dce0910b27a98h7a1bf423e9cc2 51D2._hap._tcp.local',
       type: 'TXT',
       ttl: 4500,
       class: 'IN',
@@ -154,7 +154,7 @@ export const mockMdnsResponseChromecast: multicastDns.ResponsePacket = {
       ttl: 120,
       class: 'IN',
       flush: true,
-      data: 'fd90:fc83:a0ba:41d6:797c:8e4e:51a1:664d',
+      data: 'fd90:fc83:a0ba:31d6:697c:7e4e:41a1:664d',
     },
     {
       name: 'B4_F4_BD_66_A4_51.local',
@@ -162,7 +162,7 @@ export const mockMdnsResponseChromecast: multicastDns.ResponsePacket = {
       ttl: 120,
       class: 'IN',
       flush: true,
-      data: 'fe80::9f8:928a:b8f1:e251',
+      data: 'fe80::2f8:828a:b8f1:e251',
     },
     {
       name: '_services._dns-sd._udp.local',
