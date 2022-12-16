@@ -1,25 +1,27 @@
-# HomeWizard Energy API [![npm version](https://badge.fury.io/js/homewizard-energy-api.svg)](https://badge.fury.io/js/homewizard-energy-api) [![mit license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/LICENSE)
+# HomeWizard Energy API
+[![npm version](https://badge.fury.io/js/homewizard-energy-api.svg)](https://badge.fury.io/js/homewizard-energy-api) [![mit license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/LICENSE)
 
 Full type-safe implementation of the HomeWizard Energy API in Node. Use the Local API of your HomeWizard devices with ease.
 
 ## Features
 
-- Complete type-safety on all API methods, responses and errors
+- Complete type-safety on all API methods, responses, and errors
 - Exposes a discovery method to discover devices on your local network using Multicast DNS
+- Includes inline documentation on each method, type and property
+- Follows the guidelines provided in the official [HomeWizard Energy API documentation](https://homewizard-energy-api.readthedocs.io/index.html)
 
-Official documentation: https://homewizard-energy-api.readthedocs.io/index.html
-
-## Getting started
+## Installation
+This library requires Node 14 or higher. Typescript is only required for type-safety, the library will also work without Typescript.
 
 ```
 npm install homewizard-energy-api
 ```
 
-## Requirements
+or
 
-- Node 14 or higher
-- TypeScript 4.9 or higher
-- HomeWizard devices in your network with the `Local API` option enabled
+```
+yarn add homewizard-energy-api
+```
 
 ## Supported devices
 
@@ -30,6 +32,8 @@ This library supports all devices from HomeWizard that expose an API. This inclu
 - Wi-Fi Watermeter (Only when powered over USB) `HWE-WTR`
 - Wi-Fi kWh meter (1 phase) `SDM230-wifi`
 - Wi-Fi kWh meter (3 phase) `SDM630-wifi`
+
+Make sure to enable the `Local API` setting for each device you want to use with this library. You can do this in the Energy app.
 
 ## Energy Socket
 
@@ -43,6 +47,8 @@ const api = new EnergySocketApi('http://192.168.1.10');
 // Turn the Energy Socket ON
 const updatedState = await api.updateState({ power_on: true });
 ```
+
+
 
 | Method | API              | Function         | Description                                                                                                                                                                                                                       |
 | ------ | ---------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
