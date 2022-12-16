@@ -10,36 +10,58 @@ Official documentation: https://homewizard-energy-api.readthedocs.io/index.html
 project needs to be published on npm first, just started
 ```
 
-Control your Energy Socket:
+Control your [Wi-Fi Energy Socket](https://www.homewizard.com/shop/wi-fi-energy-socket/):
 
 ```typescript
 import { EnergySocketApi } from 'homewizard-energy-api';
 
-const api = new EnergySocketApi('http://192.168.1.30');
+const api = new EnergySocketApi('http://192.168.1.10');
 
 // Turn the Energy Socket ON
 const updatedState = await api.updateState({ power_on: true });
 ```
 
-Get the power consumption or gas usage in your home from the P1 Meter:
+Get the power consumption or gas usage in your home from the [Wi-Fi P1 Meter](https://www.homewizard.com/shop/wi-fi-p1-meter/):
 
 ```typescript
 import { P1MeterApi } from 'homewizard-energy-api';
 
-const api = new P1MeterApi('http://192.168.1.30');
+const api = new P1MeterApi('http://192.168.1.11');
 
 // Get the active power and gas usage
 const data = await api.getData();
 ```
 
-Get the water consumption in your home from the Water Meter:
+Get the water consumption in your home from the [Wi-Fi Watermeter](https://www.homewizard.com/shop/wi-fi-watermeter/):
 
 ```typescript
 import { WaterMeterApi } from 'homewizard-energy-api';
 
-const api = new WaterMeterApi('http://192.168.1.30');
+const api = new WaterMeterApi('http://192.168.1.12');
 
 // Get the active water usage
+const data = await api.getData();
+```
+
+Get the power consumption from the [Wi-Fi kWh meter 1-phase MID](https://www.homewizard.com/shop/wi-fi-kwh-meter-1-phase/):
+
+```typescript
+import { KwhMeter1PhaseApi } from 'homewizard-energy-api';
+
+const api = new KwhMeter1PhaseApi('http://192.168.1.13');
+
+// Get the power usage from your Wi-Fi kWh meter 1-phase MID
+const data = await api.getData();
+```
+
+Get the power consumption from the [Wi-Fi kWh meter 3-phase MID](https://www.homewizard.com/shop/wi-fi-kwh-meter-3-phase/):
+
+```typescript
+import { KwhMeter3PhaseApi } from 'homewizard-energy-api';
+
+const api = new KwhMeter3PhaseApi('http://192.168.1.14');
+
+// Get the power usage from your Wi-Fi kWh meter 3-phase MID
 const data = await api.getData();
 ```
 
