@@ -1,3 +1,4 @@
+import EventEmitter from 'events';
 import * as multicastDns from 'multicast-dns';
 import {
   MdnsTxtRecord,
@@ -6,20 +7,13 @@ import {
   MDNS_DISCOVERY_QUERY_TYPE,
 } from './types';
 import { bufferArrayToJSON } from './utils/buffer';
+import util from 'util';
 
 interface DiscoveryResponse {
   ip: string;
   hostname: string;
+  fqdn: string;
   txt: MdnsTxtRecord;
-}
-
-interface MdnsAnswer<T> {
-  name: string;
-  type: string;
-  ttl: number;
-  class: string;
-  flush: boolean;
-  data: T;
 }
 
 interface HomeWizardEnergyApiOptions {
@@ -31,11 +25,14 @@ interface HomeWizardEnergyApiOptions {
  *
  * @link: https://homewizard-energy-api.readthedocs.io
  */
-export class HomeWizardEnergyApi {
+export class HomeWizardEnergyApi extends EventEmitter {
   private mdns: multicastDns.MulticastDNS | null = null;
   private logger: HomeWizardEnergyApiOptions['logger'];
+  private cachedDiscoveryResponses: DiscoveryResponse[] = [];
 
   constructor(options?: HomeWizardEnergyApiOptions) {
+    super();
+
     this.logger = options?.logger;
   }
 
@@ -75,12 +72,21 @@ export class HomeWizardEnergyApi {
     event: 'response',
     callback: (discoveryResponse: DiscoveryResponse) => void,
   ): void;
+  protected discoveryOn(event: 'down', callback: (downResponse: DiscoveryResponse) => void): void;
   protected discoveryOn(event: 'error', callback: (error: Error) => void): void;
   protected discoveryOn(event: 'warning', callback: (error: Error) => void): void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected discoveryOn(event: 'response' | 'error' | 'warning', callback: (d: any) => void): void {
+  protected discoveryOn(
+    event: 'response' | 'error' | 'warning' | 'down',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    callback: (d: any) => void,
+  ): void {
     if (!this.mdns) {
       throw new Error('mDNS is not started, call discovery.start() first');
+    }
+
+    if (event === 'down') {
+      this.on(event, this.handleMdnsDown(callback));
+      return;
     }
 
     if (event === 'error') {
@@ -96,55 +102,206 @@ export class HomeWizardEnergyApi {
     this.mdns.on(event, this.handleMdnsResponse(callback));
   }
 
+  // TODO: make this handler work
+  protected handleMdnsDown(callback: (goodbyeResponse: DiscoveryResponse) => void) {
+    return (response: multicastDns.ResponsePacket) => {
+      console.log('goodbye!', response);
+
+      // TODO: fix
+      callback(response as unknown as DiscoveryResponse);
+    };
+  }
+
+  protected isGoodbyeResponse(response: multicastDns.ResponsePacket): boolean {
+    return response.answers.some(answer => {
+      if ('ttl' in answer) {
+        return (
+          answer.type === MDNS_DISCOVERY_QUERY_TYPE &&
+          answer.ttl === 0 &&
+          answer.data.includes(MDNS_DISCOVERY_TYPE)
+        );
+      }
+
+      return false;
+    });
+  }
+
+  protected isGoodbyeResponseSimple(response: multicastDns.ResponsePacket): boolean {
+    return response.answers.some(answer => {
+      if ('ttl' in answer) {
+        return answer.ttl === 0;
+      }
+
+      return false;
+    });
+  }
+
+  /**
+   * Find out if the response is a HomeWizard Energy response.
+   */
+  protected isHomeWizardEnergyResponse(response: multicastDns.ResponsePacket): boolean {
+    return (
+      response.answers.filter(answer => {
+        if ('data' in answer && typeof answer.data === 'string') {
+          return answer.data.includes(MDNS_DISCOVERY_TYPE);
+        }
+
+        return false;
+      }).length > 0
+    );
+  }
+
+  protected isBufferArray(value: unknown): value is Buffer[] {
+    if (!Array.isArray(value)) return false;
+
+    return value.every(v => Buffer.isBuffer(v));
+  }
+
+  protected getTxtRecordFromResponse(response: multicastDns.ResponsePacket): MdnsTxtRecord | null {
+    const txt = response.answers.find(answer => answer.type === 'TXT');
+
+    // no txt record found
+    if (!txt) return null;
+
+    // no data property found
+    if (!('data' in txt)) return null;
+
+    // data is not an array of buffers
+    if (!this.isBufferArray(txt.data)) return null;
+
+    // txt.data must be an Array of Buffers when we end up here
+
+    const txtRecordFromBuffers = bufferArrayToJSON<MdnsTxtRecord>(txt.data);
+
+    return txtRecordFromBuffers;
+  }
+
+  protected getHostDetailsFromAnswer(
+    answer: multicastDns.ResponsePacket['answers'][number],
+  ): { ip: string; hostname: string } | null {
+    if (!('data' in answer)) return null;
+    if (typeof answer.data !== 'string') return null;
+
+    return { ip: answer.data, hostname: answer.name };
+  }
+
+  protected getHostDetailsFromResponse(
+    response: multicastDns.ResponsePacket,
+  ): { ip: string; hostname: string } | null {
+    // We can find the host details in the answer or additional section
+    const answer = response.answers.find(answer => answer.type === 'A');
+    const additional = response.additionals.find(additional => additional.type === 'A');
+
+    if (!answer && !additional) return null;
+
+    if (answer && !additional) {
+      return this.getHostDetailsFromAnswer(answer);
+    }
+
+    if (additional) {
+      return this.getHostDetailsFromAnswer(additional);
+    }
+
+    return null;
+  }
+
+  protected getFqdnFromResponse(response: multicastDns.ResponsePacket): string | null {
+    const ptr = response.answers.find(
+      a => a.type === 'PTR' && a.name.includes(MDNS_DISCOVERY_TYPE),
+    );
+
+    if (!ptr) {
+      return null;
+    }
+
+    if (ptr && !('data' in ptr)) {
+      return null;
+    }
+
+    if (typeof ptr.data !== 'string') {
+      return null;
+    }
+
+    return ptr.data;
+  }
+
   protected handleMdnsResponse(callback: (discoveryResponse: DiscoveryResponse) => void) {
     return (response: multicastDns.ResponsePacket) => {
-      // Filter out responses we don't need
-      const hwenergyResponse = response.answers.filter(answer =>
-        answer.name.includes(MDNS_DISCOVERY_TYPE),
-      );
+      const isHomeWizardEnergyResponse = this.isHomeWizardEnergyResponse(response);
 
-      this.log('Received response from mDNS:', response);
+      this.log(`Received response from mDNS: ${JSON.stringify(response)}`);
 
-      if (!hwenergyResponse.length) return;
+      if (!isHomeWizardEnergyResponse) {
+        this.log('Response from mDNS is not from HomeWizard Energy, ignoring.');
+        return;
+      }
 
-      this.log('Got a response from hwenergy:', hwenergyResponse);
+      // Get the FQDN from the response, we use this as a unique identifier for the device
+      const fqdn = this.getFqdnFromResponse(response);
+
+      if (!fqdn) {
+        this.log(`No fqdn found in mDNS response, ignoring: ${JSON.stringify(response)}`);
+
+        return;
+      }
+
+      if (this.isGoodbyeResponse(response)) {
+        this.log(`Response is a goodbye message, we'll send a down event.`);
+
+        const cachedResponse = this.cachedDiscoveryResponses.find(
+          cachedResponse => cachedResponse.fqdn === fqdn,
+        );
+
+        if (!cachedResponse) {
+          this.log(`No cached response found for ${fqdn}, ignoring.`);
+        }
+
+        console.log('down!', cachedResponse);
+
+        this.emit('down', cachedResponse);
+
+        // Remove the response from cache by using the fqdn, which is specific enough
+        this.cachedDiscoveryResponses = this.cachedDiscoveryResponses.filter(
+          cachedResponse => cachedResponse.fqdn !== fqdn,
+        );
+
+        return;
+      }
 
       // Response is from hwenergy
 
-      const additional = response.additionals.find(additional => additional.type === 'A') as
-        | MdnsAnswer<string>
-        | undefined;
+      const hostDetails = this.getHostDetailsFromResponse(response);
 
-      const txt = response.answers.find(answer => answer.type === 'TXT') as
-        | MdnsAnswer<Buffer[]>
-        | undefined;
+      const txtRecord = this.getTxtRecordFromResponse(response);
 
       // This should not happen, but just in case
-      if (!additional) {
-        throw new Error('No additional data found in mDNS response');
+      if (!hostDetails) {
+        throw new Error(`No host details found in mDNS response: ${JSON.stringify(response)}`);
       }
 
       // This should not happen, but just in case
-      if (!txt) {
-        throw new Error('No txt data found in mDNS response');
+      if (!txtRecord) {
+        throw new Error(`No txt record data found in mDNS response: ${JSON.stringify(response)}`);
       }
-
-      // Now we got all the relevant info we need
-
-      const ip = additional.data;
-      const hostname = additional.name;
-
-      // Simple buffer array to JSON conversion
-      // This will only work for this txt record, because we know each buffer contains a key and value pair
-      const textRecord = bufferArrayToJSON<MdnsTxtRecord>(txt.data);
 
       const discoveryResponse = {
-        ip,
-        hostname,
-        txt: textRecord,
+        ip: hostDetails.ip,
+        hostname: hostDetails.hostname,
+        fqdn,
+        txt: txtRecord,
       } satisfies DiscoveryResponse;
 
-      this.log('Using callback response:', discoveryResponse);
+      const isInCache = this.cachedDiscoveryResponses.some(cachedDiscoveryResponse =>
+        util.isDeepStrictEqual(discoveryResponse, cachedDiscoveryResponse),
+      );
+
+      if (isInCache) {
+        this.log('Nothing changed. Response is already in cache, ignoring.');
+        return;
+      }
+
+      // Store response in cache, so we don't send multiple events for the same device when not needed
+      this.cachedDiscoveryResponses.push(discoveryResponse);
 
       return callback(discoveryResponse);
     };

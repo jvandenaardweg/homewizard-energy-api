@@ -6,10 +6,10 @@ api.discovery.start();
 
 api.discovery.on('response', response => {
   console.log('response', response);
-
   // {
   //   ip: '192.168.1.34',
   //   hostname: 'energysocket-25FF1A.local',
+  //   fqdn: 'energysocket-25FF1A._hwenergy._tcp.local',
   //   txt: {
   //     api_enabled: '1',
   //     path: '/api/v1',
@@ -18,6 +18,10 @@ api.discovery.on('response', response => {
   //     product_type: 'HWE-SKT'
   //   }
   // }
+});
+
+api.discovery.on('down', downResponse => {
+  console.log('down', downResponse);
 });
 
 api.discovery.on('error', error => {
