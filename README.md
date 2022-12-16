@@ -24,11 +24,13 @@ const updatedState = await api.updateState({ power_on: true });
 
 | Method | API | Function | Description |
 | -- | -- | -- | -- |
+| GET | /api | `getBasic()` | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).
 | GET | /api/v1/state | `getState()` | Returns the actual state of the Energy Socket. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#state-api-v1-state).
 | PUT | /api/v1/state | `updateState()` | Control the state of the Energy Socket. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#state-api-v1-state).
 | PUT | /api/v1/identify | `identify()` | Identify the device. The status light will blink for a few seconds after calling this endpoint. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#identify-api-v1-identify).
 | GET | /api/v1/system | `getSystem()` | Returns the actual system settings. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system).
 | PUT | /api/v1/system | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system).
+
 
 ## P1 Meter
 
