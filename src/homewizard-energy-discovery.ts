@@ -8,14 +8,14 @@ import {
 import { bufferArrayToJSON } from '@/utils/buffer';
 import util from 'util';
 
-interface DiscoveryResponse {
+export interface DiscoveryResponse {
   ip: string;
   hostname: string;
   fqdn: string;
   txt: MdnsTxtRecord;
 }
 
-interface HomeWizardEnergyDiscoveryOptions {
+export interface HomeWizardEnergyDiscoveryOptions {
   logger?: (...args: unknown[]) => void;
 }
 

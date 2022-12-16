@@ -1,7 +1,7 @@
 import { Dispatcher, request as undiciRequest } from 'undici';
 import { BasicInformationResponse, DataResponse } from './types';
 
-type RequestParameters = Parameters<typeof undiciRequest>;
+export type RequestParameters = Parameters<typeof undiciRequest>;
 
 export class HomeWizardEnergyApiError extends Error {
   constructor(message: string) {
