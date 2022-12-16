@@ -1,5 +1,5 @@
 import { HomeWizardEnergyApi } from './api';
-import { MDNS_DISCOVERY_DOMAIN } from './types';
+import { MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE } from './types';
 
 let homeWizardEnergyApi: HomeWizardEnergyApi;
 
@@ -48,7 +48,7 @@ describe('HomeWizardEnergyApi', () => {
     homeWizardEnergyApi.discovery.start();
 
     expect(querySpy).toHaveBeenCalledOnce();
-    expect(querySpy).toHaveBeenCalledWith(MDNS_DISCOVERY_DOMAIN, 'PTR');
+    expect(querySpy).toHaveBeenCalledWith(MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE);
   });
 
   it('should run mdns.removeAllListeners() and mdns.destroy() when discovery.stop() is invoked', () => {

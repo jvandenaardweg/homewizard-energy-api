@@ -1,5 +1,11 @@
 import * as multicastDns from 'multicast-dns';
-import { MdnsTxtRecord, MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_TYPE } from './types';
+import {
+  MdnsTxtRecord,
+  MDNS_DISCOVERY_DOMAIN,
+  MDNS_DISCOVERY_TYPE,
+  MDNS_DISCOVERY_QUERY_TYPE,
+} from './types';
+import { bufferArrayToJSON } from './utils/buffer';
 
 interface DiscoveryResponse {
   ip: string;
@@ -52,7 +58,7 @@ export class HomeWizardEnergyApi {
 
     this.mdns = multicastDns.default();
 
-    this.mdns.query(MDNS_DISCOVERY_DOMAIN, 'PTR');
+    this.mdns.query(MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE);
   }
 
   protected discoveryStop() {
@@ -73,18 +79,21 @@ export class HomeWizardEnergyApi {
   protected discoveryOn(event: 'warning', callback: (error: Error) => void): void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected discoveryOn(event: 'response' | 'error' | 'warning', callback: (d: any) => void): void {
+    if (!this.mdns) {
+      throw new Error('mDNS is not started, call discovery.start() first');
+    }
+
     if (event === 'error') {
-      this.mdns?.on(event, this.handleMdnsError(callback));
+      this.mdns.on(event, this.handleMdnsError(callback));
       return;
     }
 
     if (event === 'warning') {
-      this.mdns?.on(event, this.handleMdnsWarning(callback));
+      this.mdns.on(event, this.handleMdnsWarning(callback));
       return;
     }
 
-    this.mdns?.on(event, this.handleMdnsResponse(callback));
-    return;
+    this.mdns.on(event, this.handleMdnsResponse(callback));
   }
 
   protected handleMdnsResponse(callback: (discoveryResponse: DiscoveryResponse) => void) {
@@ -125,15 +134,9 @@ export class HomeWizardEnergyApi {
       const ip = additional.data;
       const hostname = additional.name;
 
-      // Simple buffer to string
-      // TODO: will this work on any node version?
-      const textRecord = txt.data.reduce((prev, buffer) => {
-        const [key, value] = buffer.toString().split('=');
-
-        prev[key] = value;
-
-        return prev;
-      }, {} as Record<string, string>) as unknown as MdnsTxtRecord;
+      // Simple buffer array to JSON conversion
+      // This will only work for this txt record, because we know each buffer contains a key and value pair
+      const textRecord = bufferArrayToJSON<MdnsTxtRecord>(txt.data);
 
       const discoveryResponse = {
         ip,

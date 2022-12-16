@@ -8,6 +8,7 @@
 export const MDNS_DISCOVERY_TYPE = 'hwenergy';
 export const MDNS_DISCOVERY_PROTOCOL = 'tcp';
 export const MDNS_DISCOVERY_DOMAIN = `_${MDNS_DISCOVERY_TYPE}._${MDNS_DISCOVERY_PROTOCOL}.local`; // _hwenergy._tcp.local
+export const MDNS_DISCOVERY_QUERY_TYPE = 'PTR';
 
 /**
  * A list of device types that HomeWizard supports.
