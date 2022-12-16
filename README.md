@@ -43,6 +43,32 @@ const api = new WaterMeterApi('http://192.168.1.30');
 const data = await api.getData();
 ```
 
+Discover the HomeWizard devices in your network using Multicast DNS:
+
+```typescript
+import { HomeWizardEnergyApi } from 'homewizard-energy-api';
+
+const api = new HomeWizardEnergyApi();
+
+api.discovery.start();
+
+api.discovery.on('response', response => {
+  console.log('response', response);
+
+  // {
+  //   ip: '192.168.1.34',
+  //   hostname: 'energysocket-25FF1A.local',
+  //   txt: {
+  //     api_enabled: '1',
+  //     path: '/api/v1',
+  //     serial: '3c39e725ff1a',
+  //     product_name: 'Energy Socket',
+  //     product_type: 'HWE-SKT'
+  //   }
+  // }
+});
+```
+
 ## About HomeWizard Energy
 
 With the HomeWizard Energy platform, you can get insights in your energy usage. Use the HomeWizard Wi-Fi P1 meter to access real-time data directly from your smart meter, the HomeWizard Wi-Fi Energy Socket to get energy insights from all your devices, the HomeWizard Wi-Fi kWh meter to measure devices such as solar panels and the HomeWizard Wi-Fi Watermeter to get insight in your water usage. With the open API you can integrate the data directly into your system of choice.
