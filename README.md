@@ -131,11 +131,11 @@ This library exposes a discovery method to discover HomeWizard Energy devices in
 ```typescript
 import { HomeWizardEnergyDiscovery } from 'homewizard-energy-api';
 
-const homeWizardEnergyDiscovery = new HomeWizardEnergyDiscovery();
+const discovery = new HomeWizardEnergyDiscovery();
 
-homeWizardEnergyDiscovery.start();
+discovery.start();
 
-homeWizardEnergyDiscovery.on('response', response => {
+discovery.on('response', response => {
   // response:
   // {
   //   ip: '192.168.1.34',

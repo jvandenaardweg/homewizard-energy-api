@@ -1,10 +1,10 @@
 import { HomeWizardEnergyDiscovery } from '@/homewizard-energy-discovery';
 
-const homeWizardEnergyDiscovery = new HomeWizardEnergyDiscovery();
+const discovery = new HomeWizardEnergyDiscovery();
 
-homeWizardEnergyDiscovery.start();
+discovery.start();
 
-homeWizardEnergyDiscovery.on('response', response => {
+discovery.on('response', response => {
   console.log('response', response);
   // {
   //   ip: '192.168.1.34',
@@ -20,10 +20,10 @@ homeWizardEnergyDiscovery.on('response', response => {
   // }
 });
 
-homeWizardEnergyDiscovery.on('error', error => {
+discovery.on('error', error => {
   console.log('error', error);
 });
 
-homeWizardEnergyDiscovery.on('warning', error => {
+discovery.on('warning', error => {
   console.log('warning', error);
 });
