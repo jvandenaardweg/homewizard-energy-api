@@ -140,7 +140,7 @@ discovery.start();
 discovery.on('response', response => {
   // You'll get a response for each device that is found
 
-  // Exampple response:
+  // Example response:
   // {
   //   ip: '192.168.1.34',
   //   hostname: 'energysocket-25FF1A.local',
