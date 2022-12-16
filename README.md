@@ -1,6 +1,6 @@
 # HomeWizard Energy API
 
-Full type-safe implementation of the HomeWizard Energy API in Node.
+Full type-safe implementation of the HomeWizard Energy API in Node. Use the Local API of your HomeWizard devices with ease.
 
 ## Features
 - Complete type-safety on all API methods, responses and errors
