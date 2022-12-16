@@ -1,5 +1,14 @@
-# HomeWizard Energy API
-[![npm version](https://badge.fury.io/js/homewizard-energy-api.svg)](https://badge.fury.io/js/homewizard-energy-api) ![build-and-test workflow](https://github.com/jvandenaardweg/homewizard-energy-api/actions/workflows/build-and-test.yml/badge.svg) [![mit license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/LICENSE)
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/5155373/208201020-4caf682b-8038-4c59-b02e-486e532aefdc.png" width="120" title="hover text">
+  <h1 align="center">HomeWizard Energy API</h1>
+</p>
+
+<p align="center">
+  <a href="https://npmjs.com/package/homewizard-energy-api"><img alt="npm" src="https://badge.fury.io/js/homewizard-energy-api.svg" /></a>
+  <a href="https://github.com/jvandenaardweg/homewizard-energy-api/actions"><img alt="GitHub" src="https://github.com/jvandenaardweg/homewizard-energy-api/actions/workflows/build-and-test.yml/badge.svg" /></a>
+  <a href="https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/LICENSE"><img alt="mit license" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
+</p>
+
 
 Full type-safe implementation of the HomeWizard Energy API in Node. Use the Local API of your HomeWizard devices with ease.
 
