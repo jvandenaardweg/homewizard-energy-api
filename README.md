@@ -35,6 +35,7 @@ const updatedState = await api.updateState({ power_on: true });
 | GET | /api | `getBasic()` | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).
 | GET | /api/v1/state | `getState()` | Returns the actual state of the Energy Socket. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#state-api-v1-state).
 | PUT | /api/v1/state | `updateState()` | Control the state of the Energy Socket. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#state-api-v1-state).
+| GET | /api/v1/data | `getData()` | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).
 | PUT | /api/v1/identify | `identify()` | Identify the device. The status light will blink for a few seconds after calling this endpoint. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#identify-api-v1-identify).
 | GET | /api/v1/system | `getSystem()` | Returns the actual system settings. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system).
 | PUT | /api/v1/system | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system).
@@ -52,6 +53,12 @@ const api = new P1MeterApi('http://192.168.1.11');
 // Get the active power and gas usage
 const data = await api.getData();
 ```
+
+| Method | API | Function | Description |
+| -- | -- | -- | -- |
+| GET | /api | `getBasic()` | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).
+| GET | /api/v1/data | `getData()` | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).
+| GET | /api/v1/telegram | `getTelegram()` | Returns the most recent, valid telegram that was given by the P1 meter, therefore this endpoint is only available for the HWE-P1. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#p1-telegram-api-v1-telegram).
 
 ## Water Meter
 
