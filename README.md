@@ -10,6 +10,7 @@ Official documentation: https://homewizard-energy-api.readthedocs.io/index.html
 project needs to be published on npm first, just started
 ```
 
+## Energy Socket
 Control your [Wi-Fi Energy Socket](https://www.homewizard.com/shop/wi-fi-energy-socket/):
 
 ```typescript
@@ -20,6 +21,16 @@ const api = new EnergySocketApi('http://192.168.1.10');
 // Turn the Energy Socket ON
 const updatedState = await api.updateState({ power_on: true });
 ```
+
+| Method | API | Function | Description |
+| -- | -- | -- | -- |
+| GET | /api/v1/state | `getState()` | Returns the actual state of the Energy Socket.
+| PUT | /api/v1/state | `updateState()` | Control the state of the Energy Socket.
+| PUT | /api/v1/identify | `identify()` | Identify the device. The status light will blink for a few seconds after calling this endpoint.
+| GET | /api/v1/system | `getSystem()` | Returns the actual system settings.
+| PUT | /api/v1/system | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication.
+
+## P1 Meter
 
 Get the power consumption or gas usage in your home from the [Wi-Fi P1 Meter](https://www.homewizard.com/shop/wi-fi-p1-meter/):
 
@@ -32,6 +43,8 @@ const api = new P1MeterApi('http://192.168.1.11');
 const data = await api.getData();
 ```
 
+## Water Meter
+
 Get the water consumption in your home from the [Wi-Fi Watermeter](https://www.homewizard.com/shop/wi-fi-watermeter/):
 
 ```typescript
@@ -43,6 +56,8 @@ const api = new WaterMeterApi('http://192.168.1.12');
 const data = await api.getData();
 ```
 
+## kWh Meter 1-phase
+
 Get the power consumption from the [Wi-Fi kWh meter 1-phase MID](https://www.homewizard.com/shop/wi-fi-kwh-meter-1-phase/):
 
 ```typescript
@@ -53,6 +68,8 @@ const api = new KwhMeter1PhaseApi('http://192.168.1.13');
 // Get the power usage from your Wi-Fi kWh meter 1-phase MID
 const data = await api.getData();
 ```
+
+## kWh Meter 3-phase
 
 Get the power consumption from the [Wi-Fi kWh meter 3-phase MID](https://www.homewizard.com/shop/wi-fi-kwh-meter-3-phase/):
 
