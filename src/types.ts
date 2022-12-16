@@ -1,5 +1,3 @@
-export const PLATFORM_MANUFACTURER = 'HomeWizard';
-
 /**
  * We can discover devices on the local network using the `_hwenergy._tcp` domain.
  *
@@ -9,6 +7,7 @@ export const PLATFORM_MANUFACTURER = 'HomeWizard';
  */
 export const MDNS_DISCOVERY_TYPE = 'hwenergy';
 export const MDNS_DISCOVERY_PROTOCOL = 'tcp';
+export const MDNS_DISCOVERY_DOMAIN = `_${MDNS_DISCOVERY_TYPE}._${MDNS_DISCOVERY_PROTOCOL}`; // _hwenergy._tcp
 
 /**
  * A list of device types that HomeWizard supports.
