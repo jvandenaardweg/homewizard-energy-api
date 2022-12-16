@@ -119,7 +119,8 @@ const data = await api.getData();
 | GET | /api | `getBasic()` | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).
 | GET | /api/v1/data | `getData()` | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).
 
-Discover the HomeWizard devices in your network using Multicast DNS:
+## Discover the HomeWizard devices in your network
+This library exposes a discovery method to discover HomeWizard Energy devices in your local network. Each HomeWizard device broadcasts itself on your local network. This allows you to use all the API's without knowing the actual IP address of the device.
 
 ```typescript
 import { HomeWizardEnergyApi } from 'homewizard-energy-api';
