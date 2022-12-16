@@ -2,13 +2,13 @@
 
 Full type-safe implementation of the HomeWizard Energy API in Node.
 
-Features
+## Features
 - Complete type-safety on all API methods, responses and errors
 - Exposes a `discovery` method to discover devices on your local network using Multicast DNS
 
 Official documentation: https://homewizard-energy-api.readthedocs.io/index.html
 
-# Installation
+## Getting started
 
 ```
 project needs to be published on npm first, just started
