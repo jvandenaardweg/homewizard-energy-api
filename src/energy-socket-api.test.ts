@@ -1,12 +1,12 @@
-import { mockBasicInformationResponse } from './mocks/data/basic';
-import { mockStateResponse } from './mocks/data/state';
-import { mockIdentifyResponse } from './mocks/data/identify';
-import { mockApiUrl } from './mocks/api';
 import { Interceptable, MockAgent, setGlobalDispatcher } from 'undici';
-import { StateResponse, SystemPutParams } from './types';
-import { mockEnergySocketDataResponse } from './mocks/data/data';
-import { mockSystemResponse } from './mocks/data/system';
-import { EnergySocketApi } from './energy-socket-api';
+import { mockBasicInformationResponse } from '@/mocks/data/basic';
+import { mockStateResponse } from '@/mocks/data/state';
+import { mockIdentifyResponse } from '@/mocks/data/identify';
+import { mockApiUrl } from '@/mocks/api';
+import { StateResponse, SystemPutParams } from '@/types';
+import { mockEnergySocketDataResponse } from '@/mocks/data/data';
+import { mockSystemResponse } from '@/mocks/data/system';
+import { EnergySocketApi } from '@/energy-socket-api';
 
 let mockApiAgent: MockAgent;
 let mockApiPool: Interceptable;

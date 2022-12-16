@@ -1,9 +1,9 @@
-import { mockBasicInformationResponse } from './mocks/data/basic';
+import { mockBasicInformationResponse } from '@/mocks/data/basic';
 
-import { mockApiUrl } from './mocks/api';
+import { mockApiUrl } from '@/mocks/api';
 import { Interceptable, MockAgent, setGlobalDispatcher } from 'undici';
-import { mockKwhMeter3PhaseResponse } from './mocks/data/data';
-import { KwhMeter3PhaseApi } from './kwh-meter-3-phase-api';
+import { mockKwhMeter3PhaseResponse } from '@/mocks/data/data';
+import { KwhMeter3PhaseApi } from '@/kwh-meter-3-phase-api';
 
 let mockApiAgent: MockAgent;
 let mockApiPool: Interceptable;

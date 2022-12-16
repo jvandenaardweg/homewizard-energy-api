@@ -1,12 +1,12 @@
-import { mockApiUrl } from './mocks/api';
+import { mockApiUrl } from '@/mocks/api';
 
-import { BaseApi, HomeWizardEnergyApiError, HomeWizardEnergyApiResponseError } from './base';
+import { BaseApi, HomeWizardEnergyApiError, HomeWizardEnergyApiResponseError } from '@/base-api';
 
 let baseApi: BaseApi;
 
 const loggerSpy = vi.fn();
 
-describe('Base', () => {
+describe('BaseApi', () => {
   beforeEach(() => {
     baseApi = new BaseApi(mockApiUrl, {
       logger: loggerSpy,

@@ -1,5 +1,5 @@
-import { BaseApi, BaseApiOptions } from './base';
-import { BasicInformationResponse, KwhMeter3PhaseResponse } from './types';
+import { BaseApi, BaseApiOptions } from '@/base-api';
+import { BasicInformationResponse, KwhMeter3PhaseResponse } from '@/types';
 
 export class KwhMeter3PhaseApi extends BaseApi {
   public getBasicInformation: () => Promise<BasicInformationResponse>;

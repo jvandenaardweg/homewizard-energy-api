@@ -1,9 +1,9 @@
-import { mockBasicInformationResponse } from './mocks/data/basic';
+import { mockBasicInformationResponse } from '@/mocks/data/basic';
 
-import { mockApiUrl } from './mocks/api';
+import { mockApiUrl } from '@/mocks/api';
 import { Interceptable, MockAgent, setGlobalDispatcher } from 'undici';
-import { mockWaterMeterDataResponse } from './mocks/data/data';
-import { WaterMeterApi } from './water-meter-api';
+import { mockWaterMeterDataResponse } from '@/mocks/data/data';
+import { WaterMeterApi } from '@/water-meter-api';
 
 let mockApiAgent: MockAgent;
 let mockApiPool: Interceptable;

@@ -1,4 +1,4 @@
-import { BaseApi, BaseApiOptions } from './base';
+import { BaseApi, BaseApiOptions } from '@/base-api';
 import {
   BasicInformationResponse,
   EnergySocketDataResponse,
@@ -7,7 +7,7 @@ import {
   StateResponse,
   SystemPutParams,
   SystemResponse,
-} from './types';
+} from '@/types';
 
 export class EnergySocketApi extends BaseApi {
   public getBasicInformation: () => Promise<BasicInformationResponse>;

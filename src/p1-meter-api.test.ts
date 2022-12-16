@@ -1,10 +1,10 @@
-import { mockBasicInformationResponse } from './mocks/data/basic';
+import { mockBasicInformationResponse } from '@/mocks/data/basic';
 
-import { mockApiUrl } from './mocks/api';
+import { mockApiUrl } from '@/mocks/api';
 import { Interceptable, MockAgent, setGlobalDispatcher } from 'undici';
-import { mockP1MeterDataResponse } from './mocks/data/data';
-import { mockTelegramResponse } from './mocks/data/telegram';
-import { P1MeterApi } from './p1-meter-api';
+import { mockP1MeterDataResponse } from '@/mocks/data/data';
+import { mockTelegramResponse } from '@/mocks/data/telegram';
+import { P1MeterApi } from '@/p1-meter-api';
 
 let mockApiAgent: MockAgent;
 let mockApiPool: Interceptable;

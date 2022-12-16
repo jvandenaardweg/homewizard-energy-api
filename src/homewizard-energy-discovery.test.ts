@@ -1,5 +1,5 @@
-import { HomeWizardEnergyDiscovery } from './homewizard-energy-discovery';
-import { MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE } from './types';
+import { HomeWizardEnergyDiscovery } from '@/homewizard-energy-discovery';
+import { MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE } from '@/types';
 
 let discoveryService: HomeWizardEnergyDiscovery;
 

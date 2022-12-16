@@ -4,8 +4,8 @@ import {
   MDNS_DISCOVERY_DOMAIN,
   MDNS_DISCOVERY_TYPE,
   MDNS_DISCOVERY_QUERY_TYPE,
-} from './types';
-import { bufferArrayToJSON } from './utils/buffer';
+} from '@/types';
+import { bufferArrayToJSON } from '@/utils/buffer';
 import util from 'util';
 
 interface DiscoveryResponse {

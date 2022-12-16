@@ -1,5 +1,5 @@
-import { BaseApi, BaseApiOptions } from './base';
-import { BasicInformationResponse, WaterMeterDataResponse } from './types';
+import { BaseApi, BaseApiOptions } from '@/base-api';
+import { BasicInformationResponse, WaterMeterDataResponse } from '@/types';
 
 export class WaterMeterApi extends BaseApi {
   public getBasicInformation: () => Promise<BasicInformationResponse>;
