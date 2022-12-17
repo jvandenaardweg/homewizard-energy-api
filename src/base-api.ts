@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { Dispatcher, request as undiciRequest } from 'undici';
-import { BasicInformationResponse, DataResponse, StateResponse } from './types';
+import { BasicInformationResponse, DataResponse, StateResponse, TelegramResponse } from './types';
 
 export type RequestParameters = Parameters<typeof undiciRequest>;
 
@@ -230,7 +230,11 @@ export class BaseApi extends EventEmitter {
   ): Promise<void>;
   protected async startPolling(
     method: string,
-    apiMethod: <T extends DataResponse & StateResponse>() => Promise<T>,
+    apiMethod: <T extends TelegramResponse>() => Promise<T>,
+  ): Promise<void>;
+  protected async startPolling(
+    method: string,
+    apiMethod: <T extends DataResponse & StateResponse & TelegramResponse>() => Promise<T>,
   ): Promise<void> {
     const interval = this.pollingOptions?.interval || 1000;
     const stopOnError = !!this.pollingOptions?.stopOnError;

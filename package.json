@@ -44,7 +44,7 @@
     "prepare": "is-ci || husky install",
     "lint-staged": "lint-staged",
     "watch": "nodemon ./src/examples/**",
-    "watch:polling": "nodemon ./src/examples/polling-energy-socket-state.ts"
+    "watch:polling": "nodemon ./src/examples/polling-p1-meter-telegram.ts"
   },
   "keywords": [
     "homewizard",

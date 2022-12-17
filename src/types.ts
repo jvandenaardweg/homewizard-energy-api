@@ -236,6 +236,8 @@ export interface SystemPutParams {
   cloud_enabled: boolean;
 }
 
+export type TelegramResponse = string;
+
 /**
  * When you perform an invalid request or something went wrong, the API will respond with an error message.
  * You have to check if the HTTP status code returns 200 OK before parsing the result.

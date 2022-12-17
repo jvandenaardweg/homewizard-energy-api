@@ -1,5 +1,10 @@
-import { BaseApi, BaseApiOptions, BasePolling } from '@/base-api';
-import { BasicInformationResponse, P1MeterDataResponse } from '@/types';
+import { BaseApi, BaseApiOptions, BasePolling, PollMethod } from '@/base-api';
+import { BasicInformationResponse, P1MeterDataResponse, TelegramResponse } from '@/types';
+
+export interface P1MeterPolling<TTelegramResponse extends TelegramResponse>
+  extends BasePolling<P1MeterDataResponse> {
+  getTelegram: PollMethod<TTelegramResponse>;
+}
 
 export class P1MeterApi extends BaseApi {
   public getBasicInformation: <T extends BasicInformationResponse>() => Promise<T>;
@@ -21,13 +26,20 @@ export class P1MeterApi extends BaseApi {
     };
   }
 
-  get polling(): BasePolling<P1MeterDataResponse> {
+  get polling(): P1MeterPolling<TelegramResponse> {
+    const getTelegram = 'getTelegram';
+
     return {
       ...super.polling,
+      [getTelegram]: {
+        start: () => super.startPolling(getTelegram, this.getTelegram.bind(this)),
+        stop: () => super.stopPolling(getTelegram),
+        on: super.on.bind(this),
+      },
     };
   }
 
-  async getTelegram(): Promise<string> {
+  async getTelegram<T extends TelegramResponse>(): Promise<T> {
     const url = this.endpoints.telegram;
 
     this.log(`Fetching telegram at ${url}`);
@@ -42,7 +54,7 @@ export class P1MeterApi extends BaseApi {
     }
 
     // Telegram endpoint returns plain text
-    const data = (await response.body.text()) as string;
+    const data = (await response.body.text()) as T;
 
     this.log(`Received telegram ${JSON.stringify(data)} from ${this.endpoints.telegram}`);
 

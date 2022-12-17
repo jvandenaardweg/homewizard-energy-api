@@ -6,7 +6,7 @@ const api = new P1MeterApi('http://192.168.1.35', {
   },
 });
 
-(async () => {
+(() => {
   api.polling.getData.start();
 
   api.polling.getData.on('response', response => {
