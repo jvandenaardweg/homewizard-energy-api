@@ -62,12 +62,8 @@ export interface PollMethod<T> {
   on(event: 'error', listener: (error: Error) => void): void;
 }
 
-export interface BasePolling<
-  TDataResponse extends DataResponse,
-  TBasicInformationResponse extends BasicInformationResponse,
-> {
+export interface BasePolling<TDataResponse extends DataResponse> {
   getData: PollMethod<TDataResponse>;
-  getBasicInformation: PollMethod<TBasicInformationResponse>;
 }
 
 export interface BaseApiOptions {
@@ -212,19 +208,13 @@ export class BaseApi extends EventEmitter {
     this.log(`Stopping polling for "${method}".`);
   }
 
-  get polling(): BasePolling<DataResponse, BasicInformationResponse> {
+  get polling(): BasePolling<DataResponse> {
     const getData = 'getData';
-    const getBasicInformation = 'getBasicInformation';
 
     return {
       [getData]: {
         start: () => this.startPolling(getData, this.getData.bind(this)),
         stop: () => this.stopPolling(getData),
-        on: this.on.bind(this),
-      },
-      [getBasicInformation]: {
-        start: () => this.startPolling(getBasicInformation, this.getBasicInformation.bind(this)),
-        stop: () => this.stopPolling(getBasicInformation),
         on: this.on.bind(this),
       },
     };
@@ -236,15 +226,11 @@ export class BaseApi extends EventEmitter {
   ): Promise<void>;
   protected async startPolling(
     method: string,
-    apiMethod: <T extends BasicInformationResponse>() => Promise<T>,
-  ): Promise<void>;
-  protected async startPolling(
-    method: string,
     apiMethod: <T extends StateResponse>() => Promise<T>,
   ): Promise<void>;
   protected async startPolling(
     method: string,
-    apiMethod: <T extends BasicInformationResponse & DataResponse & StateResponse>() => Promise<T>,
+    apiMethod: <T extends DataResponse & StateResponse>() => Promise<T>,
   ): Promise<void> {
     const interval = this.pollingOptions?.interval || 1000;
     const stopOnError = !!this.pollingOptions?.stopOnError;

@@ -10,7 +10,7 @@ import {
 } from '@/types';
 
 export interface EnergySocketPolling<TStateResponse extends StateResponse>
-  extends BasePolling<EnergySocketDataResponse, BasicInformationResponse> {
+  extends BasePolling<EnergySocketDataResponse> {
   getState: PollMethod<TStateResponse>;
 }
 
