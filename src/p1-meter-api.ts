@@ -1,8 +1,8 @@
-import { BaseApi, BaseApiOptions } from '@/base-api';
+import { BaseApi, BaseApiOptions, BasePolling } from '@/base-api';
 import { BasicInformationResponse, P1MeterDataResponse } from '@/types';
 
 export class P1MeterApi extends BaseApi {
-  public getBasicInformation: () => Promise<BasicInformationResponse>;
+  public getBasicInformation: <T extends BasicInformationResponse>() => Promise<T>;
   public getData: <T extends P1MeterDataResponse>() => Promise<T>;
 
   constructor(baseUrl: string, options?: BaseApiOptions) {
@@ -18,6 +18,12 @@ export class P1MeterApi extends BaseApi {
     return {
       ...super.endpoints,
       telegram: `${baseUrl}/api/${this.apiVersion}/telegram`,
+    };
+  }
+
+  get polling(): BasePolling<P1MeterDataResponse, BasicInformationResponse> {
+    return {
+      ...super.polling,
     };
   }
 

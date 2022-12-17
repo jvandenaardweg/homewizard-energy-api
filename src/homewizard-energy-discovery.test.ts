@@ -207,7 +207,9 @@ describe('HomeWizardEnergyDiscovery', () => {
     const loggerSpy = vi.fn();
 
     const discoveryServiceWithLogger = new HomeWizardEnergyDiscovery({
-      logger: loggerSpy,
+      logger: {
+        method: loggerSpy,
+      },
     });
 
     discoveryServiceWithLogger.start();

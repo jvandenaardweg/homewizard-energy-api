@@ -2,7 +2,7 @@ import { BaseApi, BaseApiOptions } from '@/base-api';
 import { BasicInformationResponse, WaterMeterDataResponse } from '@/types';
 
 export class WaterMeterApi extends BaseApi {
-  public getBasicInformation: () => Promise<BasicInformationResponse>;
+  public getBasicInformation: <T extends BasicInformationResponse>() => Promise<T>;
   public getData: <T extends WaterMeterDataResponse>() => Promise<T>;
 
   constructor(baseUrl: string, options?: BaseApiOptions) {

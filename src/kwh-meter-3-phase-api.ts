@@ -2,7 +2,7 @@ import { BaseApi, BaseApiOptions } from '@/base-api';
 import { BasicInformationResponse, KwhMeter3PhaseResponse } from '@/types';
 
 export class KwhMeter3PhaseApi extends BaseApi {
-  public getBasicInformation: () => Promise<BasicInformationResponse>;
+  public getBasicInformation: <T extends BasicInformationResponse>() => Promise<T>;
   public getData: <T extends KwhMeter3PhaseResponse>() => Promise<T>;
 
   constructor(baseUrl: string, options?: BaseApiOptions) {

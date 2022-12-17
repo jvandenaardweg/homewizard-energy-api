@@ -1,4 +1,4 @@
-import { BaseApi, BaseApiOptions } from '@/base-api';
+import { BaseApi, BaseApiOptions, BasePolling, PollMethod } from '@/base-api';
 import {
   BasicInformationResponse,
   EnergySocketDataResponse,
@@ -9,8 +9,13 @@ import {
   SystemResponse,
 } from '@/types';
 
+export interface EnergySocketPolling<TStateResponse extends StateResponse>
+  extends BasePolling<EnergySocketDataResponse, BasicInformationResponse> {
+  getState: PollMethod<TStateResponse>;
+}
+
 export class EnergySocketApi extends BaseApi {
-  public getBasicInformation: () => Promise<BasicInformationResponse>;
+  public getBasicInformation: <T extends BasicInformationResponse>() => Promise<T>;
   public getData: <T extends EnergySocketDataResponse>() => Promise<T>;
 
   constructor(baseUrl: string, options?: BaseApiOptions) {
@@ -31,12 +36,25 @@ export class EnergySocketApi extends BaseApi {
     };
   }
 
+  get polling(): EnergySocketPolling<StateResponse> {
+    const getState = 'getState';
+
+    return {
+      ...super.polling,
+      [getState]: {
+        start: () => super.startPolling(getState, this.getState.bind(this)),
+        stop: () => super.stopPolling(getState),
+        on: super.on.bind(this),
+      },
+    };
+  }
+
   /**
    * Returns the actual state of the Energy Socket. This endpoint is only available for the HWE-SKT.
    *
    * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#state-api-v1-state
    */
-  async getState(): Promise<StateResponse> {
+  async getState<T extends StateResponse>(): Promise<T> {
     const url = this.endpoints.state;
 
     this.log(`Fetching the state at ${url}`);
@@ -50,7 +68,7 @@ export class EnergySocketApi extends BaseApi {
       return this.throwResponseError(url, method, response);
     }
 
-    const data = (await response.body.json()) as StateResponse;
+    const data = (await response.body.json()) as T;
 
     this.log(`Received state ${JSON.stringify(data)} from ${this.endpoints.state}`);
 

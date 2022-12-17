@@ -1,5 +1,6 @@
+import { EventEmitter } from 'events';
 import { Dispatcher, request as undiciRequest } from 'undici';
-import { BasicInformationResponse, DataResponse } from './types';
+import { BasicInformationResponse, DataResponse, StateResponse } from './types';
 
 export type RequestParameters = Parameters<typeof undiciRequest>;
 
@@ -23,23 +24,69 @@ export class HomeWizardEnergyApiResponseError extends HomeWizardEnergyApiError {
   }
 }
 
-export interface BaseApiOptions {
-  /** The API version to be used. Defaults to `v1` */
-  apiVersion?: 'v1' | undefined;
-  /** Request options to be used in the HTTP request to the API. */
-  requestOptions?: RequestParameters[1];
-  logger?: (...args: unknown[]) => void;
+export interface PollingOptions {
+  /** The polling interval in milliseconds. Defaults to `1000`. */
+  interval?: number;
+  /**
+   * When `true` will stop polling the API when a error occurs. Defaults to `false`.
+   *
+   * You can listen for an error using:
+   *
+   * @example
+   * api.polling.getMethod.on('error', (error) => console.log(error)) */
+  stopOnError?: boolean;
 }
 
-export class BaseApi {
+export interface LoggerOptions {
+  method?: (...args: unknown[]) => void;
+  prefix?: string;
+}
+
+export type ApiVersion = 'v1' | undefined;
+
+export interface ApiOptions {
+  version?: ApiVersion;
+}
+
+export interface PollMethod<T> {
+  start: () => void;
+  stop: () => void;
+  on(event: 'response', listener: (response: T) => void): void;
+  on(event: 'error', listener: (error: Error) => void): void;
+}
+
+export interface BasePolling<
+  TDataResponse extends DataResponse,
+  TBasicInformationResponse extends BasicInformationResponse,
+> {
+  getData: PollMethod<TDataResponse>;
+  getBasicInformation: PollMethod<TBasicInformationResponse>;
+}
+
+export interface BaseApiOptions {
+  /** The API version to be used. Defaults to `v1` */
+  api?: ApiOptions;
+  /** Request options to be used in the HTTP request to the API. */
+  requestOptions?: RequestParameters[1];
+  logger?: LoggerOptions;
+  polling?: PollingOptions;
+}
+
+export class BaseApi extends EventEmitter {
   protected readonly baseUrl: string;
-  protected readonly apiVersion: BaseApiOptions['apiVersion'];
+  protected readonly apiOptions: BaseApiOptions['api'];
+  protected readonly apiVersion: ApiVersion;
   protected requestOptions: BaseApiOptions['requestOptions'];
-  protected logger: BaseApiOptions['logger'];
+  protected loggerOptions: BaseApiOptions['logger'];
+  protected pollingOptions: BaseApiOptions['polling'];
+
+  protected isPolling: Record<string, boolean> = {};
 
   constructor(baseUrl: string, options?: BaseApiOptions) {
+    super();
     this.baseUrl = baseUrl;
-    this.apiVersion = options?.apiVersion || 'v1';
+    this.apiOptions = options?.api;
+    this.apiVersion = this.apiOptions?.version || 'v1';
     this.requestOptions = {
       bodyTimeout: 2000, // 2 seconds, we are on a local network, so all request should be fast
       headersTimeout: 2000,
@@ -47,7 +94,9 @@ export class BaseApi {
       ...options?.requestOptions,
     };
 
-    this.logger = options?.logger;
+    this.pollingOptions = options?.polling;
+
+    this.loggerOptions = options?.logger;
   }
 
   protected get endpoints() {
@@ -66,10 +115,12 @@ export class BaseApi {
     });
   }
 
-  log(...args: unknown[]): void {
-    if (!this.logger) return;
+  protected log(...args: unknown[]): void {
+    if (!this.loggerOptions?.method) return;
 
-    return this.logger('[HomeWizard Energy API]: ', ...args);
+    const loggerPrefix = this.loggerOptions.prefix || '[HomeWizard Energy API]:';
+
+    return this.loggerOptions.method(loggerPrefix, ...args);
   }
 
   protected isResponseOk(response: Dispatcher.ResponseData): boolean {
@@ -101,7 +152,7 @@ export class BaseApi {
    *
    * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api
    */
-  protected async getBasicInformation(): Promise<BasicInformationResponse> {
+  protected async getBasicInformation<T extends BasicInformationResponse>(): Promise<T> {
     const url = this.endpoints.basic;
 
     this.log(`Fetching the basic information at ${url}`);
@@ -115,7 +166,7 @@ export class BaseApi {
       return this.throwResponseError(url, method, response);
     }
 
-    const data = (await response.body.json()) as BasicInformationResponse;
+    const data = (await response.body.json()) as T;
 
     this.log(`Fetched basic information: ${JSON.stringify(data)}`);
 
@@ -141,5 +192,80 @@ export class BaseApi {
     this.log(`Fetched data: ${JSON.stringify(data)}`);
 
     return data;
+  }
+
+  protected stopPolling(method: string): void {
+    if (!this.isPolling[method]) {
+      this.log(`Polling for "${method}" is not started or already stopped.`);
+      return;
+    }
+
+    this.isPolling[method] = false;
+
+    this.log(`Stopping polling for "${method}".`);
+  }
+
+  get polling(): BasePolling<DataResponse, BasicInformationResponse> {
+    const getData = 'getData';
+    const getBasicInformation = 'getBasicInformation';
+
+    return {
+      [getData]: {
+        start: () => this.startPolling(getData, this.getData.bind(this)),
+        stop: () => this.stopPolling(getData),
+        on: this.on.bind(this),
+      },
+      [getBasicInformation]: {
+        start: () => this.startPolling(getBasicInformation, this.getBasicInformation.bind(this)),
+        stop: () => this.stopPolling(getBasicInformation),
+        on: this.on.bind(this),
+      },
+    };
+  }
+
+  protected async startPolling(
+    method: string,
+    apiMethod: <T extends DataResponse>() => Promise<T>,
+  ): Promise<void>;
+  protected async startPolling(
+    method: string,
+    apiMethod: <T extends BasicInformationResponse>() => Promise<T>,
+  ): Promise<void>;
+  protected async startPolling(
+    method: string,
+    apiMethod: <T extends StateResponse>() => Promise<T>,
+  ): Promise<void>;
+  protected async startPolling(
+    method: string,
+    apiMethod: <T extends BasicInformationResponse & DataResponse & StateResponse>() => Promise<T>,
+  ): Promise<void> {
+    const interval = this.pollingOptions?.interval || 1000;
+    const stopOnError = !!this.pollingOptions?.stopOnError;
+
+    this.isPolling[method] = true;
+
+    while (this.isPolling[method]) {
+      try {
+        const response = await apiMethod();
+
+        this.log(
+          `Received response while polling "${method}". Emitting "response": ${JSON.stringify(
+            response,
+          )}`,
+        );
+
+        this.emit('response', response);
+      } catch (error) {
+        this.log(`Received error while polling "${method}": ${JSON.stringify(error)}`);
+
+        // If the user wants to stop polling on error, we stop polling
+        if (stopOnError) {
+          this.stopPolling(method);
+        }
+      } finally {
+        this.log(`Waiting for next polling interval for "${method}"...`);
+        await new Promise(resolve => setTimeout(resolve, interval));
+      }
+    }
   }
 }

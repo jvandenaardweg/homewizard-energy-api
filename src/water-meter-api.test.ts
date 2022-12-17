@@ -40,7 +40,9 @@ describe('WaterMeterApi', () => {
     const loggerSpy = vi.fn();
 
     const waterMeterApiWithLogger = new WaterMeterApi(mockApiUrl, {
-      logger: loggerSpy,
+      logger: {
+        method: loggerSpy,
+      },
     });
 
     mockApiPool

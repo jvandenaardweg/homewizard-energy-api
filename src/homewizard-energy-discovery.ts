@@ -7,6 +7,7 @@ import {
 } from '@/types';
 import { bufferArrayToJSON, isBufferArray } from '@/utils/buffer';
 import util from 'util';
+import { LoggerOptions } from './base-api';
 
 export interface DiscoveryResponse {
   ip: string;
@@ -16,7 +17,7 @@ export interface DiscoveryResponse {
 }
 
 export interface HomeWizardEnergyDiscoveryOptions {
-  logger?: (...args: unknown[]) => void;
+  logger?: LoggerOptions;
 }
 
 /**
@@ -26,17 +27,19 @@ export interface HomeWizardEnergyDiscoveryOptions {
  */
 export class HomeWizardEnergyDiscovery {
   private mdns: multicastDns.MulticastDNS | null = null;
-  private logger: HomeWizardEnergyDiscoveryOptions['logger'];
+  private loggerOptions: HomeWizardEnergyDiscoveryOptions['logger'];
   private cachedDiscoveryResponses: DiscoveryResponse[] = [];
 
   constructor(options?: HomeWizardEnergyDiscoveryOptions) {
-    this.logger = options?.logger;
+    this.loggerOptions = options?.logger;
   }
 
   protected log(...args: unknown[]): void {
-    if (!this.logger) return;
+    if (!this.loggerOptions?.method) return;
 
-    return this.logger('[HomeWizard Energy API]: ', ...args);
+    const loggerPrefix = this.loggerOptions.prefix || '[HomeWizard Energy API]:';
+
+    return this.loggerOptions.method(loggerPrefix, ...args);
   }
 
   start() {

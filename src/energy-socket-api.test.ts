@@ -43,7 +43,9 @@ describe('EnergySocketApi', () => {
     const loggerSpy = vi.fn();
 
     const energySocketApiWithLogger = new EnergySocketApi(mockApiUrl, {
-      logger: loggerSpy,
+      logger: {
+        method: loggerSpy,
+      },
     });
 
     mockApiPool
