@@ -38,13 +38,32 @@ yarn add homewizard-energy-api
 
 This library supports all devices from HomeWizard that expose an API. This includes:
 
-- Wi-Fi P1 meter `HWE-P1`
-- Wi-Fi Energy Socket `HWE-SKT`
-- Wi-Fi Watermeter (Only when powered over USB) `HWE-WTR`
-- Wi-Fi kWh meter (1 phase) `SDM230-wifi`
-- Wi-Fi kWh meter (3 phase) `SDM630-wifi`
+- [Wi-Fi P1 meter](#p1-meter) `HWE-P1`
+- [Wi-Fi Energy Socket](#energy-socket) `HWE-SKT`
+- [Wi-Fi Watermeter](#water-meter) (Only when powered over USB) `HWE-WTR`
+- [Wi-Fi kWh meter (1 phase)](#kwh-meter-1-phase) `SDM230-wifi`
+- [Wi-Fi kWh meter (3 phase)](#kwh-meter-3-phase) `SDM630-wifi`
 
 Make sure to enable the `Local API` setting for each device you want to use with this library. You can do this in the Energy app.
+
+## P1 Meter
+
+Get the power consumption or gas usage in your home from the [Wi-Fi P1 Meter](https://www.homewizard.com/shop/wi-fi-p1-meter/):
+
+```typescript
+import { P1MeterApi } from 'homewizard-energy-api';
+
+const api = new P1MeterApi('http://192.168.1.11');
+
+// Get the active power and gas usage
+const data = await api.getData();
+```
+
+| Method | API              | Function        | Description                                                                                                                                                                                                                                                  |
+| ------ | ---------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| GET    | /api             | `getBasic()`    | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).                                                                                                  |
+| GET    | /api/v1/data     | `getData()`     | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).                                                                           |
+| GET    | /api/v1/telegram | `getTelegram()` | Returns the most recent, valid telegram that was given by the P1 meter, therefore this endpoint is only available for the HWE-P1. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#p1-telegram-api-v1-telegram). |
 
 ## Energy Socket
 
@@ -68,25 +87,6 @@ const updatedState = await api.updateState({ power_on: true });
 | PUT    | /api/v1/identify | `identify()`     | Identify the device. The status light will blink for a few seconds after calling this endpoint. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#identify-api-v1-identify).           |
 | GET    | /api/v1/system   | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system).                                                                           |
 | PUT    | /api/v1/system   | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system). |
-
-## P1 Meter
-
-Get the power consumption or gas usage in your home from the [Wi-Fi P1 Meter](https://www.homewizard.com/shop/wi-fi-p1-meter/):
-
-```typescript
-import { P1MeterApi } from 'homewizard-energy-api';
-
-const api = new P1MeterApi('http://192.168.1.11');
-
-// Get the active power and gas usage
-const data = await api.getData();
-```
-
-| Method | API              | Function        | Description                                                                                                                                                                                                                                                  |
-| ------ | ---------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| GET    | /api             | `getBasic()`    | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).                                                                                                  |
-| GET    | /api/v1/data     | `getData()`     | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).                                                                           |
-| GET    | /api/v1/telegram | `getTelegram()` | Returns the most recent, valid telegram that was given by the P1 meter, therefore this endpoint is only available for the HWE-P1. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#p1-telegram-api-v1-telegram). |
 
 ## Water Meter
 
