@@ -21,7 +21,7 @@ export class P1MeterApi extends BaseApi {
     };
   }
 
-  get polling(): BasePolling<P1MeterDataResponse, BasicInformationResponse> {
+  get polling(): BasePolling<P1MeterDataResponse> {
     return {
       ...super.polling,
     };
