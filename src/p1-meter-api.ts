@@ -26,6 +26,14 @@ export class P1MeterApi extends BaseApi {
     };
   }
 
+  /**
+   * Start polling your P1 Meter using a specific method.
+   *
+   * To start polling, call the `start()` method on the returned object.
+   * The polling can be stopped by calling the `stop()` method.
+   *
+   * Supported methods: `getData`, `getTelegram`
+   */
   get polling(): P1MeterPolling<TelegramResponse> {
     const getTelegram = 'getTelegram';
 

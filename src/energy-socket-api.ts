@@ -36,6 +36,14 @@ export class EnergySocketApi extends BaseApi {
     };
   }
 
+  /**
+   * Start polling your Energy Socket using a specific method.
+   *
+   * To start polling, call the `start()` method on the returned object.
+   * The polling can be stopped by calling the `stop()` method.
+   *
+   * Supported methods: `getData`, `getState`
+   */
   get polling(): EnergySocketPolling<StateResponse> {
     const getState = 'getState';
 
