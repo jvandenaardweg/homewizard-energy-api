@@ -40,7 +40,7 @@ This library supports all devices from HomeWizard that expose an API. This inclu
 
 - [Wi-Fi P1 meter](#p1-meter) `HWE-P1`
 - [Wi-Fi Energy Socket](#energy-socket) `HWE-SKT`
-- [Wi-Fi Watermeter](#water-meter) (Only when powered over USB) `HWE-WTR`
+- [Wi-Fi Watermeter](#watermeter) (Only when powered over USB) `HWE-WTR`
 - [Wi-Fi kWh meter (1 phase)](#kwh-meter-1-phase) `SDM230-wifi`
 - [Wi-Fi kWh meter (3 phase)](#kwh-meter-3-phase) `SDM630-wifi`
 
@@ -88,7 +88,7 @@ const updatedState = await api.updateState({ power_on: true });
 | GET    | /api/v1/system   | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system).                                                                           |
 | PUT    | /api/v1/system   | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system). |
 
-## Water Meter
+## Watermeter
 
 Get the water consumption in your home from the [Wi-Fi Watermeter](https://www.homewizard.com/shop/wi-fi-watermeter/):
 
