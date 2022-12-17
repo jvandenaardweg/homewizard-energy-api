@@ -9,7 +9,6 @@
   <a href="https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/LICENSE"><img alt="mit license" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
 </p>
 
-
 Full type-safe implementation of the HomeWizard Energy API in Node. Use the Local API of your HomeWizard devices with ease.
 
 ## Features
@@ -17,10 +16,12 @@ Full type-safe implementation of the HomeWizard Energy API in Node. Use the Loca
 - Complete type-safety on all API methods, responses, and errors
 - Supports all HomeWizard Wi-Fi devices that have a Local API
 - Exposes a discovery method to discover devices on your local network using Multicast DNS
+- Provides a simple interface to poll near realtime data from your devices
 - Includes inline documentation on each method, type and property
 - Follows the guidelines provided in the official [HomeWizard Energy API documentation](https://homewizard-energy-api.readthedocs.io/index.html)
 
 ## Installation
+
 This library requires Node 14 or higher. Typescript is only required for type-safety, the library will also work without Typescript.
 
 ```
@@ -57,8 +58,6 @@ const api = new EnergySocketApi('http://192.168.1.10');
 // Turn the Energy Socket ON
 const updatedState = await api.updateState({ power_on: true });
 ```
-
-
 
 | Method | API              | Function         | Description                                                                                                                                                                                                                       |
 | ------ | ---------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -158,7 +157,6 @@ discovery.start();
 
 discovery.on('response', response => {
   // You'll get a response for each device that is found
-
   // Example response:
   // {
   //   ip: '192.168.1.34',
@@ -176,13 +174,14 @@ discovery.on('response', response => {
 ```
 
 ## About this library
-Hi there! I created this library to provide type-safety when using the HomeWizard Energy API's in my own projects. I made it open source so that you can easily control your HomeWizard devices and have the same level of type-safety while developing your projects. 
 
-I'm not affiliated with HomeWizard. I create open source projects in my free time. If you find this project helpful, please consider supporting me on [my GitHub Sponsor page](https://github.com/sponsors/jvandenaardweg). Your support will help me continue to create high-quality, open source projects and cover the costs of maintaining them. 
+Hi there! I created this library to provide type-safety when using the HomeWizard Energy API's in my own projects. I made it open source so that you can easily control your HomeWizard devices and have the same level of type-safety while developing your projects.
+
+I'm not affiliated with HomeWizard. I create open source projects in my free time. If you find this project helpful, please consider supporting me on [my GitHub Sponsor page](https://github.com/sponsors/jvandenaardweg). Your support will help me continue to create high-quality, open source projects and cover the costs of maintaining them.
 
 Thank you for your support!
 
-Note that logos, products, and trademarks are the property of HomeWizard. 
+Note that logos, products, and trademarks are the property of HomeWizard.
 
 ## About HomeWizard Energy
 
