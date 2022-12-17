@@ -65,6 +65,47 @@ const data = await api.getData();
 | GET    | /api/v1/data     | `getData()`     | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).                                                                           |
 | GET    | /api/v1/telegram | `getTelegram()` | Returns the most recent, valid telegram that was given by the P1 meter, therefore this endpoint is only available for the HWE-P1. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#p1-telegram-api-v1-telegram). |
 
+### Data polling
+A simple polling interface for the P1 Meter (and all other devices) is exposed via `api.polling.getData` and `api.polling.getTelegram`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
+
+```typescript
+import { P1MeterApi } from 'homewizard-energy-api';
+
+const api = new P1MeterApi('http://192.168.1.35', {
+  polling: {
+    interval: 1000, // Poll the endpoints each second
+    stopOnError: true // Will stop polling when an error occurs. Defaults to false
+  },
+});
+
+api.polling.getData.start();
+
+api.polling.getData.on('response', response => {
+  // Receive the latest data of this P1 Meter from the /api/v1/data endpoint each second:
+  // {
+  //   smr_version: 50,
+  //   meter_model: 'ISKRA 2M550T-1012',
+  //   wifi_ssid: 'SOME_WIFI_SSID',
+  //   wifi_strength: 100,
+  //   total_power_import_t1_kwh: 19055.287,
+  //   total_power_import_t2_kwh: 19505.815,
+  //   total_power_export_t1_kwh: 0.002,
+  //   total_power_export_t2_kwh: 0.007,
+  //   active_power_w: 997,
+  //   active_power_l1_w: 66,
+  //   active_power_l2_w: 88,
+  //   active_power_l3_w: 852,
+  //   total_gas_m3: 6789.488,
+  //   gas_timestamp: 221217223003
+  // }
+});
+
+api.polling.getData.on('error', error => {
+  // handle an error
+});
+```
+
+
 ## Energy Socket
 
 Control your [Wi-Fi Energy Socket](https://www.homewizard.com/shop/wi-fi-energy-socket/):
@@ -88,6 +129,9 @@ const updatedState = await api.updateState({ power_on: true });
 | GET    | /api/v1/system   | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system).                                                                           |
 | PUT    | /api/v1/system   | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system). |
 
+### Data polling
+A simple polling interface for the Energy Sockets is exposed via `api.polling.getData` and `api.polling.getState`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
+
 ## Watermeter
 
 Get the water consumption in your home from the [Wi-Fi Watermeter](https://www.homewizard.com/shop/wi-fi-watermeter/):
@@ -105,6 +149,9 @@ const data = await api.getData();
 | ------ | ------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | GET    | /api         | `getBasic()` | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).                        |
 | GET    | /api/v1/data | `getData()`  | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data). |
+
+### Data polling
+A simple polling interface for the Watermeter is exposed via `api.polling.getData`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
 
 ## kWh Meter 1-phase
 
@@ -124,6 +171,9 @@ const data = await api.getData();
 | GET    | /api         | `getBasic()` | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).                        |
 | GET    | /api/v1/data | `getData()`  | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data). |
 
+### Data polling
+A simple polling interface for the kWh Meter 1-phase is exposed via `api.polling.getData`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
+
 ## kWh Meter 3-phase
 
 Get the power consumption from the [Wi-Fi kWh meter 3-phase MID](https://www.homewizard.com/shop/wi-fi-kwh-meter-3-phase/):
@@ -141,6 +191,9 @@ const data = await api.getData();
 | ------ | ------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | GET    | /api         | `getBasic()` | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).                        |
 | GET    | /api/v1/data | `getData()`  | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data). |
+
+### Data polling
+A simple polling interface for the kWh Meter 3-phase is exposed via `api.polling.getData`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
 
 ## Discover HomeWizard devices in your network
 
