@@ -7,14 +7,15 @@ export interface P1MeterPolling<TTelegramResponse extends TelegramResponse>
 }
 
 export class P1MeterApi extends BaseApi {
-  public getBasicInformation: <T extends BasicInformationResponse>() => Promise<T>;
-  public getData: <T extends P1MeterDataResponse>() => Promise<T>;
+  getBasicInformation<T extends BasicInformationResponse>(): Promise<T> {
+    return super.getBasicInformation();
+  }
+  getData<T extends P1MeterDataResponse>(): Promise<T> {
+    return super.getData();
+  }
 
   constructor(baseUrl: string, options?: BaseApiOptions) {
     super(baseUrl, options);
-
-    this.getBasicInformation = super.getBasicInformation;
-    this.getData = super.getData;
   }
 
   protected get endpoints() {
