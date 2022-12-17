@@ -41,7 +41,9 @@ describe('HomeWizardEnergyApi', () => {
     const loggerSpy = vi.fn();
 
     const p1MeterApiWithLogger = new P1MeterApi(mockApiUrl, {
-      logger: loggerSpy,
+      logger: {
+        method: loggerSpy,
+      },
     });
 
     mockApiPool

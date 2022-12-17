@@ -43,7 +43,8 @@
     "type-check": "tsc --noEmit",
     "prepare": "is-ci || husky install",
     "lint-staged": "lint-staged",
-    "watch": "nodemon ./src/examples/**"
+    "watch": "nodemon ./src/examples/**",
+    "watch:polling": "nodemon ./src/examples/polling-energy-socket-data.ts"
   },
   "keywords": [
     "homewizard",

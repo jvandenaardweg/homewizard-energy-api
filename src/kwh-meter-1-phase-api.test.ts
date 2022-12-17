@@ -40,7 +40,9 @@ describe('KwhMeter1PhaseApi', () => {
     const loggerSpy = vi.fn();
 
     const kwhMeter1PhaseApiWithLogger = new KwhMeter1PhaseApi(mockApiUrl, {
-      logger: loggerSpy,
+      logger: {
+        method: loggerSpy,
+      },
     });
 
     mockApiPool

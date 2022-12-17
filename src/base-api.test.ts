@@ -9,7 +9,9 @@ const loggerSpy = vi.fn();
 describe('BaseApi', () => {
   beforeEach(() => {
     baseApi = new BaseApi(mockApiUrl, {
-      logger: loggerSpy,
+      logger: {
+        method: loggerSpy,
+      },
     });
   });
 
