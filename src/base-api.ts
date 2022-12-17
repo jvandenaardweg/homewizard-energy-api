@@ -25,7 +25,14 @@ export class HomeWizardEnergyApiResponseError extends HomeWizardEnergyApiError {
 }
 
 export interface PollingOptions {
-  /** The polling interval in milliseconds. Defaults to `1000`. */
+  /**
+   * The polling interval in milliseconds. Defaults to `1000`.
+   *
+   * There is no limit to the time between each request on the local API, however,
+   * HomeWizard advises not to retrieve data more often than every `500`ms.
+   *
+   * @link: https://homewizard-energy-api.readthedocs.io/getting-started.html#data-update-frequency
+   * */
   interval?: number;
   /**
    * When `true` will stop polling the API when a error occurs. Defaults to `false`.
