@@ -73,7 +73,7 @@ import { P1MeterApi } from 'homewizard-energy-api';
 
 const api = new P1MeterApi('http://192.168.1.35', {
   polling: {
-    interval: 1000, // Poll the endpoints each second
+    interval: 1000, // Poll the endpoints each second. Defaults to 1000
     stopOnError: true // Will stop polling when an error occurs. Defaults to false
   },
 });
