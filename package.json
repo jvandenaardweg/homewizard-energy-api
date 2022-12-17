@@ -80,8 +80,7 @@
   },
   "dependencies": {
     "multicast-dns": "^7.2.5",
-    "undici": "^5.14.0",
-    "zod": "^3.20.2"
+    "undici": "^5.14.0"
   },
   "release-it": {
     "git": {
