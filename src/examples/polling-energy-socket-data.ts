@@ -6,7 +6,7 @@ const api = new EnergySocketApi('http://192.168.1.32', {
   },
 });
 
-(async () => {
+(() => {
   api.polling.getData.start();
 
   api.polling.getData.on('response', response => {
