@@ -75,18 +75,18 @@ export interface BaseApiOptions {
   polling?: PollingOptions;
 }
 
-export class BaseApi extends EventEmitter {
+export class BaseApi {
   protected readonly baseUrl: string;
   protected readonly apiOptions: BaseApiOptions['api'];
   protected readonly apiVersion: ApiVersion;
   protected requestOptions: BaseApiOptions['requestOptions'];
   protected loggerOptions: BaseApiOptions['logger'];
   protected pollingOptions: BaseApiOptions['polling'];
+  protected eventEmitter: EventEmitter;
 
   protected isPolling: Record<string, boolean> = {};
 
   constructor(baseUrl: string, options?: BaseApiOptions) {
-    super();
     this.baseUrl = baseUrl;
     this.apiOptions = options?.api;
     this.apiVersion = this.apiOptions?.version || 'v1';
@@ -100,6 +100,8 @@ export class BaseApi extends EventEmitter {
     this.pollingOptions = options?.polling;
 
     this.loggerOptions = options?.logger;
+
+    this.eventEmitter = new EventEmitter();
   }
 
   protected get endpoints() {
@@ -109,6 +111,13 @@ export class BaseApi extends EventEmitter {
       basic: `${baseUrl}/api`, // all products
       data: `${baseUrl}/api/${this.apiVersion}/data`, // all products
     };
+  }
+
+  protected on<T>(event: 'response', listener: (response: T) => void): void;
+  protected on(event: 'error', listener: (error: Error) => void): void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected on(event: string, listener: (...args: any[]) => void) {
+    return this.eventEmitter.on(event, listener);
   }
 
   protected request(...params: RequestParameters) {
@@ -208,6 +217,9 @@ export class BaseApi extends EventEmitter {
     this.log(`Stopping polling for "${method}".`);
   }
 
+  /**
+   * Start polling for a specific method.
+   */
   get polling(): BasePolling<DataResponse> {
     const getData = 'getData';
 
@@ -251,14 +263,17 @@ export class BaseApi extends EventEmitter {
           )}`,
         );
 
-        this.emit('response', response);
+        this.eventEmitter.emit('response', response);
       } catch (error) {
         this.log(`Received error while polling "${method}": ${JSON.stringify(error)}`);
 
         // If the user wants to stop polling on error, we stop polling
         if (stopOnError) {
           this.stopPolling(method);
+          return;
         }
+
+        this.eventEmitter.emit('error', error);
       } finally {
         this.log(`Waiting for next polling interval for "${method}"...`);
         await new Promise(resolve => setTimeout(resolve, interval));
