@@ -15,14 +15,15 @@ export interface EnergySocketPolling<TStateResponse extends StateResponse>
 }
 
 export class EnergySocketApi extends BaseApi {
-  public getBasicInformation: <T extends BasicInformationResponse>() => Promise<T>;
-  public getData: <T extends EnergySocketDataResponse>() => Promise<T>;
+  getBasicInformation<T extends BasicInformationResponse>(): Promise<T> {
+    return super.getBasicInformation();
+  }
+  getData<T extends EnergySocketDataResponse>(): Promise<T> {
+    return super.getData();
+  }
 
   constructor(baseUrl: string, options?: BaseApiOptions) {
     super(baseUrl, options);
-
-    this.getBasicInformation = super.getBasicInformation;
-    this.getData = super.getData;
   }
 
   protected get endpoints() {
