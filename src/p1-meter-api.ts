@@ -1,5 +1,6 @@
 import { BaseApi, BaseApiOptions, BasePolling, PollMethod } from '@/base-api';
 import { BasicInformationResponse, P1MeterDataResponse, TelegramResponse } from '@/types';
+import { ParsedTelegram, parseTelegram } from './utils/telegram';
 
 export interface P1MeterPolling<TTelegramResponse extends TelegramResponse>
   extends BasePolling<P1MeterDataResponse> {
@@ -89,5 +90,20 @@ export class P1MeterApi extends BaseApi {
     this.log(`Received telegram ${JSON.stringify(data)} from ${this.endpoints.telegram}`);
 
     return data;
+  }
+
+  /**
+   * The /api/v1/telegram endpoint returns the most recent, valid telegram that was given by the P1 meter in a text format.
+   *
+   * This method fetches the telegram and parses it and returns it as a JSON object.
+   */
+  async getParsedTelegram<T extends ParsedTelegram>(): Promise<T> {
+    const telegram = await this.getTelegram();
+
+    const parsedTelegram = parseTelegram(telegram) as T;
+
+    this.log(`Parsed telegram ${JSON.stringify(parsedTelegram)} from ${this.endpoints.telegram}`);
+
+    return parsedTelegram;
   }
 }

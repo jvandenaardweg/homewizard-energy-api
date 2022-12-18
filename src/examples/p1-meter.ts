@@ -1,6 +1,6 @@
 import { P1MeterApi } from '../';
 
-const p1Meter = new P1MeterApi('http://192.168.1.11');
+const p1Meter = new P1MeterApi('http://192.168.1.35');
 
 (async () => {
   try {

@@ -101,13 +101,13 @@ describe('HomeWizardEnergyApi', () => {
         method: 'GET',
       })
       .reply(() => ({
-        data: mockTelegramResponse['v50l3'],
+        data: mockTelegramResponse['v50l3_1'],
         statusCode: 200,
       }));
 
     const data = await p1MeterApi.getTelegram();
 
-    expect(data).toStrictEqual(mockTelegramResponse['v50l3']);
+    expect(data).toStrictEqual(mockTelegramResponse['v50l3_1']);
   });
 
   it('should throw an error on GET when the "telegram" endpoint returns a server error', async () => {
