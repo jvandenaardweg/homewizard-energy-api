@@ -86,7 +86,7 @@ export interface BasicInformationResponse {
  * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data
  */
 
-export interface DataResponse {
+export interface BaseDataResponse {
   /** The DSMR version of the smart meter. Available for: `HWE-P1` */
   smr_version?: number;
   /** The brand indification the smart meter. Available for: `HWE-P1` */
@@ -133,7 +133,7 @@ export interface DataResponse {
  * API /data response for `HWE-SKT`
  */
 export type EnergySocketDataResponse = Omit<
-  DataResponse,
+  BaseDataResponse,
   | 'smr_version'
   | 'meter_model'
   | 'total_power_import_t2_kwh'
@@ -149,13 +149,13 @@ export type EnergySocketDataResponse = Omit<
 /**
  * API /data response for `HWE-P1`
  */
-export type P1MeterDataResponse = Omit<DataResponse, 'active_liter_lpm' | 'total_liter_m3'>;
+export type P1MeterDataResponse = Omit<BaseDataResponse, 'active_liter_lpm' | 'total_liter_m3'>;
 
 /**
  * API /data response for `HWE-WTR`
  */
 export type WaterMeterDataResponse = Omit<
-  DataResponse,
+  BaseDataResponse,
   | 'smr_version'
   | 'meter_model'
   | 'total_power_import_t1_kwh'
@@ -173,8 +173,8 @@ export type WaterMeterDataResponse = Omit<
 /**
  * API /data response for `SDM230-wifi`
  */
-export type KwhMeter1PhaseResponse = Omit<
-  DataResponse,
+export type KwhMeter1PhaseDataResponse = Omit<
+  BaseDataResponse,
   | 'smr_version'
   | 'meter_model'
   | 'total_power_import_t2_kwh'
@@ -190,8 +190,8 @@ export type KwhMeter1PhaseResponse = Omit<
 /**
  * API /data response for `SDM630-wifi`
  */
-export type KwhMeter3PhaseResponse = Omit<
-  DataResponse,
+export type KwhMeter3PhaseDataResponse = Omit<
+  BaseDataResponse,
   | 'smr_version'
   | 'meter_model'
   | 'total_power_import_t2_kwh'
@@ -203,6 +203,14 @@ export type KwhMeter3PhaseResponse = Omit<
   | 'active_liter_lpm'
   | 'total_liter_m3'
 >;
+
+export type PossibleResponses =
+  | EnergySocketDataResponse
+  | StateResponse
+  | P1MeterDataResponse
+  | WaterMeterDataResponse
+  | KwhMeter1PhaseDataResponse
+  | KwhMeter3PhaseDataResponse;
 
 /**
  * The /api/v1/identify endpoint can be used to let the user identify the device. The status light will blink for a few seconds after calling this endpoint.

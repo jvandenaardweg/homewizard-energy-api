@@ -21,6 +21,17 @@ export class EnergySocketApi extends BaseApi {
   getData<T extends EnergySocketDataResponse>(): Promise<T> {
     return super.getData();
   }
+  startPolling(
+    method: 'getData',
+    apiMethod: <T extends EnergySocketDataResponse>() => Promise<T>,
+  ): Promise<void>;
+  startPolling(
+    method: 'getState',
+    apiMethod: <T extends StateResponse>() => Promise<T>,
+  ): Promise<void>;
+  startPolling(method: string, apiMethod: () => Promise<unknown>): Promise<void> {
+    return super.startPolling(method, apiMethod);
+  }
 
   constructor(baseUrl: string, options?: BaseApiOptions) {
     super(baseUrl, options);

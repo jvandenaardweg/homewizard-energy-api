@@ -1,7 +1,7 @@
 import {
   EnergySocketDataResponse,
-  KwhMeter1PhaseResponse,
-  KwhMeter3PhaseResponse,
+  KwhMeter1PhaseDataResponse,
+  KwhMeter3PhaseDataResponse,
   P1MeterDataResponse,
   WaterMeterDataResponse,
 } from '../../types';
@@ -39,7 +39,7 @@ export const mockWaterMeterDataResponse: WaterMeterDataResponse = {
   active_liter_lpm: 7.2,
 };
 
-export const mockKwhMeter1PhaseResponse: KwhMeter1PhaseResponse = {
+export const mockKwhMeter1PhaseResponse: KwhMeter1PhaseDataResponse = {
   // smr_version: 50, // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
   // meter_model: 'ISKRA  2M550T-101', // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
   wifi_ssid: 'My Wi-Fi',
@@ -52,7 +52,7 @@ export const mockKwhMeter1PhaseResponse: KwhMeter1PhaseResponse = {
   active_power_l1_w: -676,
 };
 
-export const mockKwhMeter3PhaseResponse: KwhMeter3PhaseResponse = {
+export const mockKwhMeter3PhaseResponse: KwhMeter3PhaseDataResponse = {
   // smr_version: 50, // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
   // meter_model: 'ISKRA  2M550T-101', // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
   wifi_ssid: 'My Wi-Fi',

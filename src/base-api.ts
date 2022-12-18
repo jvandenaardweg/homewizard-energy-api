@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { Dispatcher, request as undiciRequest } from 'undici';
-import { BasicInformationResponse, DataResponse, StateResponse, TelegramResponse } from './types';
+import { BasicInformationResponse, BaseDataResponse } from './types';
 
 export type RequestParameters = Parameters<typeof undiciRequest>;
 
@@ -62,7 +62,7 @@ export interface PollMethod<T> {
   on(event: 'error', listener: (error: Error) => void): void;
 }
 
-export interface BasePolling<TDataResponse extends DataResponse> {
+export interface BasePolling<TDataResponse extends BaseDataResponse> {
   getData: PollMethod<TDataResponse>;
 }
 
@@ -185,7 +185,7 @@ export class BaseApi {
     return data;
   }
 
-  protected async getData<T extends DataResponse>(): Promise<T> {
+  protected async getData<T extends BaseDataResponse>(): Promise<T> {
     const url = this.endpoints.data;
 
     this.log(`Fetching the data at ${url}`);
@@ -220,7 +220,7 @@ export class BaseApi {
   /**
    * Start polling for a specific method.
    */
-  get polling(): BasePolling<DataResponse> {
+  get polling(): BasePolling<BaseDataResponse> {
     const getData = 'getData';
 
     return {
@@ -232,22 +232,7 @@ export class BaseApi {
     };
   }
 
-  protected async startPolling(
-    method: string,
-    apiMethod: <T extends DataResponse>() => Promise<T>,
-  ): Promise<void>;
-  protected async startPolling(
-    method: string,
-    apiMethod: <T extends StateResponse>() => Promise<T>,
-  ): Promise<void>;
-  protected async startPolling(
-    method: string,
-    apiMethod: <T extends TelegramResponse>() => Promise<T>,
-  ): Promise<void>;
-  protected async startPolling(
-    method: string,
-    apiMethod: <T extends DataResponse & StateResponse & TelegramResponse>() => Promise<T>,
-  ): Promise<void> {
+  protected async startPolling(method: string, apiMethod: () => Promise<unknown>): Promise<void> {
     const interval = this.pollingOptions?.interval || 1000;
     const stopOnError = !!this.pollingOptions?.stopOnError;
 

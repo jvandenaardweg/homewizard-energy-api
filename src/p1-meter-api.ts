@@ -13,6 +13,17 @@ export class P1MeterApi extends BaseApi {
   getData<T extends P1MeterDataResponse>(): Promise<T> {
     return super.getData();
   }
+  startPolling(
+    method: 'getData',
+    apiMethod: <T extends P1MeterDataResponse>() => Promise<T>,
+  ): Promise<void>;
+  startPolling(
+    method: 'getTelegram',
+    apiMethod: <T extends TelegramResponse>() => Promise<T>,
+  ): Promise<void>;
+  startPolling(method: string, apiMethod: () => Promise<unknown>): Promise<void> {
+    return super.startPolling(method, apiMethod);
+  }
 
   constructor(baseUrl: string, options?: BaseApiOptions) {
     super(baseUrl, options);
