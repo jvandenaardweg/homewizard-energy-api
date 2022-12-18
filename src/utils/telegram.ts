@@ -1,45 +1,48 @@
-type ParsedLine = { obisCode: string; value: string; unit: Unit };
+export type TelegramParsedLine = { obisCode: string; value: string; unit: TelegramUnit };
 
-type LogEntry = {
+export type TelegramLogEntry = {
   endOfFailure: string;
   duration: number;
-  unit: Unit;
+  unit: TelegramUnit;
 };
 
-type OutputPowerFailureEventLog = {
+export type TelegramOutputPowerFailureEventLog = {
   count: number;
-  log: LogEntry[];
+  log: TelegramLogEntry[];
 };
 
-type Unit = 'kWh' | 'kW' | 'A' | 'V' | 's' | 'm3';
+export type TelegramUnit = 'kWh' | 'kW' | 'A' | 'V' | 's' | 'm3';
 
-interface HourlyReading {
+export interface TelegramHourlyReading {
   timestamp: string | null;
   value: string | null;
-  unit: Unit | null;
+  unit: TelegramUnit | null;
 }
 
-interface ValueItem {
+export interface TelegramValueItem {
   value: number | null;
-  unit: Unit | null;
+  unit: TelegramUnit | null;
 }
 
-interface PowerFailureLogItem {
+export interface TelegramPowerFailureLogItem {
   startOfFailure: string | null;
   endOfFailure: string | null;
   duration: number | null;
-  unit: Unit | null;
+  unit: TelegramUnit | null;
 }
 
-interface PowerFailureLog {
+export interface TelegramPowerFailureLog {
   count: number | null;
-  log: PowerFailureLogItem[];
+  log: TelegramPowerFailureLogItem[];
 }
 
 // https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_a727fce1f1.pdf
 // https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_40f025334f.pdf
 export interface ParsedTelegram {
-  meterType: string | null;
+  meter: {
+    brand: string | null;
+    model: string | null;
+  };
   /** Version information for P1 output */
   version: string | null;
   /** Date-time stamp of the P1 message. Value unit `YYMMDDhhmmssX` */
@@ -53,24 +56,24 @@ export interface ParsedTelegram {
   };
   power: {
     import: {
-      t1: ValueItem;
-      t2: ValueItem;
-      active: ValueItem;
+      t1: TelegramValueItem;
+      t2: TelegramValueItem;
+      active: TelegramValueItem;
     };
     export: {
-      t1: ValueItem;
-      t2: ValueItem;
-      active: ValueItem;
+      t1: TelegramValueItem;
+      t2: TelegramValueItem;
+      active: TelegramValueItem;
     };
     /** Tariff indicator electricity. The tariff indicator can also be used to switch tariff dependent loads e.g boilers. This is the responsibility of the P1 user */
     tariffIndicator: number | null;
-    threshold: ValueItem;
-    fuseThreshold: ValueItem;
+    threshold: TelegramValueItem;
+    fuseThreshold: TelegramValueItem;
     switchPosition: string | null;
     numberOfPowerFailures: number | null;
     numberOfLongPowerFailures: number | null;
     /** Power Failure Event Log (long power failures). Value unit `Timestamp (end of failure) – duration in seconds` */
-    longPowerFailureLog: PowerFailureLog;
+    longPowerFailureLog: TelegramPowerFailureLog;
     voltageSags: {
       l1: number | null;
       l2: number | null;
@@ -83,25 +86,25 @@ export interface ParsedTelegram {
     };
     instantaneous: {
       current: {
-        l1: ValueItem;
-        l2: ValueItem;
-        l3: ValueItem;
+        l1: TelegramValueItem;
+        l2: TelegramValueItem;
+        l3: TelegramValueItem;
       };
       voltage: {
-        l1: ValueItem;
-        l2: ValueItem;
-        l3: ValueItem;
+        l1: TelegramValueItem;
+        l2: TelegramValueItem;
+        l3: TelegramValueItem;
       };
       power: {
         positive: {
-          l1: ValueItem;
-          l2: ValueItem;
-          l3: ValueItem;
+          l1: TelegramValueItem;
+          l2: TelegramValueItem;
+          l3: TelegramValueItem;
         };
         negative: {
-          l1: ValueItem;
-          l2: ValueItem;
-          l3: ValueItem;
+          l1: TelegramValueItem;
+          l2: TelegramValueItem;
+          l3: TelegramValueItem;
         };
       };
     };
@@ -111,15 +114,37 @@ export interface ParsedTelegram {
     equipmentId: string | null;
     timestamp: string | null;
     value: number | null;
-    unit: Unit | null;
+    unit: TelegramUnit | null;
     valvePosition: string | null;
   };
 }
+
+function getMeterBrandModelFromHeader(header: string): string[] {
+  const [meterBrand, meterModel] = header.split('\\');
+
+  return [meterBrand, meterModel];
+}
+
 export function parseTelegram(telegram: string): ParsedTelegram {
-  const lines = telegram.split(/\r\n|\n|\r/);
+  const allLines = telegram
+    .trim()
+    .split(/\r\n|\n|\r/)
+    .filter(Boolean); // filter out empty lines
+
+  const header = allLines[0].substring(1);
+  // const footer = allLines[allLines.length - 1];
+
+  const [meterBrand, meterModal] = getMeterBrandModelFromHeader(header);
+
+  const linesWithoutHeaderAndFooter = allLines
+    .filter((_, index) => index > 0) // filter out header line
+    .filter((_, index, arr) => index < arr.length - 1); // filter out footer line
 
   const parsedTelegram: ParsedTelegram = {
-    meterType: lines[0].substring(1),
+    meter: {
+      brand: meterBrand,
+      model: meterModal,
+    },
     version: null,
     timestamp: null,
     equipmentId: null,
@@ -254,7 +279,7 @@ export function parseTelegram(telegram: string): ParsedTelegram {
   };
 
   // Start parsing at line 3 since first two lines contain the header and an empty row
-  for (const line of lines) {
+  for (const line of linesWithoutHeaderAndFooter) {
     // Ignore empty lines (by removing the newline breaks and trimming spaces)
     if (line.replace(/(\r\n|\n|\r)/gm, '').trim() != '') {
       const parsedLine = parseLine(line);
@@ -371,7 +396,7 @@ export function parseTelegram(telegram: string): ParsedTelegram {
               endOfFailure: null,
               duration: null,
               unit: null,
-            } as PowerFailureLogItem;
+            } as TelegramPowerFailureLogItem;
 
             // The datetime of the start of the failure can be easily calculated since the duration is
             // always specified in seconds according to the DSMR 4.0 specification.
@@ -381,7 +406,7 @@ export function parseTelegram(telegram: string): ParsedTelegram {
             );
             logItem.endOfFailure = log.endOfFailure;
             logItem.duration = log.duration;
-            logItem.unit = log.unit as Unit;
+            logItem.unit = log.unit as TelegramUnit;
 
             parsedTelegram.power.longPowerFailureLog.log.push(logItem);
           }
@@ -519,10 +544,10 @@ export function parseTelegram(telegram: string): ParsedTelegram {
         // Gas, probably BE
         case '0-1:24.2.3':
           // eslint-disable-next-line no-case-declarations
-          const instantValue = parsedLine.value.substr(15, 9);
+          const instantValue = parsedLine.value.substring(15, 9);
 
           // eslint-disable-next-line no-case-declarations
-          const instantUnit = parsedLine.value.substr(25, 2) as Unit;
+          const instantUnit = parsedLine.value.substring(25, 2) as TelegramUnit;
 
           parsedTelegram.gas.value = parseFloat(instantValue);
           parsedTelegram.gas.unit = instantUnit;
@@ -544,7 +569,7 @@ export function parseTelegram(telegram: string): ParsedTelegram {
           // eslint-disable-next-line no-case-declarations
           const split = parsedLine.value.split(')(');
           parsedTelegram.gas.timestamp = parseTimestamp(split[0]);
-          parsedTelegram.gas.unit = split[5] as Unit;
+          parsedTelegram.gas.unit = split[5] as TelegramUnit;
           break;
 
         /*
@@ -615,8 +640,8 @@ export function parseTelegram(telegram: string): ParsedTelegram {
 /**
  * Parse a single line of format: obisCode(value*unit), example: 1-0:2.8.1(123456.789*kWh)
  */
-function parseLine(line: string): ParsedLine {
-  const output = {} as ParsedLine;
+function parseLine(line: string): TelegramParsedLine {
+  const output = {} as TelegramParsedLine;
   const split = line.split(/\((.+)?/); // Split only on first occurrence of "("
 
   if (split[0] && split[1]) {
@@ -626,7 +651,7 @@ function parseLine(line: string): ParsedLine {
 
     if (value.indexOf('*') > -1 && value.indexOf(')(') === -1) {
       output.value = value.split('*')[0];
-      output.unit = value.split('*')[1] as Unit;
+      output.unit = value.split('*')[1] as TelegramUnit;
     } else {
       output.value = value;
     }
@@ -657,12 +682,12 @@ function parseTimestamp(timestamp: string | null | undefined): string | null {
 /**
  * Parse power failure event log of format: 1)(0-0:96.7.19)(timestamp end)(duration)(timestamp end)(duration...
  */
-function parsePowerFailureEventLog(value: string): OutputPowerFailureEventLog {
+function parsePowerFailureEventLog(value: string): TelegramOutputPowerFailureEventLog {
   const split = value.split(')(0-0:96.7.19)(');
 
   const output = {
     count: parseInt(split[0]) || 0,
-    log: [] as LogEntry[],
+    log: [] as TelegramLogEntry[],
   };
 
   if (split[1]) {
@@ -675,7 +700,7 @@ function parsePowerFailureEventLog(value: string): OutputPowerFailureEventLog {
           endOfFailure: parseTimestamp(log[i]),
           duration: parseInt(log[i + 1].split('*')[0]),
           unit: log[i + 1].split('*')[1],
-        } as LogEntry;
+        } as TelegramLogEntry;
 
         output.log.push(logEntry);
       }
@@ -688,21 +713,21 @@ function parsePowerFailureEventLog(value: string): OutputPowerFailureEventLog {
 /**
  * Parse hourly readings, which is used for gas, water, heat, cold and slave electricity meters (DSMR 4.0+)
  */
-function parseHourlyReading(reading: string | null): HourlyReading | null {
+function parseHourlyReading(reading: string | null): TelegramHourlyReading | null {
   if (!reading) return null;
 
   const output = {
     timestamp: null,
     value: null,
     unit: null,
-  } as HourlyReading;
+  } as TelegramHourlyReading;
 
   const split = reading.split(')(');
 
   if (split[0] && split[1]) {
     output.timestamp = split[0];
     output.value = split[1].split('*')[0];
-    output.unit = split[1].split('*')[1] as Unit;
+    output.unit = split[1].split('*')[1] as TelegramUnit;
   }
 
   return output;
@@ -725,7 +750,7 @@ function convertHexToAscii(string: string) {
   let output = '';
 
   for (let i = 0; i < string.length; i = i + 2) {
-    output = output + String.fromCharCode(parseInt(string.substr(i, 2), 16));
+    output = output + String.fromCharCode(parseInt(string.substring(i, 2), 16));
   }
 
   return output;
