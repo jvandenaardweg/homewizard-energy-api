@@ -59,6 +59,16 @@ export class P1MeterApi extends BaseApi {
     };
   }
 
+  /**
+   * The /api/v1/telegram endpoint returns the most recent, valid telegram that was given by the P1 meter,
+   * therefore this endpoint is only available for the HWE-P1.
+   *
+   * The telegram validated with its CRC, but not parsed in any form.
+   *
+   * Note that this endpoint returns plain text instead of formatted JSON, even when an error occours (see Error handling)
+   *
+   * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#p1-telegram-api-v1-telegram
+   */
   async getTelegram<T extends TelegramResponse>(): Promise<T> {
     const url = this.endpoints.telegram;
 

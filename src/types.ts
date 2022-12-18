@@ -76,6 +76,7 @@ export interface BasicInformationResponse {
   /** The current api version, currently ‘v1’ */
   api_version: string;
 }
+
 /**
  * The /api/v1/data endpoint allows you to get the most recent measurement from the device.
  *
@@ -85,7 +86,6 @@ export interface BasicInformationResponse {
  *
  * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data
  */
-
 export interface BaseDataResponse {
   /** The DSMR version of the smart meter. Available for: `HWE-P1` */
   smr_version?: number;

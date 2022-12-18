@@ -185,6 +185,15 @@ export class BaseApi {
     return data;
   }
 
+  /**
+   * The /api/v1/data endpoint allows you to get the most recent measurement from the device.
+   *
+   * This response type only relates to the Energy Socket.
+   *
+   * All datapoints are “optional”; The API does not send datapoints that are null. Make sure your application can handle this.
+   *
+   * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data
+   */
   protected async getData<T extends BaseDataResponse>(): Promise<T> {
     const url = this.endpoints.data;
 
@@ -206,6 +215,9 @@ export class BaseApi {
     return data;
   }
 
+  /**
+   * Stops polling for a specific method.
+   */
   protected stopPolling(method: string): void {
     if (!this.isPolling[method]) {
       this.log(`Polling for "${method}" is not started or already stopped.`);
@@ -232,6 +244,11 @@ export class BaseApi {
     };
   }
 
+  /**
+   * Start polling for a specific method. This method will keep polling until the stop method is called.
+   *
+   * It will use the `interval` and `stopOnError` options from the polling options.
+   */
   protected async startPolling(method: string, apiMethod: () => Promise<unknown>): Promise<void> {
     const interval = this.pollingOptions?.interval || 1000;
     const stopOnError = !!this.pollingOptions?.stopOnError;
