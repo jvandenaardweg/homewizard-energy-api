@@ -730,3 +730,6 @@ function convertHexToAscii(string: string) {
 
   return output;
 }
+
+// Credits to https://github.com/ruudverheijden/node-p1-reader for the initial idea.
+// This code is based on that code, but has been heavily modified to support Typescript and to be more readable.
