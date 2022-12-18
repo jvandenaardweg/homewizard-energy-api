@@ -65,7 +65,7 @@ const data = await p1Meter.getData();
 | GET    | /api             | `getBasic()`          | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).                                                                                                                 |
 | GET    | /api/v1/data     | `getData()`           | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).                                                                                          |
 | GET    | /api/v1/telegram | `getTelegram()`       | Returns the most recent, valid telegram in text format that was given by the P1 meter, therefore this endpoint is only available for the HWE-P1. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#p1-telegram-api-v1-telegram). |
-| GET    | /api/v1/telegram | `getParsedTelegram()` | Returns the telegram as a detailed JSON response. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#p1-telegram-api-v1-telegram).                                                                                                |
+| GET    | /api/v1/telegram | `getParsedTelegram()` | Returns the telegram as a detailed JSON response. This is a feature of this library, and not of the API itself. See telegram docs for more info about the telegram endpoint                                                                                                 |
 
 ### Data polling
 
