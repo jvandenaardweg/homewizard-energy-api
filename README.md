@@ -17,6 +17,7 @@ Full type-safe implementation of the HomeWizard Energy API in Node. Use the Loca
 - Supports all HomeWizard Wi-Fi devices that have a Local API
 - Exposes a discovery method to discover devices on your local network using Multicast DNS
 - Provides a simple polling interface to request near real-time data from your devices
+- Parses the P1 telegram from the P1 meter into a readable detailed format
 - Includes inline documentation on each method, type and property
 - Follows the guidelines provided in the official [HomeWizard Energy API documentation](https://homewizard-energy-api.readthedocs.io/index.html)
 
@@ -59,11 +60,12 @@ const p1Meter = new P1MeterApi('http://192.168.1.11');
 const data = await p1Meter.getData();
 ```
 
-| Method | API              | Function        | Description                                                                                                                                                                                                                                                  |
-| ------ | ---------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| GET    | /api             | `getBasic()`    | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).                                                                                                  |
-| GET    | /api/v1/data     | `getData()`     | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).                                                                           |
-| GET    | /api/v1/telegram | `getTelegram()` | Returns the most recent, valid telegram that was given by the P1 meter, therefore this endpoint is only available for the HWE-P1. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#p1-telegram-api-v1-telegram). |
+| Method | API              | Function              | Description                                                                                                                                                                                                                                                                 |
+| ------ | ---------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /api             | `getBasic()`          | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).                                                                                                                 |
+| GET    | /api/v1/data     | `getData()`           | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).                                                                                          |
+| GET    | /api/v1/telegram | `getTelegram()`       | Returns the most recent, valid telegram in text format that was given by the P1 meter, therefore this endpoint is only available for the HWE-P1. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#p1-telegram-api-v1-telegram). |
+| GET    | /api/v1/telegram | `getParsedTelegram()` | Returns the telegram as a detailed JSON response. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#p1-telegram-api-v1-telegram).                                                                                                |
 
 ### Data polling
 
