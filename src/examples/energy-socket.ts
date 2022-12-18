@@ -1,11 +1,11 @@
 import { EnergySocketApi } from '../';
 
-const api = new EnergySocketApi('http://192.168.1.10');
+const energySocket = new EnergySocketApi('http://192.168.1.10');
 
 (async () => {
   try {
     // Turn the Energy Socket ON
-    const updatedState = await api.updateState({ power_on: true });
+    const updatedState = await energySocket.updateState({ power_on: true });
 
     console.log(updatedState);
   } catch (err) {

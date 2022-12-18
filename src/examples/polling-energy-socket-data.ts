@@ -1,15 +1,15 @@
 import { EnergySocketApi } from '..';
 
-const api = new EnergySocketApi('http://192.168.1.32', {
+const energySocket = new EnergySocketApi('http://192.168.1.32', {
   polling: {
     interval: 1000,
   },
 });
 
 (() => {
-  api.polling.getData.start();
+  energySocket.polling.getData.start();
 
-  api.polling.getData.on('response', response => {
+  energySocket.polling.getData.on('response', response => {
     // Receive the latest data of this Energy Socket from the /api/v1/data endpoint each second:
     // {
     //   wifi_ssid: 'SOME_WIFI_SSID',
@@ -23,11 +23,11 @@ const api = new EnergySocketApi('http://192.168.1.32', {
     console.log('response', response);
   });
 
-  api.polling.getData.on('error', error => {
+  energySocket.polling.getData.on('error', error => {
     console.log('error', error);
   });
 
   setTimeout(() => {
-    api.polling.getData.stop();
+    energySocket.polling.getData.stop();
   }, 10000); // stop after 10 seconds for the purpose of this example
 })();

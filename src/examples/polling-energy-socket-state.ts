@@ -1,15 +1,15 @@
 import { EnergySocketApi } from '..';
 
-const api = new EnergySocketApi('http://192.168.1.32', {
+const energySocket = new EnergySocketApi('http://192.168.1.32', {
   polling: {
     interval: 1000,
   },
 });
 
 (() => {
-  api.polling.getState.start();
+  energySocket.polling.getState.start();
 
-  api.polling.getState.on('response', response => {
+  energySocket.polling.getState.on('response', response => {
     // Receive the latest state of this Energy Socket from the /api/v1/state endpoint each second:
     // {
     //   power_on: false,
@@ -20,11 +20,11 @@ const api = new EnergySocketApi('http://192.168.1.32', {
     console.log('response', response);
   });
 
-  api.polling.getState.on('error', error => {
+  energySocket.polling.getState.on('error', error => {
     console.log('error', error);
   });
 
   setTimeout(() => {
-    api.polling.getState.stop();
+    energySocket.polling.getState.stop();
   }, 10000); // stop after 10 seconds for the purpose of this example
 })();

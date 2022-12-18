@@ -1,15 +1,15 @@
 import { P1MeterApi } from '..';
 
-const api = new P1MeterApi('http://192.168.1.35', {
+const p1Meter = new P1MeterApi('http://192.168.1.35', {
   polling: {
     interval: 1000,
   },
 });
 
 (() => {
-  api.polling.getTelegram.start();
+  p1Meter.polling.getTelegram.start();
 
-  api.polling.getTelegram.on('response', response => {
+  p1Meter.polling.getTelegram.on('response', response => {
     // Receive the latest data of this P1 Meter from the /api/v1/telegram endpoint each second:
     // /ISK5\2M550T-1012
 
@@ -53,11 +53,11 @@ const api = new P1MeterApi('http://192.168.1.35', {
     console.log('response', response);
   });
 
-  api.polling.getTelegram.on('error', error => {
+  p1Meter.polling.getTelegram.on('error', error => {
     console.log('error', error);
   });
 
   setTimeout(() => {
-    api.polling.getTelegram.stop();
+    p1Meter.polling.getTelegram.stop();
   }, 10000); // stop after 10 seconds for the purpose of this example
 })();

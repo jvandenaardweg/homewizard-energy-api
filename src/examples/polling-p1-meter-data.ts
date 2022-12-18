@@ -1,15 +1,15 @@
 import { P1MeterApi } from '..';
 
-const api = new P1MeterApi('http://192.168.1.35', {
+const p1Meter = new P1MeterApi('http://192.168.1.35', {
   polling: {
     interval: 1000,
   },
 });
 
 (() => {
-  api.polling.getData.start();
+  p1Meter.polling.getData.start();
 
-  api.polling.getData.on('response', response => {
+  p1Meter.polling.getData.on('response', response => {
     // Receive the latest data of this P1 Meter from the /api/v1/data endpoint each second:
     // {
     //   smr_version: 50,
@@ -31,11 +31,11 @@ const api = new P1MeterApi('http://192.168.1.35', {
     console.log('response', response);
   });
 
-  api.polling.getData.on('error', error => {
+  p1Meter.polling.getData.on('error', error => {
     console.log('error', error);
   });
 
   setTimeout(() => {
-    api.polling.getData.stop();
+    p1Meter.polling.getData.stop();
   }, 10000); // stop after 10 seconds for the purpose of this example
 })();
