@@ -204,14 +204,6 @@ export type KwhMeter3PhaseDataResponse = Omit<
   | 'total_liter_m3'
 >;
 
-export type PossibleResponses =
-  | EnergySocketDataResponse
-  | StateResponse
-  | P1MeterDataResponse
-  | WaterMeterDataResponse
-  | KwhMeter1PhaseDataResponse
-  | KwhMeter3PhaseDataResponse;
-
 /**
  * The /api/v1/identify endpoint can be used to let the user identify the device. The status light will blink for a few seconds after calling this endpoint.
  *
