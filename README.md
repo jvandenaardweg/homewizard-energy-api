@@ -17,7 +17,7 @@ Full type-safe implementation of the HomeWizard Energy API in Node. Use the Loca
 - Supports all HomeWizard Wi-Fi devices that have a Local API
 - Exposes a discovery method to discover devices on your local network using Multicast DNS
 - Provides a simple polling interface to request near real-time data from your devices
-- Parses the P1 telegram from the P1 meter into a readable detailed format
+- Transforms the P1 telegram text from the P1 meter into a readable detailed object
 - Includes inline documentation on each method, type and property
 - Follows the guidelines provided in the official [HomeWizard Energy API documentation](https://homewizard-energy-api.readthedocs.io/index.html)
 
