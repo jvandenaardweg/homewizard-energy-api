@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const bufferArrayToJSON = <T extends Record<string, any>>(buffers: Buffer[]): T => {
+export function bufferArrayToJSON<T extends Record<string, any>>(buffers: Buffer[]): T {
   return buffers.reduce((prev, buffer) => {
     const [key, value] = buffer.toString().split('=');
 
@@ -7,10 +7,10 @@ export const bufferArrayToJSON = <T extends Record<string, any>>(buffers: Buffer
 
     return prev;
   }, {} as Record<string, unknown>) as T;
-};
+}
 
-export const isBufferArray = (value: unknown): value is Buffer[] => {
+export function isBufferArray(value: unknown): value is Buffer[] {
   if (!Array.isArray(value)) return false;
 
   return value.every(v => Buffer.isBuffer(v));
-};
+}

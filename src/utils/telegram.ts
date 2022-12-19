@@ -1,15 +1,15 @@
 export type TelegramParsedLine = { obisCode: string; value: string; unit: TelegramUnit };
 
-export type TelegramLogEntry = {
-  endOfFailure: string;
-  duration: number;
-  unit: TelegramUnit;
-};
+// export type TelegramLogEntry = {
+//   endOfFailure: string;
+//   duration: number;
+//   unit: TelegramUnit;
+// };
 
-export type TelegramOutputPowerFailureEventLog = {
-  count: number;
-  log: TelegramLogEntry[];
-};
+// export type TelegramOutputPowerFailureEventLog = {
+//   count: number;
+//   log: TelegramLogEntry[];
+// };
 
 export type TelegramUnit = 'kWh' | 'kW' | 'A' | 'V' | 's' | 'm3';
 
@@ -117,12 +117,6 @@ export interface ParsedTelegram {
     unit: TelegramUnit | null;
     valvePosition: string | null;
   };
-}
-
-function getMeterBrandModelFromHeader(header: string): string[] {
-  const [meterBrand, meterModel] = header.split('\\');
-
-  return [meterBrand, meterModel];
 }
 
 export function parseTelegram(telegram: string): ParsedTelegram {
@@ -384,32 +378,7 @@ export function parseTelegram(telegram: string): ParsedTelegram {
 
         // Power Failure Event Log (long power failures)
         case '1-0:99.97.0':
-          // eslint-disable-next-line no-case-declarations
-          const powerFailureEventLog = parsePowerFailureEventLog(parsedLine.value);
-
-          parsedTelegram.power.longPowerFailureLog.count = powerFailureEventLog.count;
-          parsedTelegram.power.longPowerFailureLog.log = [];
-
-          for (const log of powerFailureEventLog.log) {
-            const logItem = {
-              startOfFailure: null,
-              endOfFailure: null,
-              duration: null,
-              unit: null,
-            } as TelegramPowerFailureLogItem;
-
-            // The datetime of the start of the failure can be easily calculated since the duration is
-            // always specified in seconds according to the DSMR 4.0 specification.
-            logItem.startOfFailure = subtractNumberOfSecondsFromDate(
-              log.endOfFailure,
-              log.duration,
-            );
-            logItem.endOfFailure = log.endOfFailure;
-            logItem.duration = log.duration;
-            logItem.unit = log.unit as TelegramUnit;
-
-            parsedTelegram.power.longPowerFailureLog.log.push(logItem);
-          }
+          parsedTelegram.power.longPowerFailureLog = parsePowerFailureEventLog(parsedLine.value);
 
           break;
 
@@ -637,10 +606,16 @@ export function parseTelegram(telegram: string): ParsedTelegram {
   return parsedTelegram;
 }
 
+export function getMeterBrandModelFromHeader(header: string): string[] {
+  const [meterBrand, meterModel] = header.split('\\');
+
+  return [meterBrand, meterModel];
+}
+
 /**
  * Parse a single line of format: obisCode(value*unit), example: 1-0:2.8.1(123456.789*kWh)
  */
-function parseLine(line: string): TelegramParsedLine {
+export function parseLine(line: string): TelegramParsedLine {
   const output = {} as TelegramParsedLine;
   const split = line.split(/\((.+)?/); // Split only on first occurrence of "("
 
@@ -663,7 +638,7 @@ function parseLine(line: string): TelegramParsedLine {
 /**
  * Parse timestamp of format: YYMMDDhhmmssX
  */
-function parseTimestamp(timestamp: string | null | undefined): string | null {
+export function parseTimestamp(timestamp: string | null | undefined): string | null {
   if (!timestamp) return null;
 
   const parsedTimestamp = new Date();
@@ -682,12 +657,12 @@ function parseTimestamp(timestamp: string | null | undefined): string | null {
 /**
  * Parse power failure event log of format: 1)(0-0:96.7.19)(timestamp end)(duration)(timestamp end)(duration...
  */
-function parsePowerFailureEventLog(value: string): TelegramOutputPowerFailureEventLog {
+export function parsePowerFailureEventLog(value: string): TelegramPowerFailureLog {
   const split = value.split(')(0-0:96.7.19)(');
 
   const output = {
     count: parseInt(split[0]) || 0,
-    log: [] as TelegramLogEntry[],
+    log: [] as TelegramPowerFailureLogItem[],
   };
 
   if (split[1]) {
@@ -696,11 +671,18 @@ function parsePowerFailureEventLog(value: string): TelegramOutputPowerFailureEve
     // Loop the log structure: timestamp)(duration)(timestamp)(duration...
     for (let i = 0; i <= log.length; i = i + 2) {
       if (log[i] && log[i + 1]) {
+        const endOfFailure = parseTimestamp(log[i]);
+        const duration = parseInt(log[i + 1].split('*')[0]);
+        const startOfFailure = endOfFailure
+          ? subtractNumberOfSecondsFromDate(endOfFailure, duration)
+          : null;
+
         const logEntry = {
+          startOfFailure,
           endOfFailure: parseTimestamp(log[i]),
-          duration: parseInt(log[i + 1].split('*')[0]),
+          duration,
           unit: log[i + 1].split('*')[1],
-        } as TelegramLogEntry;
+        } as TelegramPowerFailureLogItem;
 
         output.log.push(logEntry);
       }
@@ -713,7 +695,7 @@ function parsePowerFailureEventLog(value: string): TelegramOutputPowerFailureEve
 /**
  * Parse hourly readings, which is used for gas, water, heat, cold and slave electricity meters (DSMR 4.0+)
  */
-function parseHourlyReading(reading: string | null): TelegramHourlyReading | null {
+export function parseHourlyReading(reading: string | null): TelegramHourlyReading | null {
   if (!reading) return null;
 
   const output = {
@@ -736,7 +718,10 @@ function parseHourlyReading(reading: string | null): TelegramHourlyReading | nul
 /**
  * Subtract a number of seconds from a date and return the result as ISO string.
  */
-function subtractNumberOfSecondsFromDate(date: string | number | Date, seconds: number): string {
+export function subtractNumberOfSecondsFromDate(
+  date: string | number | Date,
+  seconds: number,
+): string {
   const output = new Date(date);
   output.setSeconds(output.getSeconds() - seconds);
 
@@ -746,14 +731,25 @@ function subtractNumberOfSecondsFromDate(date: string | number | Date, seconds: 
 /**
  * Convert a hexadecimal encoded string to readable ASCII characters (e.g. 0x414243 -> ABC)
  */
-function convertHexToAscii(string: string) {
-  let output = '';
-
-  for (let i = 0; i < string.length; i = i + 2) {
-    output = output + String.fromCharCode(parseInt(string.substring(i, 2), 16));
+export function convertHexToAscii(hex: string): string {
+  if (!(typeof hex === 'number' || typeof hex == 'string')) {
+    return '';
   }
 
-  return output;
+  hex = hex.toString().replace(/\s+/gi, '');
+
+  const stack = [];
+
+  for (let i = 0; i < hex.length; i += 2) {
+    const code = parseInt(hex.substring(i, i + 2), 16);
+    if (!isNaN(code) && code !== 0) {
+      stack.push(String.fromCharCode(code));
+    }
+  }
+
+  const ascii = stack.join('');
+
+  return ascii;
 }
 
 // Credits to https://github.com/ruudverheijden/node-p1-reader for the initial idea.
