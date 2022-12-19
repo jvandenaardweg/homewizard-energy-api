@@ -46,4 +46,56 @@ describe('BaseApi', () => {
 
     expect(error.toString()).toBe('HomeWizardEnergyApiResponseError: Test error');
   });
+
+  describe('polling', () => {
+    it('should start polling when start() is invoked', () => {
+      const startPollingSpy = vi.fn();
+      const method = 'getData';
+
+      baseApi['startPolling'] = startPollingSpy;
+
+      baseApi.polling[method].start();
+
+      expect(startPollingSpy).toHaveBeenCalledOnce();
+      expect(startPollingSpy.mock.calls[0][0]).toBe(method);
+    });
+
+    it('should stop polling when stop() is invoked', () => {
+      const stopPollingSpy = vi.fn();
+      const method = 'getData';
+
+      baseApi['stopPolling'] = stopPollingSpy;
+
+      baseApi.polling[method].start();
+      baseApi.polling[method].stop();
+
+      expect(stopPollingSpy).toHaveBeenCalledOnce();
+      expect(stopPollingSpy.mock.calls[0][0]).toBe(method);
+    });
+
+    it('should return nothing when stop() is invoked when isPolling is not set', () => {
+      const method = 'getData';
+
+      baseApi.polling[method].stop();
+
+      expect(baseApi['stopPolling'](method)).toBeUndefined();
+    });
+
+    it('should set isPolling for getData to true when start() is invoked', () => {
+      const method = 'getData';
+
+      baseApi.polling[method].start();
+
+      expect(baseApi['isPolling'][method]).toBe(true);
+    });
+
+    it('should set isPolling for getData to false when stop() is invoked', () => {
+      const method = 'getData';
+
+      baseApi.polling[method].start();
+      baseApi.polling[method].stop();
+
+      expect(baseApi['isPolling'][method]).toBe(false);
+    });
+  });
 });

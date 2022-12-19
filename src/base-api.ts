@@ -269,12 +269,12 @@ export class BaseApi {
       } catch (error) {
         this.log(`Received error while polling "${method}": ${JSON.stringify(error)}`);
 
-        this.eventEmitter.emit('error', error);
-
         // If the user wants to stop polling on error, we stop polling
         if (stopOnError) {
           this.stopPolling(method);
         }
+
+        this.eventEmitter.emit('error', error);
       } finally {
         this.log(`Waiting for next polling interval for "${method}"...`);
         await new Promise(resolve => setTimeout(resolve, interval));
