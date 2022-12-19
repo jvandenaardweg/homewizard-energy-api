@@ -1,3 +1,4 @@
+import { formatISO } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 
 export type TelegramParsedLine = { obisCode: string; value: string; unit: TelegramUnit };
@@ -653,10 +654,14 @@ export function parseTimestamp(timestamp: string | null | undefined): string | n
   parsedTimestamp.setUTCSeconds(parseInt(timestamp.substring(10, 12)));
   parsedTimestamp.setUTCMilliseconds(0);
 
-  const timeZone = 'Europe/Amsterdam';
-  const zonedDate = utcToZonedTime(parsedTimestamp, timeZone);
+  return toIsoDateString(parsedTimestamp);
+}
 
-  return zonedDate.toISOString();
+export function toIsoDateString(date: Date): string {
+  const timeZone = 'Europe/Amsterdam';
+  const zonedDate = utcToZonedTime(date, timeZone);
+
+  return formatISO(zonedDate);
 }
 
 /**
@@ -730,10 +735,7 @@ export function subtractNumberOfSecondsFromDate(
   const output = new Date(date);
   output.setSeconds(output.getSeconds() - seconds);
 
-  const timeZone = 'Europe/Amsterdam';
-  const zonedDate = utcToZonedTime(output, timeZone);
-
-  return zonedDate.toISOString();
+  return toIsoDateString(output);
 }
 
 /**

@@ -62,14 +62,14 @@ describe('utils/telegram', () => {
     it('should parse a timestamp', () => {
       const parsedTimestamp = parseTimestamp('221219072214W');
 
-      const expected = '2022-12-19T07:22:14.000Z';
+      const expected = '2022-12-19T08:22:14+01:00';
 
       expect(parsedTimestamp).toBe(expected);
     });
     it('should parse a timestamp', () => {
       const parsedTimestamp = parseTimestamp('171130183027W');
 
-      const expected = '2017-11-30T18:30:27.000Z';
+      const expected = '2017-11-30T19:30:27+01:00';
 
       expect(parsedTimestamp).toBe(expected);
     });
@@ -99,8 +99,8 @@ describe('utils/telegram', () => {
         count: 1,
         log: [
           {
-            startOfFailure: '2017-11-30T18:14:43.000Z',
-            endOfFailure: '2017-11-30T18:30:27.000Z',
+            startOfFailure: '2017-11-30T19:14:43+01:00',
+            endOfFailure: '2017-11-30T19:30:27+01:00',
             duration: 944,
             unit: 's',
           },
@@ -118,14 +118,14 @@ describe('utils/telegram', () => {
         count: 2,
         log: [
           {
-            startOfFailure: '2018-03-27T06:38:11.000Z',
-            endOfFailure: '2018-03-27T06:41:11.000Z',
+            startOfFailure: '2018-03-27T08:38:11+02:00',
+            endOfFailure: '2018-03-27T08:41:11+02:00',
             duration: 180,
             unit: 's',
           },
           {
-            startOfFailure: '2019-01-08T10:16:00.000Z',
-            endOfFailure: '2019-01-08T10:59:23.000Z',
+            startOfFailure: '2019-01-08T11:16:00+01:00',
+            endOfFailure: '2019-01-08T11:59:23+01:00',
             duration: 2603,
             unit: 's',
           },
@@ -144,14 +144,14 @@ describe('utils/telegram', () => {
         count: 2,
         log: [
           {
-            startOfFailure: '2018-08-24T13:03:42.000Z',
-            endOfFailure: '2018-08-24T14:37:02.000Z',
+            startOfFailure: '2018-08-24T15:03:42+02:00',
+            endOfFailure: '2018-08-24T16:37:02+02:00',
             duration: 5600,
             unit: 's',
           },
           {
-            startOfFailure: '1931-12-13T21:45:54.000Z',
-            endOfFailure: '2000-01-01T00:00:01.000Z',
+            startOfFailure: '1931-12-13T21:45:54Z',
+            endOfFailure: '2000-01-01T01:00:01+01:00',
             duration: 2147483647,
             unit: 's',
           },
@@ -189,9 +189,9 @@ describe('utils/telegram', () => {
 
   describe('subtractNumberOfSecondsFromDate', () => {
     it('should subtract a number of seconds from a date', () => {
-      const subtractedDate = subtractNumberOfSecondsFromDate('2022-12-19T07:22:14.000Z', 944);
+      const subtractedDate = subtractNumberOfSecondsFromDate('2022-12-19T07:22:14+01:00', 944);
 
-      const expected = '2022-12-19T07:06:30.000Z';
+      const expected = '2022-12-19T07:06:30+01:00';
 
       expect(subtractedDate).toBe(expected);
     });
@@ -240,7 +240,7 @@ describe('utils/telegram', () => {
           model: '2M550T-1012',
         },
         version: '50',
-        timestamp: '2022-12-18T22:48:20.000Z',
+        timestamp: '2022-12-18T23:48:20+01:00',
         equipmentId: '4530303434303037303138303138313137',
         textMessage: {
           codes: null,
@@ -291,8 +291,8 @@ describe('utils/telegram', () => {
             count: 1,
             log: [
               {
-                startOfFailure: '2017-11-30T18:14:43.000Z',
-                endOfFailure: '2017-11-30T18:30:27.000Z',
+                startOfFailure: '2017-11-30T19:14:43+01:00',
+                endOfFailure: '2017-11-30T19:30:27+01:00',
                 duration: 944,
                 unit: 's',
               },
@@ -372,7 +372,7 @@ describe('utils/telegram', () => {
         gas: {
           deviceType: '003',
           equipmentId: '4730303332353635353330393732333137',
-          timestamp: '2022-12-18T22:45:01.000Z',
+          timestamp: '2022-12-18T23:45:01+01:00',
           value: 6798.545,
           unit: 'm3',
           valvePosition: null,
