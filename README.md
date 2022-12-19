@@ -4,9 +4,13 @@
 </p>
 
 <p align="center">
-  <a href="https://npmjs.com/package/homewizard-energy-api"><img alt="npm" src="https://badge.fury.io/js/homewizard-energy-api.svg" /></a>
-  <a href="https://github.com/jvandenaardweg/homewizard-energy-api/actions"><img alt="GitHub" src="https://github.com/jvandenaardweg/homewizard-energy-api/actions/workflows/build-and-test.yml/badge.svg" /></a>
-  <a href="https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/LICENSE"><img alt="mit license" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
+  <a href="https://npmjs.com/package/homewizard-energy-api" title="NPM package"><img alt="npm" src="https://img.shields.io/npm/v/homewizard-energy-api?color=%234c1&label=npm%20package" /></a>
+  &nbsp;
+  <a href="https://github.com/jvandenaardweg/homewizard-energy-api/actions" title="Build and Test result"><img alt="github" src="http://img.shields.io/github/actions/workflow/status/jvandenaardweg/homewizard-energy-api/build-and-test.yml?branch=main&color=%234c1" /></a>
+  &nbsp;
+  <a href="https://github.com/sponsors/jvandenaardweg" title="Sponsor me on GitHub"><img src="https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23db61a2" alt="github sponsor" /></a>
+  &nbsp;
+  <a href="https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/LICENSE" title="MIT license"><img alt="mit license" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
 </p>
 
 Full type-safe implementation of the HomeWizard Energy API in Node. Use the Local API of your HomeWizard devices with ease.
