@@ -69,7 +69,7 @@ const data = await p1Meter.getData();
 
 ### Data polling
 
-A simple polling interface for the P1 Meter (and all other devices) is exposed via `api.polling.getData` and `api.polling.getTelegram`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
+A simple polling interface for the P1 Meter (and all other devices) is exposed via `api.polling.getData`, `api.polling.getTelegram` and `api.polling.getParsedTelegram`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
 
 ```typescript
 import { P1MeterApi } from 'homewizard-energy-api';
