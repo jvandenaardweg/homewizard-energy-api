@@ -45,13 +45,16 @@ export interface PollingOptions {
 }
 
 export interface LoggerOptions {
+  /** The log method to use. */
   method?: (...args: unknown[]) => void;
+  /** The prefix that will show before the log. Defaults to `[HomeWizard Energy API]:` */
   prefix?: string;
 }
 
 export type ApiVersion = 'v1' | undefined;
 
 export interface ApiOptions {
+  /** The API version to be used. Defaults to `v1`. */
   version?: ApiVersion;
 }
 
@@ -67,11 +70,13 @@ export interface BasePolling<TDataResponse extends BaseDataResponse> {
 }
 
 export interface BaseApiOptions {
-  /** The API version to be used. Defaults to `v1` */
+  /** Options specific to the HomeWizard Energy API */
   api?: ApiOptions;
-  /** Request options to be used in the HTTP request to the API. */
+  /** Request options to be used in the HTTP request to the API */
   requestOptions?: RequestParameters[1];
+  /** Logging options */
   logger?: LoggerOptions;
+  /** Polling options to request API endpoints at the given interval. */
   polling?: PollingOptions;
 }
 

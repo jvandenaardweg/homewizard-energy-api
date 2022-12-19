@@ -27,16 +27,23 @@ export const SupportedDevicesList = [
 
 export type SupportedDevices = typeof SupportedDevicesList[number];
 
+/**
+ * The txt record of the mDNS discovery response.
+ *
+ * A discovery response contains some extra data that can be used to improve the setup in your application.
+ *
+ * @link: https://homewizard-energy-api.readthedocs.io/discovery.html#txt-records
+ */
 export interface MdnsTxtRecord {
   /** Indicates if the "Local API" is enabled. `"1"` = enabled, `"0"` = disabled */
   api_enabled: string;
-  /** The path to the API. Example: `"/api/v1"` */
+  /** The path to the API. Can be used to validate that your application supports this device and API version. Example: `"/api/v1"` */
   path: string;
-  /** The serial number of the device. Example: `"3c12e7659852"`. This is also a the Mac address of the device. */
+  /** The serial number of the device. Consists of 12 hexadecimal values. This is also a the Mac address of the device. Example: `"3c12e7659852"` */
   serial: string;
   /** The product name of this device. Example: `"Energy Socket"` */
   product_name: string;
-  /** A device type identifier. Example: `"HWE-SKT"` */
+  /** The product type, see Supported devices. Make sure your application can handle other values for future products. Example: `"HWE-SKT"` */
   product_type: SupportedDevices;
 }
 
