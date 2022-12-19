@@ -3,6 +3,9 @@
 
 name: Build & Test
 
+env:
+  TZ: Europe/Amsterdam # For our date tests
+
 on:
   push:
     branches: ['main']

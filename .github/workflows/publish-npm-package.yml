@@ -3,6 +3,9 @@
 
 name: Publish NPM Package
 
+env:
+  TZ: Europe/Amsterdam # For our date tests
+
 on:
   release:
     types: [created]
