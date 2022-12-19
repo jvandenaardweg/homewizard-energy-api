@@ -62,7 +62,7 @@
     "@types/node": "^18.11.15",
     "@typescript-eslint/eslint-plugin": "^5.46.1",
     "@typescript-eslint/parser": "^5.46.1",
-    "@vitest/coverage-istanbul": "^0.25.8",
+    "@vitest/coverage-istanbul": "^0.26.0",
     "dotenv-cli": "^6.0.0",
     "eslint": "^8.29.0",
     "eslint-plugin-prettier": "^4.2.1",
