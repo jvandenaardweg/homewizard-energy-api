@@ -1,5 +1,4 @@
 import { mockParsedTelegramResponse, mockTelegramResponse } from '@/mocks/data/telegram';
-import { e } from 'vitest/dist/index-5aad25c1';
 import {
   convertHexToAscii,
   parseHourlyReading,
