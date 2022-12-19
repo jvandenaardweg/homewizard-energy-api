@@ -194,12 +194,73 @@ describe('HomeWizardEnergyDiscovery', () => {
         expected,
       );
     });
+    it('should return the host details as an object from a mdns response', () => {
+      const expected = {
+        hostname: 'energysocket-27FF1E.local',
+        ip: '192.168.1.34',
+      };
+
+      expect(discoveryService['getHostDetailsFromResponse'](mockMdnsResponse)).toMatchObject(
+        expected,
+      );
+    });
   });
 
   describe('getFqdnFromResponse()', () => {
     it('should return the fqdn from a mdns response', () => {
       const expected = 'energysocket-27FF1E._hwenergy._tcp.local';
       expect(discoveryService['getFqdnFromResponse'](mockMdnsResponse)).toBe(expected);
+    });
+
+    // TODO: rename
+    it('should return the fqdn from a mdns response', () => {
+      const expected = null;
+
+      const test = {
+        ...mockMdnsResponse,
+        answers: [],
+      };
+      expect(discoveryService['getFqdnFromResponse'](test)).toBe(expected);
+    });
+
+    // TODO: rename
+    it('should return null when the data property in answer is missing', () => {
+      const expected = null;
+
+      const mockedMdnsResponseWithoutData = {
+        ...mockMdnsResponse,
+        answers: [
+          {
+            name: '_hwenergy._tcp.local',
+            type: 'PTR',
+            ttl: 4500,
+            class: 'IN',
+            flush: false,
+            // data: 'energysocket-27FF1E._hwenergy._tcp.local',
+          },
+        ],
+      } as multicastDns.ResponsePacket;
+      expect(discoveryService['getFqdnFromResponse'](mockedMdnsResponseWithoutData)).toBe(expected);
+    });
+    it('should return null if the data property in answer is not a string', () => {
+      const expected = null;
+
+      const mockedMdnsResponseWithoutDataString = {
+        ...mockMdnsResponse,
+        answers: [
+          {
+            name: '_hwenergy._tcp.local',
+            type: 'PTR',
+            ttl: 4500,
+            class: 'IN',
+            flush: false,
+            data: false as unknown as string, // test
+          },
+        ],
+      } as multicastDns.ResponsePacket;
+      expect(discoveryService['getFqdnFromResponse'](mockedMdnsResponseWithoutDataString)).toBe(
+        expected,
+      );
     });
   });
 
