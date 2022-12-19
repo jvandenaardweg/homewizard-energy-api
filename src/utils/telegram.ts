@@ -117,7 +117,6 @@ export function parseTelegram(telegram: string): ParsedTelegram {
     .filter(Boolean); // filter out empty lines
 
   const header = allLines[0].substring(1);
-  // const footer = allLines[allLines.length - 1];
 
   const [meterBrand, meterModal] = getMeterBrandModelFromHeader(header);
 
@@ -265,318 +264,315 @@ export function parseTelegram(telegram: string): ParsedTelegram {
 
   // Start parsing at line 3 since first two lines contain the header and an empty row
   for (const line of linesWithoutHeaderAndFooter) {
-    // Ignore empty lines (by removing the newline breaks and trimming spaces)
-    if (line.replace(/(\r\n|\n|\r)/gm, '').trim() != '') {
-      const parsedLine = parseLine(line);
+    const parsedLine = parseLine(line);
 
-      // https://github.com/dsmrreader/dsmr-reader/blob/4d07f391cbf84edaace9aab85c1c22a0080a27e9/dsmr_parser/obis_references.py
-      // 2016: https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_a727fce1f1.pdf
-      // 2014: https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_40f025334f.pdf
-      switch (parsedLine.obisCode) {
-        // Version information for P1 output
-        case '1-3:0.2.8': // version NL?
-        case '0-0:96.1.4': // version BE
-          parsedTelegram.version = parsedLine.value;
-          break;
+    // https://github.com/dsmrreader/dsmr-reader/blob/4d07f391cbf84edaace9aab85c1c22a0080a27e9/dsmr_parser/obis_references.py
+    // 2016: https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_a727fce1f1.pdf
+    // 2014: https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_40f025334f.pdf
+    switch (parsedLine.obisCode) {
+      // Version information for P1 output
+      case '1-3:0.2.8': // version NL?
+      case '0-0:96.1.4': // version BE
+        parsedTelegram.version = parsedLine.value;
+        break;
 
-        // Date-time stamp of the P1 message
-        case '0-0:1.0.0':
-          parsedTelegram.timestamp = parseTimestamp(parsedLine.value);
-          break;
+      // Date-time stamp of the P1 message
+      case '0-0:1.0.0':
+        parsedTelegram.timestamp = parseTimestamp(parsedLine.value);
+        break;
 
-        // Equipment identifier
-        case '0-0:96.1.1':
-          parsedTelegram.equipmentId = parsedLine.value;
-          break;
+      // Equipment identifier
+      case '0-0:96.1.1':
+        parsedTelegram.equipmentId = parsedLine.value;
+        break;
 
-        // TEXT_MESSAGE_CODE
-        case '0-0:96.13.1':
-          parsedTelegram.textMessage.codes = parsedLine.value;
-          break;
+      // TEXT_MESSAGE_CODE
+      case '0-0:96.13.1':
+        parsedTelegram.textMessage.codes = parsedLine.value;
+        break;
 
-        // Text message max 1024 characters.
-        case '0-0:96.13.0':
-          parsedTelegram.textMessage.message = convertHexToAscii(parsedLine.value);
-          break;
+      // Text message max 1024 characters.
+      case '0-0:96.13.0':
+        parsedTelegram.textMessage.message = convertHexToAscii(parsedLine.value);
+        break;
 
-        // Meter Reading electricity delivered to client (Tariff 1) in 0,001 kWh
-        case '1-0:1.8.1':
-          parsedTelegram.power.import.t1.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.import.t1.unit = parsedLine.unit;
-          break;
+      // Meter Reading electricity delivered to client (Tariff 1) in 0,001 kWh
+      case '1-0:1.8.1':
+        parsedTelegram.power.import.t1.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.import.t1.unit = parsedLine.unit;
+        break;
 
-        // Meter Reading electricity delivered to client (Tariff 2) in 0,001 kWh
-        case '1-0:1.8.2':
-          parsedTelegram.power.import.t2.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.import.t2.unit = parsedLine.unit;
-          break;
+      // Meter Reading electricity delivered to client (Tariff 2) in 0,001 kWh
+      case '1-0:1.8.2':
+        parsedTelegram.power.import.t2.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.import.t2.unit = parsedLine.unit;
+        break;
 
-        // Meter Reading electricity delivered by client (Tariff 1) in 0,001 kWh
-        case '1-0:2.8.1':
-          parsedTelegram.power.export.t1.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.export.t1.unit = parsedLine.unit;
-          break;
+      // Meter Reading electricity delivered by client (Tariff 1) in 0,001 kWh
+      case '1-0:2.8.1':
+        parsedTelegram.power.export.t1.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.export.t1.unit = parsedLine.unit;
+        break;
 
-        // Meter Reading electricity delivered by client (Tariff 2) in 0,001 kWh
-        case '1-0:2.8.2':
-          parsedTelegram.power.export.t2.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.export.t2.unit = parsedLine.unit;
-          break;
+      // Meter Reading electricity delivered by client (Tariff 2) in 0,001 kWh
+      case '1-0:2.8.2':
+        parsedTelegram.power.export.t2.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.export.t2.unit = parsedLine.unit;
+        break;
 
-        // Tariff indicator electricity.
-        // The tariff indicator can also be used to switch tariff dependent loads e.g boilers.
-        // This is the responsibility of the P1 user
-        case '0-0:96.14.0':
-          parsedTelegram.power.tariffIndicator = parseInt(parsedLine.value);
-          break;
+      // Tariff indicator electricity.
+      // The tariff indicator can also be used to switch tariff dependent loads e.g boilers.
+      // This is the responsibility of the P1 user
+      case '0-0:96.14.0':
+        parsedTelegram.power.tariffIndicator = parseInt(parsedLine.value);
+        break;
 
-        // Actual electricity power delivered (+P) in 1 Watt resolution
-        case '1-0:1.7.0':
-          parsedTelegram.power.import.active.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.import.active.unit = parsedLine.unit;
-          break;
+      // Actual electricity power delivered (+P) in 1 Watt resolution
+      case '1-0:1.7.0':
+        parsedTelegram.power.import.active.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.import.active.unit = parsedLine.unit;
+        break;
 
-        // Actual electricity power received (-P) in 1 Watt resolution
-        case '1-0:2.7.0':
-          parsedTelegram.power.export.active.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.export.active.unit = parsedLine.unit;
-          break;
+      // Actual electricity power received (-P) in 1 Watt resolution
+      case '1-0:2.7.0':
+        parsedTelegram.power.export.active.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.export.active.unit = parsedLine.unit;
+        break;
 
-        // The actual threshold Electricity in kW
-        // probably not available anymore?
-        // page 25: https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_40f025334f.pdf
-        case '0-0:17.0.0':
-          parsedTelegram.power.threshold.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.threshold.unit = parsedLine.unit;
-          break;
+      // The actual threshold Electricity in kW
+      // probably not available anymore?
+      // page 25: https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_40f025334f.pdf
+      case '0-0:17.0.0':
+        parsedTelegram.power.threshold.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.threshold.unit = parsedLine.unit;
+        break;
 
-        // Switch position Electricity (in/out/enabled).
-        // probably not available anymore?
-        // page: 25https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_40f025334f.pdf
-        case '0-0:96.3.10':
-          parsedTelegram.power.switchPosition = parsedLine.value; // TODO: parseBreaker
-          break;
+      // Switch position Electricity (in/out/enabled).
+      // probably not available anymore?
+      // page: 25https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_40f025334f.pdf
+      case '0-0:96.3.10':
+        parsedTelegram.power.switchPosition = parsedLine.value; // TODO: parseBreaker
+        break;
 
-        // Number of power failures in any phase
-        case '0-0:96.7.21':
-          parsedTelegram.power.numberOfPowerFailures = parseInt(parsedLine.value);
-          break;
+      // Number of power failures in any phase
+      case '0-0:96.7.21':
+        parsedTelegram.power.numberOfPowerFailures = parseInt(parsedLine.value);
+        break;
 
-        // Number of long power failures in any phase
-        case '0-0:96.7.9':
-          parsedTelegram.power.numberOfLongPowerFailures = parseInt(parsedLine.value);
-          break;
+      // Number of long power failures in any phase
+      case '0-0:96.7.9':
+        parsedTelegram.power.numberOfLongPowerFailures = parseInt(parsedLine.value);
+        break;
 
-        // Power Failure Event Log (long power failures)
-        case '1-0:99.97.0':
-          parsedTelegram.power.longPowerFailureLog = parsePowerFailureEventLog(parsedLine.value);
+      // Power Failure Event Log (long power failures)
+      case '1-0:99.97.0':
+        parsedTelegram.power.longPowerFailureLog = parsePowerFailureEventLog(parsedLine.value);
 
-          break;
+        break;
 
-        // Number of voltage sags in phase L1
-        case '1-0:32.32.0':
-          parsedTelegram.power.voltageSags.l1 = parseInt(parsedLine.value);
-          break;
+      // Number of voltage sags in phase L1
+      case '1-0:32.32.0':
+        parsedTelegram.power.voltageSags.l1 = parseInt(parsedLine.value);
+        break;
 
-        // Number of voltage sags in phase L2
-        case '1-0:52.32.0':
-          parsedTelegram.power.voltageSags.l2 = parseInt(parsedLine.value);
-          break;
+      // Number of voltage sags in phase L2
+      case '1-0:52.32.0':
+        parsedTelegram.power.voltageSags.l2 = parseInt(parsedLine.value);
+        break;
 
-        // Number of voltage sags in phase L3
-        case '1-0:72.32.0':
-          parsedTelegram.power.voltageSags.l3 = parseInt(parsedLine.value);
-          break;
+      // Number of voltage sags in phase L3
+      case '1-0:72.32.0':
+        parsedTelegram.power.voltageSags.l3 = parseInt(parsedLine.value);
+        break;
 
-        // Number of voltage swells in phase L1
-        case '1-0:32.36.0':
-          parsedTelegram.power.voltageSwell.l1 = parseInt(parsedLine.value);
-          break;
+      // Number of voltage swells in phase L1
+      case '1-0:32.36.0':
+        parsedTelegram.power.voltageSwell.l1 = parseInt(parsedLine.value);
+        break;
 
-        // Number of voltage swells in phase L2
-        case '1-0:52.36.0':
-          parsedTelegram.power.voltageSwell.l2 = parseInt(parsedLine.value);
-          break;
+      // Number of voltage swells in phase L2
+      case '1-0:52.36.0':
+        parsedTelegram.power.voltageSwell.l2 = parseInt(parsedLine.value);
+        break;
 
-        // Number of voltage swells in phase L3
-        case '1-0:72.36.0':
-          parsedTelegram.power.voltageSwell.l3 = parseInt(parsedLine.value);
-          break;
+      // Number of voltage swells in phase L3
+      case '1-0:72.36.0':
+        parsedTelegram.power.voltageSwell.l3 = parseInt(parsedLine.value);
+        break;
 
-        // Instantaneous current L1 in A resolution.
-        case '1-0:31.7.0':
-          parsedTelegram.power.instantaneous.current.l1.value = parseInt(parsedLine.value);
-          parsedTelegram.power.instantaneous.current.l1.unit = parsedLine.unit;
-          break;
+      // Instantaneous current L1 in A resolution.
+      case '1-0:31.7.0':
+        parsedTelegram.power.instantaneous.current.l1.value = parseInt(parsedLine.value);
+        parsedTelegram.power.instantaneous.current.l1.unit = parsedLine.unit;
+        break;
 
-        // Instantaneous current L2 in A resolution.
-        case '1-0:51.7.0':
-          parsedTelegram.power.instantaneous.current.l2.value = parseInt(parsedLine.value);
-          parsedTelegram.power.instantaneous.current.l2.unit = parsedLine.unit;
-          break;
+      // Instantaneous current L2 in A resolution.
+      case '1-0:51.7.0':
+        parsedTelegram.power.instantaneous.current.l2.value = parseInt(parsedLine.value);
+        parsedTelegram.power.instantaneous.current.l2.unit = parsedLine.unit;
+        break;
 
-        // Instantaneous current L3 in A resolution
-        case '1-0:71.7.0':
-          parsedTelegram.power.instantaneous.current.l3.value = parseInt(parsedLine.value);
-          parsedTelegram.power.instantaneous.current.l3.unit = parsedLine.unit;
-          break;
+      // Instantaneous current L3 in A resolution
+      case '1-0:71.7.0':
+        parsedTelegram.power.instantaneous.current.l3.value = parseInt(parsedLine.value);
+        parsedTelegram.power.instantaneous.current.l3.unit = parsedLine.unit;
+        break;
 
-        // Instantaneous active power L1 (+P) in W resolution
-        case '1-0:21.7.0':
-          parsedTelegram.power.instantaneous.power.positive.l1.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.instantaneous.power.positive.l1.unit = parsedLine.unit;
-          break;
+      // Instantaneous active power L1 (+P) in W resolution
+      case '1-0:21.7.0':
+        parsedTelegram.power.instantaneous.power.positive.l1.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.instantaneous.power.positive.l1.unit = parsedLine.unit;
+        break;
 
-        // Instantaneous active power L2 (+P) in W resolution
-        case '1-0:41.7.0':
-          parsedTelegram.power.instantaneous.power.positive.l2.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.instantaneous.power.positive.l2.unit = parsedLine.unit;
-          break;
+      // Instantaneous active power L2 (+P) in W resolution
+      case '1-0:41.7.0':
+        parsedTelegram.power.instantaneous.power.positive.l2.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.instantaneous.power.positive.l2.unit = parsedLine.unit;
+        break;
 
-        // Instantaneous active power L3 (+P) in W resolution
-        case '1-0:61.7.0':
-          parsedTelegram.power.instantaneous.power.positive.l3.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.instantaneous.power.positive.l3.unit = parsedLine.unit;
-          break;
+      // Instantaneous active power L3 (+P) in W resolution
+      case '1-0:61.7.0':
+        parsedTelegram.power.instantaneous.power.positive.l3.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.instantaneous.power.positive.l3.unit = parsedLine.unit;
+        break;
 
-        // Instantaneous active power L1 (-P) in W resolution
-        case '1-0:22.7.0':
-          parsedTelegram.power.instantaneous.power.negative.l1.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.instantaneous.power.negative.l1.unit = parsedLine.unit;
-          break;
+      // Instantaneous active power L1 (-P) in W resolution
+      case '1-0:22.7.0':
+        parsedTelegram.power.instantaneous.power.negative.l1.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.instantaneous.power.negative.l1.unit = parsedLine.unit;
+        break;
 
-        // Instantaneous active power L2 (-P) in W resolution
-        case '1-0:42.7.0':
-          parsedTelegram.power.instantaneous.power.negative.l2.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.instantaneous.power.negative.l2.unit = parsedLine.unit;
-          break;
+      // Instantaneous active power L2 (-P) in W resolution
+      case '1-0:42.7.0':
+        parsedTelegram.power.instantaneous.power.negative.l2.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.instantaneous.power.negative.l2.unit = parsedLine.unit;
+        break;
 
-        // Instantaneous active power L3 (-P) in W resolution
-        case '1-0:62.7.0':
-          parsedTelegram.power.instantaneous.power.negative.l3.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.instantaneous.power.negative.l3.unit = parsedLine.unit;
-          break;
+      // Instantaneous active power L3 (-P) in W resolution
+      case '1-0:62.7.0':
+        parsedTelegram.power.instantaneous.power.negative.l3.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.instantaneous.power.negative.l3.unit = parsedLine.unit;
+        break;
 
-        /**
-         * Device-Type
-         *
-         * The Smart Meter has 4 M-Bus interfaces which allow to connect external devices like a Gas, Thermal,
-         * Water or slave Electricity meter. The Obis code of external devices starts with 0-n (where n is a number from 1 to 4)
-         *
-         * However, the way to correctly determine the type of external device that is connected to each M-Bus is very poorly documented.
-         * At the moment only Gas meters are being installed by the grid companies as far as I know.
-         * So we make the assumption that a gas meter is attached to M-Bus 1.
-         */
-        case '0-1:24.1.0':
-        case '0-2:24.1.0':
-        case '0-3:24.1.0':
-        case '0-4:24.1.0':
-          parsedTelegram.gas.deviceType = parsedLine.value;
-          break;
+      /**
+       * Device-Type
+       *
+       * The Smart Meter has 4 M-Bus interfaces which allow to connect external devices like a Gas, Thermal,
+       * Water or slave Electricity meter. The Obis code of external devices starts with 0-n (where n is a number from 1 to 4)
+       *
+       * However, the way to correctly determine the type of external device that is connected to each M-Bus is very poorly documented.
+       * At the moment only Gas meters are being installed by the grid companies as far as I know.
+       * So we make the assumption that a gas meter is attached to M-Bus 1.
+       */
+      case '0-1:24.1.0':
+      case '0-2:24.1.0':
+      case '0-3:24.1.0':
+      case '0-4:24.1.0':
+        parsedTelegram.gas.deviceType = parsedLine.value;
+        break;
 
-        // Equipment identifier (Gas)
-        // Equipment identifier (Thermal: Heat or Cold)
-        // Equipment identifier (Water)
-        case '0-1:96.1.0':
-        case '0-2:96.1.0':
-        case '0-3:96.1.0':
-        case '0-4:96.1.0':
-        case '0-1:96.1.1':
-          parsedTelegram.gas.equipmentId = parsedLine.value;
-          break;
+      // Equipment identifier (Gas)
+      // Equipment identifier (Thermal: Heat or Cold)
+      // Equipment identifier (Water)
+      case '0-1:96.1.0':
+      case '0-2:96.1.0':
+      case '0-3:96.1.0':
+      case '0-4:96.1.0':
+      case '0-1:96.1.1':
+        parsedTelegram.gas.equipmentId = parsedLine.value;
+        break;
 
-        // Last 5-minute value (temperature converted), gas delivered to client in m3, including decimal values and capture time
-        // Last 5-minute Meter reading Heat or Cold in 0,01 GJ and capture time
-        // Last 5-minute Meter reading in 0,001 m3 and capture time
-        // Last 5-minute Meter reading and capture time (e.g. slave E meter)
-        case '0-1:24.2.1':
-        case '0-2:24.2.1':
-        case '0-3:24.2.1':
-        case '0-4:24.2.1':
-          // eslint-disable-next-line no-case-declarations
-          const hourlyReading = parseHourlyReading(parsedLine.value);
+      // Last 5-minute value (temperature converted), gas delivered to client in m3, including decimal values and capture time
+      // Last 5-minute Meter reading Heat or Cold in 0,01 GJ and capture time
+      // Last 5-minute Meter reading in 0,001 m3 and capture time
+      // Last 5-minute Meter reading and capture time (e.g. slave E meter)
+      case '0-1:24.2.1':
+      case '0-2:24.2.1':
+      case '0-3:24.2.1':
+      case '0-4:24.2.1':
+        // eslint-disable-next-line no-case-declarations
+        const hourlyReading = parseHourlyReading(parsedLine.value);
 
-          parsedTelegram.gas.timestamp = parseTimestamp(hourlyReading?.timestamp);
-          parsedTelegram.gas.value = parseFloat(hourlyReading?.value || '0');
-          parsedTelegram.gas.unit = hourlyReading?.unit || null;
-          break;
+        parsedTelegram.gas.timestamp = parseTimestamp(hourlyReading?.timestamp);
+        parsedTelegram.gas.value = parseFloat(hourlyReading?.value || '0');
+        parsedTelegram.gas.unit = hourlyReading?.unit || null;
+        break;
 
-        // Gas, probably BE
-        case '0-1:24.2.3':
-          // eslint-disable-next-line no-case-declarations
-          const instantValue = parsedLine.value.substring(15, 9);
+      // Gas, probably BE
+      case '0-1:24.2.3':
+        // eslint-disable-next-line no-case-declarations
+        const instantValue = parsedLine.value.substring(15, 9);
 
-          // eslint-disable-next-line no-case-declarations
-          const instantUnit = parsedLine.value.substring(25, 2) as TelegramUnit;
+        // eslint-disable-next-line no-case-declarations
+        const instantUnit = parsedLine.value.substring(25, 2) as TelegramUnit;
 
-          parsedTelegram.gas.value = parseFloat(instantValue);
-          parsedTelegram.gas.unit = instantUnit;
-          break;
+        parsedTelegram.gas.value = parseFloat(instantValue);
+        parsedTelegram.gas.unit = instantUnit;
+        break;
 
-        // Valve position (Gas) (BE)
-        case '0-1:24.4.0':
-        case '0-2:24.4.0':
-        case '0-3:24.4.0':
-        case '0-4:24.4.0':
-          parsedTelegram.gas.valvePosition = parsedLine.value;
-          break;
+      // Valve position (Gas) (BE)
+      case '0-1:24.4.0':
+      case '0-2:24.4.0':
+      case '0-3:24.4.0':
+      case '0-4:24.4.0':
+        parsedTelegram.gas.valvePosition = parsedLine.value;
+        break;
 
-        /*
-         * DSMR 2.2 specific mappings
-         */
+      /*
+       * DSMR 2.2 specific mappings
+       */
 
-        case '0-1:24.3.0':
-          // eslint-disable-next-line no-case-declarations
-          const split = parsedLine.value.split(')(');
-          parsedTelegram.gas.timestamp = parseTimestamp(split[0]);
-          parsedTelegram.gas.unit = split[5] as TelegramUnit;
-          break;
+      case '0-1:24.3.0':
+        // eslint-disable-next-line no-case-declarations
+        const split = parsedLine.value.split(')(');
+        parsedTelegram.gas.timestamp = parseTimestamp(split[0]);
+        parsedTelegram.gas.unit = split[5] as TelegramUnit;
+        break;
 
-        /*
-         * DSMR 5.0 specific mappings
-         */
+      /*
+       * DSMR 5.0 specific mappings
+       */
 
-        // Instantaneous voltage L1 in V resolution
-        case '1-0:32.7.0':
-          parsedTelegram.power.instantaneous.voltage.l1.value = parseInt(parsedLine.value);
-          parsedTelegram.power.instantaneous.voltage.l1.unit = parsedLine.unit;
-          break;
+      // Instantaneous voltage L1 in V resolution
+      case '1-0:32.7.0':
+        parsedTelegram.power.instantaneous.voltage.l1.value = parseInt(parsedLine.value);
+        parsedTelegram.power.instantaneous.voltage.l1.unit = parsedLine.unit;
+        break;
 
-        // Instantaneous voltage L2 in V resolution
-        case '1-0:52.7.0':
-          parsedTelegram.power.instantaneous.voltage.l2.value = parseInt(parsedLine.value);
-          parsedTelegram.power.instantaneous.voltage.l2.unit = parsedLine.unit;
-          break;
+      // Instantaneous voltage L2 in V resolution
+      case '1-0:52.7.0':
+        parsedTelegram.power.instantaneous.voltage.l2.value = parseInt(parsedLine.value);
+        parsedTelegram.power.instantaneous.voltage.l2.unit = parsedLine.unit;
+        break;
 
-        // Instantaneous voltage L3 in V resolution
-        case '1-0:72.7.0':
-          parsedTelegram.power.instantaneous.voltage.l3.value = parseInt(parsedLine.value);
-          parsedTelegram.power.instantaneous.voltage.l3.unit = parsedLine.unit;
-          break;
+      // Instantaneous voltage L3 in V resolution
+      case '1-0:72.7.0':
+        parsedTelegram.power.instantaneous.voltage.l3.value = parseInt(parsedLine.value);
+        parsedTelegram.power.instantaneous.voltage.l3.unit = parsedLine.unit;
+        break;
 
-        /*
-         * eMUCs 1.4 specific mappings
-         */
+      /*
+       * eMUCs 1.4 specific mappings
+       */
 
-        case '1-0:31.4.0':
-          parsedTelegram.power.fuseThreshold.value = parseFloat(parsedLine.value);
-          parsedTelegram.power.fuseThreshold.unit = 'A';
-          break;
+      case '1-0:31.4.0':
+        parsedTelegram.power.fuseThreshold.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.fuseThreshold.unit = 'A';
+        break;
 
-        /*
-         * Handling anything not matched so far
-         */
+      /*
+       * Handling anything not matched so far
+       */
 
-        default:
-          // Due to a 'bug' in DSMR2.2 the gas reading value is put on a separate line, so we catch it here with a regex
-          // Format of the line containing that reading is: "(012345.678)"
-          if (line.match(/\([0-9]{5}\.[0-9]{3}\)/)) {
-            parsedTelegram.gas.value = parseFloat(line.substring(1, 10));
-          } else {
-            console.error('Unable to parse line: ' + line);
-          }
-          break;
-      }
+      default:
+        // Due to a 'bug' in DSMR2.2 the gas reading value is put on a separate line, so we catch it here with a regex
+        // Format of the line containing that reading is: "(012345.678)"
+        if (line.match(/\([0-9]{5}\.[0-9]{3}\)/)) {
+          parsedTelegram.gas.value = parseFloat(line.substring(1, 10));
+        } else {
+          console.error('Unable to parse line: ' + line);
+        }
+        break;
     }
   }
 
