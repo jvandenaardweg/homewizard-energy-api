@@ -1,13 +1,10 @@
 import { mockBasicInformationResponse } from '@/mocks/data/basic';
 
-import { mockApiUrl } from '@/mocks/api';
-import { Interceptable, MockAgent, setGlobalDispatcher } from 'undici';
+import { mockApiPool, mockApiUrl } from '@/mocks/api';
 import { mockP1MeterDataResponse } from '@/mocks/data/data';
 import { mockParsedTelegramResponse, mockTelegramResponse } from '@/mocks/data/telegram';
 import { P1MeterApi } from '@/p1-meter-api';
 
-let mockApiAgent: MockAgent;
-let mockApiPool: Interceptable;
 let p1MeterApi: P1MeterApi;
 
 const mockBasicResponse = mockBasicInformationResponse['HWE-P1'];
@@ -19,22 +16,6 @@ describe('HomeWizardEnergyApi', () => {
         interval: 10,
       },
     });
-
-    mockApiAgent = new MockAgent({
-      bodyTimeout: 10,
-      keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10,
-    });
-
-    mockApiAgent.disableNetConnect();
-
-    setGlobalDispatcher(mockApiAgent);
-
-    mockApiPool = mockApiAgent.get(mockApiUrl);
-  });
-
-  afterEach(async () => {
-    await mockApiAgent.close();
   });
 
   describe('constructor', () => {

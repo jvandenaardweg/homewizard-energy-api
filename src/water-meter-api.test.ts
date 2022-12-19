@@ -1,12 +1,9 @@
 import { mockBasicInformationResponse } from '@/mocks/data/basic';
 
-import { mockApiUrl } from '@/mocks/api';
-import { Interceptable, MockAgent, setGlobalDispatcher } from 'undici';
+import { mockApiPool, mockApiUrl } from '@/mocks/api';
 import { mockWaterMeterDataResponse } from '@/mocks/data/data';
 import { WaterMeterApi } from '@/water-meter-api';
 
-let mockApiAgent: MockAgent;
-let mockApiPool: Interceptable;
 let waterMeterApi: WaterMeterApi;
 
 const mockBasicResponse = mockBasicInformationResponse['HWE-WTR'];
@@ -14,22 +11,6 @@ const mockBasicResponse = mockBasicInformationResponse['HWE-WTR'];
 describe('WaterMeterApi', () => {
   beforeEach(() => {
     waterMeterApi = new WaterMeterApi(mockApiUrl);
-
-    mockApiAgent = new MockAgent({
-      bodyTimeout: 10,
-      keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10,
-    });
-
-    mockApiAgent.disableNetConnect();
-
-    setGlobalDispatcher(mockApiAgent);
-
-    mockApiPool = mockApiAgent.get(mockApiUrl);
-  });
-
-  afterEach(async () => {
-    await mockApiAgent.close();
   });
 
   it('should be able to create a new instance', () => {

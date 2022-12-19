@@ -1,12 +1,9 @@
 import { mockBasicInformationResponse } from '@/mocks/data/basic';
 
-import { mockApiUrl } from '@/mocks/api';
-import { Interceptable, MockAgent, setGlobalDispatcher } from 'undici';
+import { mockApiPool, mockApiUrl } from '@/mocks/api';
 import { mockKwhMeter1PhaseResponse } from '@/mocks/data/data';
 import { KwhMeter1PhaseApi } from '@/kwh-meter-1-phase-api';
 
-let mockApiAgent: MockAgent;
-let mockApiPool: Interceptable;
 let kwhMeter1PhaseApi: KwhMeter1PhaseApi;
 
 const mockBasicResponse = mockBasicInformationResponse['SDM230-wifi'];
@@ -14,22 +11,6 @@ const mockBasicResponse = mockBasicInformationResponse['SDM230-wifi'];
 describe('KwhMeter1PhaseApi', () => {
   beforeEach(() => {
     kwhMeter1PhaseApi = new KwhMeter1PhaseApi(mockApiUrl);
-
-    mockApiAgent = new MockAgent({
-      bodyTimeout: 10,
-      keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10,
-    });
-
-    mockApiAgent.disableNetConnect();
-
-    setGlobalDispatcher(mockApiAgent);
-
-    mockApiPool = mockApiAgent.get(mockApiUrl);
-  });
-
-  afterEach(async () => {
-    await mockApiAgent.close();
   });
 
   it('should be able to create a new instance', () => {

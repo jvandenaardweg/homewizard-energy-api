@@ -1,15 +1,12 @@
-import { Interceptable, MockAgent, setGlobalDispatcher } from 'undici';
 import { mockBasicInformationResponse } from '@/mocks/data/basic';
 import { mockStateResponse } from '@/mocks/data/state';
 import { mockIdentifyResponse } from '@/mocks/data/identify';
-import { mockApiUrl } from '@/mocks/api';
+import { mockApiPool, mockApiUrl } from '@/mocks/api';
 import { StateResponse, SystemPutParams } from '@/types';
 import { mockEnergySocketDataResponse } from '@/mocks/data/data';
 import { mockSystemResponse } from '@/mocks/data/system';
 import { EnergySocketApi } from '@/energy-socket-api';
 
-let mockApiAgent: MockAgent;
-let mockApiPool: Interceptable;
 let energySocketApi: EnergySocketApi;
 
 const mockBasicResponse = mockBasicInformationResponse['HWE-SKT'];
@@ -17,22 +14,6 @@ const mockBasicResponse = mockBasicInformationResponse['HWE-SKT'];
 describe('EnergySocketApi', () => {
   beforeEach(() => {
     energySocketApi = new EnergySocketApi(mockApiUrl);
-
-    mockApiAgent = new MockAgent({
-      bodyTimeout: 10,
-      keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10,
-    });
-
-    mockApiAgent.disableNetConnect();
-
-    setGlobalDispatcher(mockApiAgent);
-
-    mockApiPool = mockApiAgent.get(mockApiUrl);
-  });
-
-  afterEach(async () => {
-    await mockApiAgent.close();
   });
 
   it('should be able to create a new instance', () => {
