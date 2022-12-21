@@ -2,6 +2,7 @@ import { HomeWizardEnergyDiscovery } from '@/homewizard-energy-discovery';
 import { MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE } from '@/types';
 import * as multicastDns from 'multicast-dns';
 import {
+  mockDiscoveryResponse,
   mockMdnsGoodbyeResponse,
   mockMdnsResponse,
   mockMdnsResponseChromecast,
@@ -11,6 +12,7 @@ let discoveryService: HomeWizardEnergyDiscovery;
 
 const querySpy = vi.fn();
 const onSpy = vi.fn();
+const emitSpy = vi.fn();
 const removeAllListenersSpy = vi.fn();
 const destroySpy = vi.fn();
 
@@ -20,6 +22,7 @@ vi.mock('multicast-dns', () => {
       return {
         query: querySpy,
         on: onSpy,
+        emit: emitSpy,
         removeAllListeners: removeAllListenersSpy,
         destroy: destroySpy,
       };
@@ -61,29 +64,125 @@ describe('HomeWizardEnergyDiscovery', () => {
     expect(destroySpy).toHaveBeenCalledOnce();
   });
 
-  // it('should trigger the "discovered" event when a response is received', () => {
-  //   const discoveredSpy = vi.fn();
+  it('should return an error when on is invoked without start() being invoked first', () => {
+    const callbackSpy = vi.fn();
+    expect(() => discoveryService.on('response', callbackSpy)).toThrowError(
+      'mDNS is not started, call discovery.start() first',
+    );
 
-  //   discoveryService.on('discovered', discoveredSpy);
+    expect(callbackSpy).not.toHaveBeenCalled();
+  });
 
-  //   discoveryService.start();
+  it('should trigger the logger invoking a method', async () => {
+    const loggerSpy = vi.fn();
 
-  //   const response = {
-  //     answers: [
-  //       {
-  //         name: 'test',
-  //         type: 'A',
-  //         ttl: 120,
-  //         data: ''
-  //       },
-  //     ],
-  //   };
+    const discoveryServiceWithLogger = new HomeWizardEnergyDiscovery({
+      logger: {
+        method: loggerSpy,
+      },
+    });
 
-  //   onSpy.mock.calls[0][1](response);
+    discoveryServiceWithLogger.start();
 
-  //   expect(discoveredSpy).toHaveBeenCalledOnce();
-  //   expect(discoveredSpy).toHaveBeenCalledWith(response);
-  // });
+    expect(loggerSpy).toHaveBeenCalled();
+  });
+
+  describe('handleMdnsResponse()', () => {
+    it('should return a function', () => {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      expect(discoveryService['handleMdnsResponse'](() => {})).toBeInstanceOf(Function);
+    });
+
+    it('should call the callback when invoked with a response that is no goodbye response', () => {
+      const handleMdnsResponseCallback = vi.fn();
+
+      discoveryService['handleMdnsResponse'](handleMdnsResponseCallback)(mockMdnsResponse);
+
+      expect(handleMdnsResponseCallback).toHaveBeenCalledOnce();
+      expect(handleMdnsResponseCallback).toHaveBeenCalledWith(mockDiscoveryResponse);
+    });
+
+    it('should not call the callback when invoked with a goodbye response', () => {
+      const handleMdnsResponseCallback = vi.fn();
+
+      discoveryService['handleMdnsResponse'](handleMdnsResponseCallback)(mockMdnsGoodbyeResponse);
+
+      expect(handleMdnsResponseCallback).not.toHaveBeenCalled();
+    });
+
+    it('should not call the callback when invoked with a response that is no homewizard energy response', () => {
+      const handleMdnsResponseCallback = vi.fn();
+
+      discoveryService['handleMdnsResponse'](handleMdnsResponseCallback)(
+        mockMdnsResponseChromecast,
+      );
+
+      expect(handleMdnsResponseCallback).not.toHaveBeenCalled();
+    });
+
+    it('should not call the callback when invoked with a response that misses the answers property', () => {
+      const handleMdnsResponseCallback = vi.fn();
+
+      discoveryService['handleMdnsResponse'](handleMdnsResponseCallback)({
+        ...mockMdnsResponse,
+        answers: undefined as unknown as multicastDns.ResponsePacket['answers'],
+      });
+
+      expect(handleMdnsResponseCallback).not.toHaveBeenCalled();
+    });
+
+    it('should not call the callback when invoked with a response that misses the fqdn', () => {
+      const handleMdnsResponseCallback = vi.fn();
+
+      discoveryService['handleMdnsResponse'](handleMdnsResponseCallback)({
+        ...mockMdnsResponse,
+        answers: [
+          {
+            ...mockMdnsResponse.answers[0],
+            name: undefined as unknown as string,
+          },
+        ],
+      });
+
+      expect(handleMdnsResponseCallback).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleMdnsError()', () => {
+    it('should return a function', () => {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      expect(discoveryService['handleMdnsError'](() => {})).toBeInstanceOf(Function);
+    });
+
+    it('should call the callback when invoked with an error', () => {
+      const handleMdnsErrorCallback = vi.fn();
+
+      const mockError = new Error('Some error');
+
+      discoveryService['handleMdnsError'](handleMdnsErrorCallback)(mockError);
+
+      expect(handleMdnsErrorCallback).toHaveBeenCalledOnce();
+      expect(handleMdnsErrorCallback).toHaveBeenCalledWith(mockError);
+    });
+  });
+
+  describe('handleMdnsWarning()', () => {
+    it('should return a function', () => {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      expect(discoveryService['handleMdnsWarning'](() => {})).toBeInstanceOf(Function);
+    });
+
+    it('should call the callback when invoked with an error', () => {
+      const handleMdnsWarningCallback = vi.fn();
+
+      const mockError = new Error('Some warning');
+
+      discoveryService['handleMdnsWarning'](handleMdnsWarningCallback)(mockError);
+
+      expect(handleMdnsWarningCallback).toHaveBeenCalledOnce();
+      expect(handleMdnsWarningCallback).toHaveBeenCalledWith(mockError);
+    });
+  });
 
   describe('isGoodbyeResponse()', () => {
     it('should return true when invoked with a goodbye response', () => {
@@ -264,18 +363,46 @@ describe('HomeWizardEnergyDiscovery', () => {
     });
   });
 
-  it('should trigger the logger invoking a method', async () => {
-    const loggerSpy = vi.fn();
+  describe('getCachedResponseByFqdn', () => {
+    it('should return the cached response by fqdn', () => {
+      discoveryService['cachedDiscoveryResponses'] = [mockDiscoveryResponse];
 
-    const discoveryServiceWithLogger = new HomeWizardEnergyDiscovery({
-      logger: {
-        method: loggerSpy,
-      },
+      const mockFqdn = 'energysocket-27FF1E._hwenergy._tcp.local';
+
+      expect(discoveryService['getCachedResponseByFqdn'](mockFqdn)).toBe(mockDiscoveryResponse);
     });
 
-    discoveryServiceWithLogger.start();
+    it('should return undefined if no cached response is found', () => {
+      discoveryService['cachedDiscoveryResponses'] = [];
 
-    expect(loggerSpy).toHaveBeenCalled();
+      const mockFqdn = 'energysocket-27FF1E._hwenergy._tcp.local';
+
+      expect(discoveryService['getCachedResponseByFqdn'](mockFqdn)).toBeUndefined();
+    });
+  });
+
+  describe('removeCachedResponseByFqdn', () => {
+    it('should remove the cached response by fqdn', () => {
+      discoveryService['cachedDiscoveryResponses'] = [mockDiscoveryResponse];
+
+      discoveryService['removeCachedResponseByFqdn'](mockDiscoveryResponse.fqdn);
+
+      expect(discoveryService['cachedDiscoveryResponses']).not.toContain(mockDiscoveryResponse);
+    });
+  });
+
+  describe('isDiscoveryResponseInCache', () => {
+    it('should return true if the discovery response is in the cache', () => {
+      discoveryService['cachedDiscoveryResponses'] = [mockDiscoveryResponse];
+
+      expect(discoveryService['isDiscoveryResponseInCache'](mockDiscoveryResponse)).toBe(true);
+    });
+
+    it('should return false if the discovery response is not in the cache', () => {
+      discoveryService['cachedDiscoveryResponses'] = [];
+
+      expect(discoveryService['isDiscoveryResponseInCache'](mockDiscoveryResponse)).toBe(false);
+    });
   });
 
   // TODO: test on response and error/warning

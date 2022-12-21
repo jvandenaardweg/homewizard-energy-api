@@ -1,4 +1,5 @@
 import * as multicastDns from 'multicast-dns';
+import { DiscoveryResponse } from '..';
 
 export const mockMdnsTxtData = [
   Buffer.from([97, 112, 105, 95, 101, 110, 97, 98, 108, 101, 100, 61, 49]),
@@ -68,6 +69,19 @@ export const mockMdnsResponse: multicastDns.ResponsePacket = {
       data: '192.168.1.34',
     },
   ],
+};
+
+export const mockDiscoveryResponse: DiscoveryResponse = {
+  fqdn: 'energysocket-27FF1E._hwenergy._tcp.local',
+  hostname: 'energysocket-27FF1E.local',
+  ip: '192.168.1.34',
+  txt: {
+    api_enabled: '1',
+    path: '/api/v1',
+    product_name: 'Energy Socket',
+    product_type: 'HWE-SKT',
+    serial: '3c39e727ff1e',
+  },
 };
 
 export const mockMdnsGoodbyeResponse: multicastDns.ResponsePacket = {

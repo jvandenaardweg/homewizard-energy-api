@@ -78,6 +78,7 @@ export class HomeWizardEnergyDiscovery {
     //   return;
     // }
 
+    console.log(event);
     if (event === 'error') {
       this.mdns.on(event, this.handleMdnsError(callback));
       return;
@@ -120,7 +121,7 @@ export class HomeWizardEnergyDiscovery {
    */
   protected isHomeWizardEnergyResponse(response: multicastDns.ResponsePacket): boolean {
     return (
-      response.answers.filter(answer => {
+      response.answers?.filter(answer => {
         if ('data' in answer && typeof answer.data === 'string') {
           return answer.data.includes(MDNS_DISCOVERY_TYPE);
         }
@@ -180,7 +181,7 @@ export class HomeWizardEnergyDiscovery {
 
   protected getFqdnFromResponse(response: multicastDns.ResponsePacket): string | null {
     const ptr = response.answers.find(
-      a => a.type === 'PTR' && a.name.includes(MDNS_DISCOVERY_TYPE),
+      a => a.type === 'PTR' && a.name?.includes(MDNS_DISCOVERY_TYPE),
     );
 
     if (!ptr) {
@@ -198,11 +199,27 @@ export class HomeWizardEnergyDiscovery {
     return ptr.data;
   }
 
+  protected getCachedResponseByFqdn(fqdn: string): DiscoveryResponse | undefined {
+    return this.cachedDiscoveryResponses.find(cachedResponse => cachedResponse.fqdn === fqdn);
+  }
+
+  protected removeCachedResponseByFqdn(fqdn: string): void {
+    this.cachedDiscoveryResponses = this.cachedDiscoveryResponses.filter(
+      cachedResponse => cachedResponse.fqdn !== fqdn,
+    );
+  }
+
+  protected isDiscoveryResponseInCache(discoveryResponse: DiscoveryResponse): boolean {
+    return this.cachedDiscoveryResponses.some(cachedDiscoveryResponse =>
+      util.isDeepStrictEqual(discoveryResponse, cachedDiscoveryResponse),
+    );
+  }
+
   protected handleMdnsResponse(callback: (discoveryResponse: DiscoveryResponse) => void) {
     return (response: multicastDns.ResponsePacket) => {
       const isHomeWizardEnergyResponse = this.isHomeWizardEnergyResponse(response);
 
-      console.log(`Received response from mDNS: ${JSON.stringify(response)}`);
+      this.log(`Received response from mDNS: ${JSON.stringify(response)}`);
 
       if (!isHomeWizardEnergyResponse) {
         this.log('Response from mDNS is not from HomeWizard Energy, ignoring.');
@@ -221,22 +238,18 @@ export class HomeWizardEnergyDiscovery {
       if (this.isGoodbyeResponse(response)) {
         this.log(`Response is a goodbye message, we'll send a down event.`);
 
-        const cachedResponse = this.cachedDiscoveryResponses.find(
-          cachedResponse => cachedResponse.fqdn === fqdn,
-        );
+        const cachedResponse = this.getCachedResponseByFqdn(fqdn);
 
         if (!cachedResponse) {
           this.log(`No cached response found for ${fqdn}, ignoring.`);
         }
 
-        console.log('down!', cachedResponse);
+        this.log('down!', cachedResponse);
 
         // this.emit('down', cachedResponse);
 
         // Remove the response from cache by using the fqdn, which is specific enough
-        this.cachedDiscoveryResponses = this.cachedDiscoveryResponses.filter(
-          cachedResponse => cachedResponse.fqdn !== fqdn,
-        );
+        this.removeCachedResponseByFqdn(fqdn);
 
         return;
       }
@@ -264,11 +277,9 @@ export class HomeWizardEnergyDiscovery {
         txt: txtRecord,
       } satisfies DiscoveryResponse;
 
-      const isInCache = this.cachedDiscoveryResponses.some(cachedDiscoveryResponse =>
-        util.isDeepStrictEqual(discoveryResponse, cachedDiscoveryResponse),
-      );
+      const isDiscoveryResponseInCache = this.isDiscoveryResponseInCache(discoveryResponse);
 
-      if (isInCache) {
+      if (isDiscoveryResponseInCache) {
         this.log('Nothing changed. Response is already in cache, ignoring.');
         return;
       }
