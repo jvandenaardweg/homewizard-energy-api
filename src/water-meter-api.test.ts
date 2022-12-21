@@ -73,4 +73,69 @@ describe('WaterMeterApi', () => {
 
     expect(data).toStrictEqual(mockWaterMeterDataResponse);
   });
+
+  describe('polling.start()', () => {
+    it('should start polling the "data" endpoint', async () =>
+      new Promise(done => {
+        mockApiPool
+          .intercept({
+            path: `/api/v1/data`,
+            method: 'GET',
+          })
+          .reply(() => ({
+            data: mockWaterMeterDataResponse,
+            statusCode: 200,
+          }));
+
+        waterMeterApi.polling.getData.start();
+
+        waterMeterApi.polling.getData.on('response', response => {
+          expect(response).toMatchObject(mockWaterMeterDataResponse);
+          done(response);
+        });
+      }));
+  });
+
+  describe('polling.stop()', () => {
+    it('should start polling the "data" endpoint', async () =>
+      new Promise(done => {
+        mockApiPool
+          .intercept({
+            path: `/api/v1/data`,
+            method: 'GET',
+          })
+          .reply(() => ({
+            data: mockWaterMeterDataResponse,
+            statusCode: 200,
+          }));
+
+        waterMeterApi.polling.getData.start();
+
+        waterMeterApi.polling.getData.on('response', response => {
+          expect(response).toMatchObject(mockWaterMeterDataResponse);
+          done(response);
+        });
+      }));
+
+    it('should stop polling the "data" endpoint', async () => {
+      mockApiPool
+        .intercept({
+          path: `/api/v1/data`,
+          method: 'GET',
+        })
+        .reply(() => ({
+          data: mockWaterMeterDataResponse,
+          statusCode: 200,
+        }));
+
+      const stopPollingSpy = vi.fn();
+
+      waterMeterApi['stopPolling'] = stopPollingSpy;
+      waterMeterApi.polling.getData.start();
+      waterMeterApi.polling.getData.stop();
+
+      expect(stopPollingSpy).toHaveBeenCalledOnce();
+      expect(stopPollingSpy).toHaveBeenCalledWith('getData');
+    });
+  });
 });
