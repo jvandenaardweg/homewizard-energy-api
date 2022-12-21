@@ -80,6 +80,12 @@ export interface BaseApiOptions {
   polling?: PollingOptions;
 }
 
+// 2 seconds, we are on a local network, so all request should be fast
+export const DEFAULT_BODY_TIMEOUT = 2000;
+export const DEFAULT_HEADERS_TIMEOUT = 2000;
+
+export const DEFAULT_API_VERSION = 'v1';
+
 export class BaseApi {
   protected readonly baseUrl: string;
   protected readonly apiOptions: BaseApiOptions['api'];
@@ -94,10 +100,10 @@ export class BaseApi {
   constructor(baseUrl: string, options?: BaseApiOptions) {
     this.baseUrl = baseUrl;
     this.apiOptions = options?.api;
-    this.apiVersion = this.apiOptions?.version || 'v1';
+    this.apiVersion = this.apiOptions?.version || DEFAULT_API_VERSION;
     this.requestOptions = {
-      bodyTimeout: 2000, // 2 seconds, we are on a local network, so all request should be fast
-      headersTimeout: 2000,
+      bodyTimeout: DEFAULT_BODY_TIMEOUT,
+      headersTimeout: DEFAULT_HEADERS_TIMEOUT,
       // Allow user to overwrite the defaults
       ...options?.requestOptions,
     };
@@ -125,10 +131,10 @@ export class BaseApi {
     return this.eventEmitter.on(event, listener);
   }
 
-  protected request(...params: RequestParameters) {
-    return undiciRequest(params[0], {
+  protected request(url: RequestParameters[0], options: RequestParameters[1]) {
+    return undiciRequest(url, {
       ...this.requestOptions,
-      ...params[1],
+      ...options,
     });
   }
 
