@@ -50,6 +50,8 @@ export class P1MeterApi extends BaseApi {
   get polling(): P1MeterPolling<TelegramResponse> {
     const getTelegram = 'getTelegram';
 
+    // TODO: add getParsedTelegram
+
     return {
       ...super.polling,
       [getTelegram]: {
@@ -72,6 +74,8 @@ export class P1MeterApi extends BaseApi {
    */
   async getTelegram<T extends TelegramResponse>(): Promise<T> {
     const url = this.endpoints.telegram;
+
+    console.log('getTelegram', url);
 
     this.log(`Fetching telegram at ${url}`);
 

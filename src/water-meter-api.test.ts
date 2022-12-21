@@ -96,7 +96,7 @@ describe('WaterMeterApi', () => {
       }));
   });
 
-  describe('polling.stop()', () => {
+  describe('polling', () => {
     it('should start polling the "data" endpoint', async () =>
       new Promise(done => {
         mockApiPool
@@ -118,16 +118,6 @@ describe('WaterMeterApi', () => {
       }));
 
     it('should stop polling the "data" endpoint', async () => {
-      mockApiPool
-        .intercept({
-          path: `/api/v1/data`,
-          method: 'GET',
-        })
-        .reply(() => ({
-          data: mockWaterMeterDataResponse,
-          statusCode: 200,
-        }));
-
       const stopPollingSpy = vi.fn();
 
       waterMeterApi['stopPolling'] = stopPollingSpy;

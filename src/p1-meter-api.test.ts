@@ -158,6 +158,26 @@ describe('HomeWizardEnergyApi', () => {
   });
 
   describe('polling.getData', () => {
+    it('should should invoke startPolling() when invoking start()', async () => {
+      const startPollingSpy = vi.fn();
+
+      p1MeterApi['startPolling'] = startPollingSpy;
+      p1MeterApi.polling.getData.start();
+
+      expect(startPollingSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should should invoke stopPolling() when invoking stop()', async () => {
+      const stopPollingSpy = vi.fn();
+
+      p1MeterApi['stopPolling'] = stopPollingSpy;
+      p1MeterApi.polling.getData.start();
+      p1MeterApi.polling.getData.stop();
+
+      expect(stopPollingSpy).toHaveBeenCalledOnce();
+      expect(stopPollingSpy).toHaveBeenCalledWith('getData');
+    });
+
     it('should get a response event when polling /api/v1/data', async () =>
       new Promise(done => {
         mockApiPool
