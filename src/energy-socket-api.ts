@@ -21,15 +21,15 @@ export class EnergySocketApi extends BaseApi {
   getData<T extends EnergySocketDataResponse>(): Promise<T> {
     return super.getData();
   }
-  startPolling(
+  protected startPolling(
     method: 'getData',
     apiMethod: <T extends EnergySocketDataResponse>() => Promise<T>,
   ): Promise<void>;
-  startPolling(
+  protected startPolling(
     method: 'getState',
     apiMethod: <T extends StateResponse>() => Promise<T>,
   ): Promise<void>;
-  startPolling(method: string, apiMethod: () => Promise<unknown>): Promise<void> {
+  protected startPolling(method: string, apiMethod: () => Promise<unknown>): Promise<void> {
     return super.startPolling(method, apiMethod);
   }
 

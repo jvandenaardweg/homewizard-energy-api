@@ -10,7 +10,7 @@ export class KwhMeter1PhaseApi extends BaseApi {
   getData<T extends KwhMeter1PhaseDataResponse>(): Promise<T> {
     return super.getData();
   }
-  startPolling(
+  protected startPolling(
     method: 'getData',
     apiMethod: <T extends KwhMeter1PhaseDataResponse>() => Promise<T>,
   ): Promise<void> {

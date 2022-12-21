@@ -10,7 +10,7 @@ export class WaterMeterApi extends BaseApi {
   getData<T extends WaterMeterDataResponse>(): Promise<T> {
     return super.getData();
   }
-  startPolling(
+  protected startPolling(
     method: 'getData',
     apiMethod: <T extends WaterMeterDataResponse>() => Promise<T>,
   ): Promise<void> {

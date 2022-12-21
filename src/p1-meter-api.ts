@@ -2,9 +2,12 @@ import { BaseApi, BaseApiOptions, BasePolling, PollMethod } from '@/base-api';
 import { BasicInformationResponse, P1MeterDataResponse, TelegramResponse } from '@/types';
 import { ParsedTelegram, parseTelegram } from './utils/telegram';
 
-export interface P1MeterPolling<TTelegramResponse extends TelegramResponse>
-  extends BasePolling<P1MeterDataResponse> {
+export interface P1MeterPolling<
+  TTelegramResponse extends TelegramResponse,
+  TParsedTelegram extends ParsedTelegram,
+> extends BasePolling<P1MeterDataResponse> {
   getTelegram: PollMethod<TTelegramResponse>;
+  getParsedTelegram: PollMethod<TParsedTelegram>;
 }
 
 export class P1MeterApi extends BaseApi {
@@ -14,15 +17,19 @@ export class P1MeterApi extends BaseApi {
   getData<T extends P1MeterDataResponse>(): Promise<T> {
     return super.getData();
   }
-  startPolling(
+  protected startPolling(
     method: 'getData',
     apiMethod: <T extends P1MeterDataResponse>() => Promise<T>,
   ): Promise<void>;
-  startPolling(
+  protected startPolling(
     method: 'getTelegram',
     apiMethod: <T extends TelegramResponse>() => Promise<T>,
   ): Promise<void>;
-  startPolling(method: string, apiMethod: () => Promise<unknown>): Promise<void> {
+  protected startPolling(
+    method: 'getParsedTelegram',
+    apiMethod: <T extends TelegramResponse>() => Promise<T>,
+  ): Promise<void>;
+  protected startPolling(method: string, apiMethod: () => Promise<unknown>): Promise<void> {
     return super.startPolling(method, apiMethod);
   }
 
@@ -45,18 +52,22 @@ export class P1MeterApi extends BaseApi {
    * To start polling, call the `start()` method on the returned object.
    * The polling can be stopped by calling the `stop()` method.
    *
-   * Supported methods: `getData`, `getTelegram`
+   * Supported methods: `getData`, `getTelegram` and `getParsedTelegram`
    */
-  get polling(): P1MeterPolling<TelegramResponse> {
+  get polling(): P1MeterPolling<TelegramResponse, ParsedTelegram> {
     const getTelegram = 'getTelegram';
-
-    // TODO: add getParsedTelegram
+    const getParsedTelegram = 'getParsedTelegram';
 
     return {
       ...super.polling,
       [getTelegram]: {
         start: () => super.startPolling(getTelegram, this.getTelegram.bind(this)),
         stop: () => super.stopPolling(getTelegram),
+        on: super.on.bind(this),
+      },
+      [getParsedTelegram]: {
+        start: () => super.startPolling(getParsedTelegram, this.getParsedTelegram.bind(this)),
+        stop: () => super.stopPolling(getParsedTelegram),
         on: super.on.bind(this),
       },
     };
