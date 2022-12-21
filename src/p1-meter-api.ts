@@ -61,12 +61,12 @@ export class P1MeterApi extends BaseApi {
     return {
       ...super.polling,
       [getTelegram]: {
-        start: () => super.startPolling(getTelegram, this.getTelegram.bind(this)),
+        start: () => super.startPolling(getTelegram, this[getTelegram].bind(this)),
         stop: () => super.stopPolling(getTelegram),
         on: super.on.bind(this),
       },
       [getParsedTelegram]: {
-        start: () => super.startPolling(getParsedTelegram, this.getParsedTelegram.bind(this)),
+        start: () => super.startPolling(getParsedTelegram, this[getParsedTelegram].bind(this)),
         stop: () => super.stopPolling(getParsedTelegram),
         on: super.on.bind(this),
       },

@@ -55,4 +55,18 @@ describe('WaterMeterApi', () => {
 
     expect(data).toStrictEqual(mockKwhMeter3PhaseResponse);
   });
+
+  it('should start polling getData when start() is invoked', async () =>
+    new Promise(done => {
+      apiMocks.getData({
+        response: mockKwhMeter3PhaseResponse,
+      });
+
+      kwhMeter3PhaseApi.polling.getData.start();
+
+      kwhMeter3PhaseApi.polling.getData.on('response', response => {
+        expect(response).toStrictEqual(mockKwhMeter3PhaseResponse);
+        done(mockKwhMeter3PhaseResponse);
+      });
+    }));
 });

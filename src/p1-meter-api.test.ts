@@ -118,27 +118,7 @@ describe('HomeWizardEnergyApi', () => {
   });
 
   describe('polling.getData', () => {
-    it('should should invoke startPolling() when invoking start()', async () => {
-      const startPollingSpy = vi.fn();
-
-      p1MeterApi['startPolling'] = startPollingSpy;
-      p1MeterApi.polling.getData.start();
-
-      expect(startPollingSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should should invoke stopPolling() when invoking stop()', async () => {
-      const stopPollingSpy = vi.fn();
-
-      p1MeterApi['stopPolling'] = stopPollingSpy;
-      p1MeterApi.polling.getData.start();
-      p1MeterApi.polling.getData.stop();
-
-      expect(stopPollingSpy).toHaveBeenCalledOnce();
-      expect(stopPollingSpy).toHaveBeenCalledWith('getData');
-    });
-
-    it('should get a response event when polling /api/v1/data', async () =>
+    it('should start polling getData when start() is invoked', async () =>
       new Promise(done => {
         apiMocks.getData({
           response: mockP1MeterDataResponse,
@@ -148,7 +128,7 @@ describe('HomeWizardEnergyApi', () => {
 
         p1MeterApi.polling.getData.on('response', response => {
           expect(response).toStrictEqual(mockP1MeterDataResponse);
-          done(true);
+          done(mockP1MeterDataResponse);
         });
       }));
 
@@ -193,6 +173,49 @@ describe('HomeWizardEnergyApi', () => {
         p1MeterWithStopOnError.polling.getData.on('error', () => {
           expect(stopPollingSpy).toHaveBeenCalledTimes(1);
           done(true);
+        });
+      }));
+
+    it('should start polling getTelegram when start() is invoked', async () =>
+      new Promise(done => {
+        apiMocks.getTelegram({
+          response: mockTelegramResponse['v50l3_2'],
+        });
+
+        p1MeterApi.polling.getTelegram.start();
+
+        p1MeterApi.polling.getTelegram.on('response', response => {
+          expect(response).toBe(mockTelegramResponse['v50l3_2']);
+          done(mockTelegramResponse['v50l3_2']);
+        });
+      }));
+
+    // it('should stop polling getTelegram when stop() is invoked', () => {
+    //   apiMocks.getTelegram({
+    //     response: mockTelegramResponse['v50l3_2'],
+    //   });
+
+    //   const stopPollingSpy = vi.fn();
+
+    //   p1MeterApi['stopPolling'] = stopPollingSpy;
+
+    //   p1MeterApi.polling.getTelegram.start();
+    //   p1MeterApi.polling.getTelegram.stop();
+
+    //   expect(stopPollingSpy).toHaveBeenCalledOnce();
+    // });
+
+    it('should start polling getParsedTelegram when start() is invoked', async () =>
+      new Promise(done => {
+        apiMocks.getTelegram({
+          response: mockTelegramResponse['v50l3_2'],
+        });
+
+        p1MeterApi.polling.getParsedTelegram.start();
+
+        p1MeterApi.polling.getParsedTelegram.on('response', response => {
+          expect(response).toStrictEqual(mockParsedTelegramResponse['v50l3_2']);
+          done(mockParsedTelegramResponse['v50l3_2']);
         });
       }));
   });
