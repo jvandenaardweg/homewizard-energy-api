@@ -78,7 +78,6 @@ export class HomeWizardEnergyDiscovery {
     //   return;
     // }
 
-    console.log(event);
     if (event === 'error') {
       this.mdns.on(event, this.handleMdnsError(callback));
       return;
