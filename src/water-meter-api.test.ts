@@ -1,6 +1,6 @@
 import { mockBasicInformationResponse } from '@/mocks/data/basic';
 
-import { mockApiPool, mockApiUrl } from '@/mocks/api';
+import { apiMocks, mockApiUrl } from '@/mocks/api';
 import { mockWaterMeterDataResponse } from '@/mocks/data/data';
 import { WaterMeterApi } from '@/water-meter-api';
 
@@ -26,15 +26,9 @@ describe('WaterMeterApi', () => {
       },
     });
 
-    mockApiPool
-      .intercept({
-        path: '/api',
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: mockBasicResponse,
-        statusCode: 200,
-      }));
+    apiMocks.getBasicInformation({
+      response: mockBasicResponse,
+    });
 
     await waterMeterApiWithLogger.getBasicInformation();
 
@@ -43,15 +37,9 @@ describe('WaterMeterApi', () => {
   });
 
   it('should GET the "basic" endpoint', async () => {
-    mockApiPool
-      .intercept({
-        path: '/api',
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: mockBasicResponse,
-        statusCode: 200,
-      }));
+    apiMocks.getBasicInformation({
+      response: mockBasicResponse,
+    });
 
     const basicInformation = await waterMeterApi.getBasicInformation();
 
@@ -59,15 +47,9 @@ describe('WaterMeterApi', () => {
   });
 
   it('should GET the "data" endpoint', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/data`,
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: mockWaterMeterDataResponse,
-        statusCode: 200,
-      }));
+    apiMocks.getData({
+      response: mockWaterMeterDataResponse,
+    });
 
     const data = await waterMeterApi.getData();
 
@@ -77,15 +59,9 @@ describe('WaterMeterApi', () => {
   describe('polling.start()', () => {
     it('should start polling the "data" endpoint', async () =>
       new Promise(done => {
-        mockApiPool
-          .intercept({
-            path: `/api/v1/data`,
-            method: 'GET',
-          })
-          .reply(() => ({
-            data: mockWaterMeterDataResponse,
-            statusCode: 200,
-          }));
+        apiMocks.getData({
+          response: mockWaterMeterDataResponse,
+        });
 
         waterMeterApi.polling.getData.start();
 
@@ -99,15 +75,9 @@ describe('WaterMeterApi', () => {
   describe('polling', () => {
     it('should start polling the "data" endpoint', async () =>
       new Promise(done => {
-        mockApiPool
-          .intercept({
-            path: `/api/v1/data`,
-            method: 'GET',
-          })
-          .reply(() => ({
-            data: mockWaterMeterDataResponse,
-            statusCode: 200,
-          }));
+        apiMocks.getData({
+          response: mockWaterMeterDataResponse,
+        });
 
         waterMeterApi.polling.getData.start();
 

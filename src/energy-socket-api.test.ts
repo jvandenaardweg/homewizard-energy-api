@@ -1,8 +1,7 @@
 import { mockBasicInformationResponse } from '@/mocks/data/basic';
 import { mockStateResponse } from '@/mocks/data/state';
 import { mockIdentifyResponse } from '@/mocks/data/identify';
-import { mockApiPool, mockApiUrl } from '@/mocks/api';
-import { StateResponse, SystemPutParams } from '@/types';
+import { apiMocks, mockApiUrl } from '@/mocks/api';
 import { mockEnergySocketDataResponse } from '@/mocks/data/data';
 import { mockSystemResponse } from '@/mocks/data/system';
 import { EnergySocketApi } from '@/energy-socket-api';
@@ -29,15 +28,9 @@ describe('EnergySocketApi', () => {
       },
     });
 
-    mockApiPool
-      .intercept({
-        path: '/api',
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: mockBasicResponse,
-        statusCode: 200,
-      }));
+    apiMocks.getBasicInformation({
+      response: mockBasicResponse,
+    });
 
     await energySocketApiWithLogger.getBasicInformation();
 
@@ -46,15 +39,9 @@ describe('EnergySocketApi', () => {
   });
 
   it('should GET the "basic" endpoint', async () => {
-    mockApiPool
-      .intercept({
-        path: '/api',
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: mockBasicResponse,
-        statusCode: 200,
-      }));
+    apiMocks.getBasicInformation({
+      response: mockBasicResponse,
+    });
 
     const basicInformation = await energySocketApi.getBasicInformation();
 
@@ -62,15 +49,10 @@ describe('EnergySocketApi', () => {
   });
 
   it('should throw an error when GET the "basic" endpoint returns a server error', async () => {
-    mockApiPool
-      .intercept({
-        path: '/api',
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: 'Server error!',
-        statusCode: 500,
-      }));
+    apiMocks.getBasicInformation({
+      response: 'Server error!',
+      statusCode: 500,
+    });
 
     const responseFn = () => energySocketApi.getBasicInformation();
 
@@ -80,15 +62,9 @@ describe('EnergySocketApi', () => {
   });
 
   it('should GET the "state" endpoint', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/state`,
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: mockStateResponse,
-        statusCode: 200,
-      }));
+    apiMocks.getState({
+      response: mockStateResponse,
+    });
 
     const state = await energySocketApi.getState();
 
@@ -96,15 +72,10 @@ describe('EnergySocketApi', () => {
   });
 
   it('should throw an error when GET the "state" endpoint returns a server error', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/state`,
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: 'Server error!',
-        statusCode: 500,
-      }));
+    apiMocks.getState({
+      response: 'Server error!',
+      statusCode: 500,
+    });
 
     const responseFn = () => energySocketApi.getState();
 
@@ -114,50 +85,28 @@ describe('EnergySocketApi', () => {
   });
 
   it('should PUT the "state" endpoint', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/state`,
-        method: 'PUT',
-      })
-      .reply(({ body }) => {
-        if (!body) {
-          return {
-            statusCode: 400,
-          };
-        }
-
-        const bodyParams = JSON.parse(body.toString()) as Partial<StateResponse>;
-
-        const updatedStateResponse = {
-          ...mockStateResponse,
-          ...bodyParams,
-        };
-
-        return {
-          data: updatedStateResponse,
-          statusCode: 200,
-        };
-      });
-
     const updatedPowerOn = true;
+
+    const mockedResponse = {
+      power_on: updatedPowerOn,
+    };
+
+    apiMocks.updateState({
+      response: mockedResponse,
+    });
 
     const state = await energySocketApi.updateState({
       power_on: updatedPowerOn,
     });
 
-    expect(state.power_on).toBe(updatedPowerOn);
+    expect(state).toMatchObject(mockedResponse);
   });
 
   it('should throw an error on PUT when the "state" endpoint returns a server error', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/state`,
-        method: 'PUT',
-      })
-      .reply(() => ({
-        data: 'Server error!',
-        statusCode: 500,
-      }));
+    apiMocks.updateState({
+      response: 'Server error!',
+      statusCode: 500,
+    });
 
     const responseFn = () =>
       energySocketApi.updateState({
@@ -170,15 +119,9 @@ describe('EnergySocketApi', () => {
   });
 
   it('should GET the "system" endpoint', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/system`,
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: mockSystemResponse,
-        statusCode: 200,
-      }));
+    apiMocks.getSystem({
+      response: mockSystemResponse,
+    });
 
     const state = await energySocketApi.getSystem();
 
@@ -186,15 +129,10 @@ describe('EnergySocketApi', () => {
   });
 
   it('should throw an error when GET the "system" endpoint returns a server error', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/system`,
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: 'Server error!',
-        statusCode: 500,
-      }));
+    apiMocks.getSystem({
+      response: 'Server error!',
+      statusCode: 500,
+    });
 
     const responseFn = () => energySocketApi.getSystem();
 
@@ -204,32 +142,13 @@ describe('EnergySocketApi', () => {
   });
 
   it('should PUT the "system" endpoint', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/system`,
-        method: 'PUT',
-      })
-      .reply(({ body }) => {
-        if (!body) {
-          return {
-            statusCode: 400,
-          };
-        }
-
-        const bodyParams = JSON.parse(body.toString()) as Partial<SystemPutParams>;
-
-        const updatedSystemResponse = {
-          ...mockSystemResponse,
-          ...bodyParams,
-        };
-
-        return {
-          data: updatedSystemResponse,
-          statusCode: 200,
-        };
-      });
-
     const updatedCloudEnabled = false;
+
+    apiMocks.updateSystem({
+      response: {
+        cloud_enabled: updatedCloudEnabled,
+      },
+    });
 
     const system = await energySocketApi.updateSystem({
       cloud_enabled: updatedCloudEnabled,
@@ -239,15 +158,10 @@ describe('EnergySocketApi', () => {
   });
 
   it('should throw an error on PUT when the "system" endpoint returns a server error', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/system`,
-        method: 'PUT',
-      })
-      .reply(() => ({
-        data: 'Server error!',
-        statusCode: 500,
-      }));
+    apiMocks.updateSystem({
+      response: 'Server error!',
+      statusCode: 500,
+    });
 
     const responseFn = () =>
       energySocketApi.updateSystem({
@@ -260,15 +174,9 @@ describe('EnergySocketApi', () => {
   });
 
   it('should PUT the "identify" endpoint', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/identify`,
-        method: 'PUT',
-      })
-      .reply(() => ({
-        data: mockIdentifyResponse,
-        statusCode: 200,
-      }));
+    apiMocks.identify({
+      response: mockIdentifyResponse,
+    });
 
     const identify = await energySocketApi.identify();
 
@@ -276,15 +184,10 @@ describe('EnergySocketApi', () => {
   });
 
   it('should throw an error when PUT on the "identify" endpoint returns a server error', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/identify`,
-        method: 'PUT',
-      })
-      .reply(() => ({
-        data: 'Server error!',
-        statusCode: 500,
-      }));
+    apiMocks.identify({
+      response: 'Server error!',
+      statusCode: 500,
+    });
 
     const responseFn = () => energySocketApi.identify();
 
@@ -294,15 +197,9 @@ describe('EnergySocketApi', () => {
   });
 
   it('should GET the "data" endpoint as an Energy Socket', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/data`,
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: mockEnergySocketDataResponse,
-        statusCode: 200,
-      }));
+    apiMocks.getData({
+      response: mockEnergySocketDataResponse,
+    });
 
     const data = await energySocketApi.getData();
 
@@ -310,15 +207,10 @@ describe('EnergySocketApi', () => {
   });
 
   it('should throw an error when GET on the "data" endpoint returns a server error', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/data`,
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: 'Server error!',
-        statusCode: 500,
-      }));
+    apiMocks.getData({
+      response: 'Server error!',
+      statusCode: 500,
+    });
 
     const dataFn = () => energySocketApi.getData();
 

@@ -1,4 +1,4 @@
-import { mockApiPool, mockApiUrl } from '@/mocks/api';
+import { apiMocks, mockApiUrl } from '@/mocks/api';
 
 import {
   BaseApi,
@@ -102,15 +102,9 @@ describe('BaseApi', () => {
 
   describe('request()', () => {
     it('should return the response data when the response status code is 200', async () => {
-      mockApiPool
-        .intercept({
-          path: `/api/v1/data`,
-          method: 'GET',
-        })
-        .reply(() => ({
-          data: mockP1MeterDataResponse,
-          statusCode: 200,
-        }));
+      apiMocks.getData({
+        response: mockP1MeterDataResponse,
+      });
 
       const response = await baseApi['request']('http://localhost/api/v1/data', {
         method: 'GET',

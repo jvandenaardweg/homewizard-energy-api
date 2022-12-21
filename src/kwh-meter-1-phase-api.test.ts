@@ -1,6 +1,6 @@
 import { mockBasicInformationResponse } from '@/mocks/data/basic';
 
-import { mockApiPool, mockApiUrl } from '@/mocks/api';
+import { apiMocks, mockApiUrl } from '@/mocks/api';
 import { mockKwhMeter1PhaseResponse } from '@/mocks/data/data';
 import { KwhMeter1PhaseApi } from '@/kwh-meter-1-phase-api';
 
@@ -26,15 +26,9 @@ describe('KwhMeter1PhaseApi', () => {
       },
     });
 
-    mockApiPool
-      .intercept({
-        path: '/api',
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: mockBasicResponse,
-        statusCode: 200,
-      }));
+    apiMocks.getBasicInformation({
+      response: mockBasicResponse,
+    });
 
     await kwhMeter1PhaseApiWithLogger.getBasicInformation();
 
@@ -43,15 +37,9 @@ describe('KwhMeter1PhaseApi', () => {
   });
 
   it('should GET the "basic" endpoint', async () => {
-    mockApiPool
-      .intercept({
-        path: '/api',
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: mockBasicResponse,
-        statusCode: 200,
-      }));
+    apiMocks.getBasicInformation({
+      response: mockBasicResponse,
+    });
 
     const basicInformation = await kwhMeter1PhaseApi.getBasicInformation();
 
@@ -59,15 +47,9 @@ describe('KwhMeter1PhaseApi', () => {
   });
 
   it('should GET the "data" endpoint', async () => {
-    mockApiPool
-      .intercept({
-        path: `/api/v1/data`,
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: mockKwhMeter1PhaseResponse,
-        statusCode: 200,
-      }));
+    apiMocks.getData({
+      response: mockKwhMeter1PhaseResponse,
+    });
 
     const data = await kwhMeter1PhaseApi.getData();
 

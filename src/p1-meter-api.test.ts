@@ -1,6 +1,6 @@
 import { mockBasicInformationResponse } from '@/mocks/data/basic';
 
-import { mockApiPool, mockApiUrl } from '@/mocks/api';
+import { apiMocks, mockApiUrl } from '@/mocks/api';
 import { mockP1MeterDataResponse } from '@/mocks/data/data';
 import { mockParsedTelegramResponse, mockTelegramResponse } from '@/mocks/data/telegram';
 import { P1MeterApi } from '@/p1-meter-api';
@@ -32,15 +32,9 @@ describe('HomeWizardEnergyApi', () => {
         },
       });
 
-      mockApiPool
-        .intercept({
-          path: '/api',
-          method: 'GET',
-        })
-        .reply(() => ({
-          data: mockBasicResponse,
-          statusCode: 200,
-        }));
+      apiMocks.getBasicInformation({
+        response: mockBasicResponse,
+      });
 
       await p1MeterApiWithLogger.getBasicInformation();
 
@@ -51,15 +45,9 @@ describe('HomeWizardEnergyApi', () => {
 
   describe('getBasic()', () => {
     it('should return the basic information response from /api/v1/basic', async () => {
-      mockApiPool
-        .intercept({
-          path: '/api',
-          method: 'GET',
-        })
-        .reply(() => ({
-          data: mockBasicResponse,
-          statusCode: 200,
-        }));
+      apiMocks.getBasicInformation({
+        response: mockBasicResponse,
+      });
 
       const basicInformation = await p1MeterApi.getBasicInformation();
 
@@ -69,15 +57,9 @@ describe('HomeWizardEnergyApi', () => {
 
   describe('getData()', () => {
     it('should return the data response from /api/v1/date', async () => {
-      mockApiPool
-        .intercept({
-          path: `/api/v1/data`,
-          method: 'GET',
-        })
-        .reply(() => ({
-          data: mockP1MeterDataResponse,
-          statusCode: 200,
-        }));
+      apiMocks.getData({
+        response: mockP1MeterDataResponse,
+      });
 
       const data = await p1MeterApi.getData();
 
@@ -87,15 +69,9 @@ describe('HomeWizardEnergyApi', () => {
 
   describe('getTelegram()', () => {
     it('should return a telegram response from /api/v1/telegram', async () => {
-      mockApiPool
-        .intercept({
-          path: `/api/v1/telegram`,
-          method: 'GET',
-        })
-        .reply(() => ({
-          data: mockTelegramResponse['v50l3_2'],
-          statusCode: 200,
-        }));
+      apiMocks.getTelegram({
+        response: mockTelegramResponse['v50l3_2'],
+      });
 
       const data = await p1MeterApi.getTelegram();
 
@@ -103,15 +79,10 @@ describe('HomeWizardEnergyApi', () => {
     });
 
     it('should throw an error when /api/v1/telegram returns an error response', async () => {
-      mockApiPool
-        .intercept({
-          path: `/api/v1/telegram`,
-          method: 'GET',
-        })
-        .reply(() => ({
-          data: 'Server error!',
-          statusCode: 500,
-        }));
+      apiMocks.getTelegram({
+        response: 'Server error!',
+        statusCode: 500,
+      });
 
       const responseFn = () => p1MeterApi.getTelegram();
 
@@ -123,15 +94,9 @@ describe('HomeWizardEnergyApi', () => {
 
   describe('getParsedTelegram()', () => {
     it('should return a parsed telegram response from /api/v1/telegram', async () => {
-      mockApiPool
-        .intercept({
-          path: `/api/v1/telegram`,
-          method: 'GET',
-        })
-        .reply(() => ({
-          data: mockTelegramResponse['v50l3_2'],
-          statusCode: 200,
-        }));
+      apiMocks.getTelegram({
+        response: mockTelegramResponse['v50l3_2'],
+      });
 
       const data = await p1MeterApi.getParsedTelegram();
 
@@ -139,15 +104,10 @@ describe('HomeWizardEnergyApi', () => {
     });
 
     it('should throw an error when /api/v1/telegram returns an error response', async () => {
-      mockApiPool
-        .intercept({
-          path: `/api/v1/telegram`,
-          method: 'GET',
-        })
-        .reply(() => ({
-          data: 'Server error!',
-          statusCode: 500,
-        }));
+      apiMocks.getTelegram({
+        response: 'Server error!',
+        statusCode: 500,
+      });
 
       const responseFn = () => p1MeterApi.getParsedTelegram();
 
@@ -180,15 +140,9 @@ describe('HomeWizardEnergyApi', () => {
 
     it('should get a response event when polling /api/v1/data', async () =>
       new Promise(done => {
-        mockApiPool
-          .intercept({
-            path: `/api/v1/data`,
-            method: 'GET',
-          })
-          .reply(() => ({
-            data: mockP1MeterDataResponse,
-            statusCode: 200,
-          }));
+        apiMocks.getData({
+          response: mockP1MeterDataResponse,
+        });
 
         p1MeterApi.polling.getData.start();
 
@@ -200,15 +154,10 @@ describe('HomeWizardEnergyApi', () => {
 
     it('should get a error event when polling /api/v1/data', async () =>
       new Promise(done => {
-        mockApiPool
-          .intercept({
-            path: `/api/v1/data`,
-            method: 'GET',
-          })
-          .reply(() => ({
-            data: 'Server error!',
-            statusCode: 500,
-          }));
+        apiMocks.getData({
+          response: 'Server error!',
+          statusCode: 500,
+        });
 
         p1MeterApi.polling.getData.start();
 
@@ -230,15 +179,10 @@ describe('HomeWizardEnergyApi', () => {
           },
         });
 
-        mockApiPool
-          .intercept({
-            path: `/api/v1/data`,
-            method: 'GET',
-          })
-          .reply(() => ({
-            data: 'Server error!',
-            statusCode: 500,
-          }));
+        apiMocks.getData({
+          response: 'Server error!',
+          statusCode: 500,
+        });
 
         const stopPollingSpy = vi.fn();
 
