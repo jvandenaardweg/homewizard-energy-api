@@ -8,7 +8,8 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     coverage: {
       provider: 'istanbul',
-      exclude: ['**/vitest.setup.ts', '**/mocks/**'],
+      all: true,
+      exclude: ['**/vitest.setup.ts', '**/mocks/**', '**/examples/**'],
     },
   },
   resolve: {
