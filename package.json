@@ -61,7 +61,7 @@
     "@types/multicast-dns": "^7.2.1",
     "@types/node": "^18.11.17",
     "@typescript-eslint/eslint-plugin": "^5.48.0",
-    "@typescript-eslint/parser": "^5.47.0",
+    "@typescript-eslint/parser": "^5.48.0",
     "@vitest/coverage-istanbul": "^0.26.0",
     "dotenv-cli": "^6.0.0",
     "eslint": "^8.30.0",
