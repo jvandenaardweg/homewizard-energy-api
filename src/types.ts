@@ -127,6 +127,7 @@ export interface BaseDataResponse {
   wifi_ssid?: string;
   /** The strength of the Wi-Fi signal in %. Available for: `HWE-P1`, `HWE-WTR`, `SDM630-wifi`, `SDM230-wifi` */
   wifi_strength?: number;
+  /** The power usage meter reading in kWh. Available for: `HWE-P1` */
   total_power_import_kwh?: number; // TODO: determine what this is, not in docs, but only found in example
   /** The power usage meter reading for tariff 1 in kWh. Available for: `HWE-P1`, `SDM230-wifi`, `SDM630-wifi` */
   total_power_import_t1_kwh?: number;
@@ -136,6 +137,7 @@ export interface BaseDataResponse {
   total_power_import_t3_kwh?: number;
   /** The power usage meter reading for tariff 4 in kWh. Available for: `HWE-P1` */
   total_power_import_t4_kwh?: number;
+  /** The power feed-in meter reading in kWh. Available for: `HWE-P1` */
   total_power_export_kwh?: number; // TODO: determine what this is, not in docs, but only found in example
   /** The power feed-in meter reading for tariff 1 in kWh. Available: `HWE-P1`, `HWE-SKT`, `SDM230-wifi`, `SDM630-wifi` */
   total_power_export_t1_kwh?: number;
@@ -198,9 +200,9 @@ export interface BaseDataResponse {
   /** The most recent gas update time stamp structured as YYMMDDhhmmss. Available for: `HWE-P1` */
   gas_timestamp?: number;
   /** The unique identifier for the gas meter, can be used to migrate to the ‘external’ datapoint. Available for: `HWE-P1` */
-  unique_gas_id?: number; // TODO: determine which to use. Docs say unique_gas_id, but example says gas_unique_id
+  unique_gas_id?: number; // TODO: determine which to use. unique_gas_id vs gas_unique_id. Docs say unique_gas_id, but example says gas_unique_id
   /** The unique identifier for the gas meter, can be used to migrate to the ‘external’ datapoint. Available for: `HWE-P1`  */
-  gas_unique_id?: string; // TODO: determine which to use. Docs say unique_gas_id, but example says gas_unique_id
+  gas_unique_id?: string; // TODO: determine which to use. unique_gas_id vs gas_unique_id.  Docs say unique_gas_id, but example says gas_unique_id
   /** A list of externally connected utility meters, see External datapoint for more information. Available for: `HWE-P1` */
   external?: ExternalData[];
   /** Active water usage in liters per minute. Available for: `HWE-WTR` */
