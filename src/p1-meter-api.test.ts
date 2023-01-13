@@ -4,6 +4,8 @@ import { apiMocks, mockApiUrl } from '@/mocks/api';
 import { mockP1MeterDataResponse } from '@/mocks/data/data';
 import { mockParsedTelegramResponse, mockTelegramResponse } from '@/mocks/data/telegram';
 import { P1MeterApi } from '@/p1-meter-api';
+import { mockSystemResponse } from './mocks/data/system';
+import { mockIdentifyResponse } from './mocks/data/identify';
 
 let p1MeterApi: P1MeterApi;
 
@@ -113,6 +115,90 @@ describe('HomeWizardEnergyApi', () => {
 
       expect(responseFn()).rejects.toThrowError(
         'Api GET call at http://localhost/api/v1/telegram failed with status 500 and response data: Server error!',
+      );
+    });
+  });
+
+  describe('getSystem', () => {
+    it('should GET the "system" endpoint', async () => {
+      apiMocks.getSystem({
+        response: mockSystemResponse,
+      });
+
+      const state = await p1MeterApi.getSystem();
+
+      expect(state).toStrictEqual(mockSystemResponse);
+    });
+
+    it('should throw an error when GET the "system" endpoint returns a server error', async () => {
+      apiMocks.getSystem({
+        response: 'Server error!',
+        statusCode: 500,
+      });
+
+      const responseFn = () => p1MeterApi.getSystem();
+
+      expect(responseFn()).rejects.toThrowError(
+        'Api GET call at http://localhost/api/v1/system failed with status 500 and response data: Server error!',
+      );
+    });
+  });
+
+  describe('updateSystem', () => {
+    it('should PUT the "system" endpoint', async () => {
+      const updatedCloudEnabled = false;
+
+      apiMocks.updateSystem({
+        response: {
+          cloud_enabled: updatedCloudEnabled,
+        },
+      });
+
+      const system = await p1MeterApi.updateSystem({
+        cloud_enabled: updatedCloudEnabled,
+      });
+
+      expect(system.cloud_enabled).toBe(updatedCloudEnabled);
+    });
+
+    it('should throw an error on PUT when the "system" endpoint returns a server error', async () => {
+      apiMocks.updateSystem({
+        response: 'Server error!',
+        statusCode: 500,
+      });
+
+      const responseFn = () =>
+        p1MeterApi.updateSystem({
+          cloud_enabled: true,
+        });
+
+      expect(responseFn()).rejects.toThrowError(
+        'Api PUT call at http://localhost/api/v1/system failed with status 500 and response data: Server error!',
+      );
+    });
+  });
+
+  describe('identify()', () => {
+    it('should PUT the "identify" endpoint', async () => {
+      apiMocks.identify({
+        response: mockIdentifyResponse,
+      });
+
+      const identify = await p1MeterApi.identify();
+
+      expect(identify).toStrictEqual(mockIdentifyResponse);
+    });
+
+    it('should throw an error when PUT on the "identify" endpoint returns a server error', async () => {
+      apiMocks.identify({
+        response: 'Server error!',
+        statusCode: 500,
+      });
+
+      const responseFn = () => p1MeterApi.identify();
+
+      expect(responseFn()).rejects.toThrowError(
+        'Api PUT call at http://localhost/api/v1/identify failed with status 500 and response data: Server error!',
       );
     });
   });
