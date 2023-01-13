@@ -85,6 +85,29 @@ export interface BasicInformationResponse {
 }
 
 /**
+ * Some smart meters have more than one external device connected to it. This can be, for example, a gas and a water meter.
+ * The external datapoint adds support for these devices.
+ * Each entry is supplied with a set of data.
+ *
+ * See Example: HWE-P1 (3-phase, with gas, running 4.00 firmware)
+ * for an example: https://homewizard-energy-api.readthedocs.io/endpoints.html#example-hwe-p1-3-phase-with-gas-running-4-00-firmware
+ *
+ * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#external-datapoint
+ */
+export interface ExternalData {
+  /** The unique identifier from the smart meter. Available for: `HWE-P1` */
+  unique_id?: string;
+  /** The type of the device, can be gas_meter heat_meter warm_water_meter water_meter or inlet_heat_meter. Available for: `HWE-P1` */
+  type?: 'gas_meter' | 'heat_meter' | 'warm_water_meter' | 'water_meter' | 'inlet_heat_meter';
+  /** The most recent value update time stamp structured as YYMMDDhhmmss. */
+  timestamp?: number;
+  /** The raw value */
+  value?: number;
+  /** The unit of the value, for example: “m3” or “GJ” */
+  unit?: string;
+}
+
+/**
  * The /api/v1/data endpoint allows you to get the most recent measurement from the device.
  *
  * This response type only relates to the Energy Socket.
@@ -94,30 +117,34 @@ export interface BasicInformationResponse {
  * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data
  */
 export interface BaseDataResponse {
+  /** The unique identifier from the smart meter. Available for: `HWE-P1` */
+  unique_id?: string;
   /** The DSMR version of the smart meter. Available for: `HWE-P1` */
   smr_version?: number;
   /** The brand indification the smart meter. Available for: `HWE-P1` */
   meter_model?: string;
-  /**
-   * The Wi-Fi network that the meter is connected to. Available for: `HWE-P1`, `HWE-WTR`, `SDM630-wifi`, `SDM230-wifi`
-   *
-   * Note: docs says not available on `HWE-SKT`, but it is available on my HWE-SKT
-   */
+  /** The Wi-Fi network that the meter is connected to. Available for: `HWE-P1`, `HWE-WTR`, `SDM630-wifi`, `SDM230-wifi */
   wifi_ssid?: string;
-  /**
-   * The strength of the Wi-Fi signal in %. Available for: `HWE-P1`, `HWE-WTR`, `SDM630-wifi`, `SDM230-wifi`
-   *
-   * Note: docs says not available on `HWE-SKT`, but it is available on my HWE-SKT
-   */
+  /** The strength of the Wi-Fi signal in %. Available for: `HWE-P1`, `HWE-WTR`, `SDM630-wifi`, `SDM230-wifi` */
   wifi_strength?: number;
+  total_power_import_kwh?: number; // TODO: determine what this is, not in docs, but only found in example
   /** The power usage meter reading for tariff 1 in kWh. Available for: `HWE-P1`, `SDM230-wifi`, `SDM630-wifi` */
   total_power_import_t1_kwh?: number;
   /** The power usage meter reading for tariff 2 in kWh. Available for: `HWE-P1` */
   total_power_import_t2_kwh?: number;
+  /** The power usage meter reading for tariff 3 in kWh. Available for: `HWE-P1` */
+  total_power_import_t3_kwh?: number;
+  /** The power usage meter reading for tariff 4 in kWh. Available for: `HWE-P1` */
+  total_power_import_t4_kwh?: number;
+  total_power_export_kwh?: number; // TODO: determine what this is, not in docs, but only found in example
   /** The power feed-in meter reading for tariff 1 in kWh. Available: `HWE-P1`, `HWE-SKT`, `SDM230-wifi`, `SDM630-wifi` */
   total_power_export_t1_kwh?: number;
-  /** The power feed-in meter reading for tariff 2 in kWh. Available for: HWE-P1 */
+  /** The power feed-in meter reading for tariff 2 in kWh. Available for: `HWE-P1` */
   total_power_export_t2_kwh?: number;
+  /** The power feed-in meter reading for tariff 3 in kWh. Available for: `HWE-P1` */
+  total_power_export_t3_kwh?: number;
+  /** The power feed-in meter reading for tariff 4 in kWh. Available for: `HWE-P1` */
+  total_power_export_t4_kwh?: number;
   /** The total active usage in Watts: Available for: `HWE-P1`, `HWE-SKT`, SDM230-wifi, `SDM630-wifi` */
   active_power_w?: number;
   /** The active usage for fase 1 in Watts. Abailable for: `HWE-P1`, `HWE-SKT`, SDM230-wifi, `SDM630-wifi` */
@@ -126,31 +153,76 @@ export interface BaseDataResponse {
   active_power_l2_w?: number;
   /** The active usage for fase 3 in Watts. Available for: `HWE-P1`, `SDM630-wifi`  */
   active_power_l3_w?: number;
-  /** The gas meter reading in m3. Available for: `HWE-P1` */
+  /** The active voltage for phase 1 in volt. Available for: `HWE-P1` */
+  active_voltage_l1_v?: number;
+  /** The active voltage for phase 2 in volt. Available for: `HWE-P1` */
+  active_voltage_l2_v?: number;
+  /** The active voltage for phase 3 in volt. Available for: `HWE-P1` */
+  active_voltage_l3_v?: number;
+  /** The active current for phase 1 in ampere. Available for: `HWE-P1` */
+  active_current_l1_a?: number;
+  /** The active current for phase 2 in ampere. Available for: `HWE-P1` */
+  active_current_l2_a?: number;
+  /** The active current for phase 3 in ampere. Available for: `HWE-P1` */
+  active_current_l3_a?: number;
+  /** Line frequency in hertz. Available for: `HWE-P1` */
+  active_frequency_hz?: number;
+  /** Number of voltage sags detected by meter for phase 1. Available for: `HWE-P1` */
+  voltage_sag_l1_count?: number;
+  /** Number of voltage sags detected by meter for phase 2. Available for: `HWE-P1` */
+  voltage_sag_l2_count?: number;
+  /** Number of voltage sags detected by meter for phase 3. Available for: `HWE-P1` */
+  voltage_sag_l3_count?: number;
+  /** Number of voltage swells detected by meter for phase 1. Available for: `HWE-P1` */
+  voltage_swell_l1_count?: number;
+  /** Number of voltage swells detected by meter for phase 2. Available for: `HWE-P1` */
+  voltage_swell_l2_count?: number;
+  /** Number of voltage swells detected by meter for phase 3. Available for: `HWE-P1` */
+  voltage_swell_l3_count?: number;
+  /** Number of power failures detected by meter. Available for: `HWE-P1` */
+  any_power_fail_count?: number;
+  /** Number of ‘long’ power failes detected by meter. Available for: `HWE-P1` */
+  long_power_fail_count?: number;
+  /** The active average demand. Available for: `HWE-P1` */
+  active_power_average_w?: number;
+  /** The peak average demand of this month. Available for: `HWE-P1` */
+  montly_power_peak_w?: number;
+  /** Timetamp when peak demand was registered, formatted as YYMMDDhhmmss. Available for: `HWE-P1` */
+  montly_power_peak_timestamp?: number;
+  /**
+   * The gas meter reading in m3. Available for: `HWE-P1`
+   *
+   * @deprecated The gas meter reading in m3 for the first detected gas meter. Gas datapoints will be removed in favor of ‘external’ in a future software version, do not use this field in new implementations
+   */
   total_gas_m3?: number;
   /** The most recent gas update time stamp structured as YYMMDDhhmmss. Available for: `HWE-P1` */
   gas_timestamp?: number;
+  /** The unique identifier for the gas meter, can be used to migrate to the ‘external’ datapoint. Available for: `HWE-P1` */
+  unique_gas_id?: number; // TODO: determine which to use. Docs say unique_gas_id, but example says gas_unique_id
+  /** The unique identifier for the gas meter, can be used to migrate to the ‘external’ datapoint. Available for: `HWE-P1`  */
+  gas_unique_id?: string; // TODO: determine which to use. Docs say unique_gas_id, but example says gas_unique_id
+  /** A list of externally connected utility meters, see External datapoint for more information. Available for: `HWE-P1` */
+  external?: ExternalData[];
   /** Active water usage in liters per minute. Available for: `HWE-WTR` */
   active_liter_lpm?: number;
   /** Total water usage in cubic meters since installation. Available for: `HWE-WTR` */
   total_liter_m3?: number;
+  active_tariff?: number; // TODO: determine what this is, not in docs, but only found in example
 }
 
 /**
  * API /data response for `HWE-SKT`
+ *
+ * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#datapoints-for-hwe-skt
  */
-export type EnergySocketDataResponse = Omit<
+export type EnergySocketDataResponse = Pick<
   BaseDataResponse,
-  | 'smr_version'
-  | 'meter_model'
-  | 'total_power_import_t2_kwh'
-  | 'total_power_export_t2_kwh'
-  | 'active_power_l2_w'
-  | 'active_power_l3_w'
-  | 'total_gas_m3'
-  | 'gas_timestamp'
-  | 'active_liter_lpm'
-  | 'total_liter_m3'
+  | 'wifi_ssid'
+  | 'wifi_strength'
+  | 'total_power_import_t1_kwh'
+  | 'total_power_export_t1_kwh'
+  | 'active_power_w'
+  | 'active_power_l1_w'
 >;
 
 /**
@@ -160,55 +232,44 @@ export type P1MeterDataResponse = Omit<BaseDataResponse, 'active_liter_lpm' | 't
 
 /**
  * API /data response for `HWE-WTR`
+ *
+ * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#datapoints-for-hwe-wtr
  */
-export type WaterMeterDataResponse = Omit<
+export type WaterMeterDataResponse = Pick<
   BaseDataResponse,
-  | 'smr_version'
-  | 'meter_model'
-  | 'total_power_import_t1_kwh'
-  | 'total_power_import_t2_kwh'
-  | 'total_power_export_t1_kwh'
-  | 'total_power_export_t2_kwh'
-  | 'active_power_w'
-  | 'active_power_l1_w'
-  | 'active_power_l2_w'
-  | 'active_power_l3_w'
-  | 'total_gas_m3'
-  | 'gas_timestamp'
+  'wifi_ssid' | 'wifi_strength' | 'total_liter_m3' | 'active_liter_lpm'
 >;
 
 /**
  * API /data response for `SDM230-wifi`
+ *
+ * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#datapoints-for-sdm230-wifi-and-sdm630-wifi
  */
-export type KwhMeter1PhaseDataResponse = Omit<
+export type KwhMeter1PhaseDataResponse = Pick<
   BaseDataResponse,
-  | 'smr_version'
-  | 'meter_model'
-  | 'total_power_import_t2_kwh'
-  | 'total_power_export_t2_kwh'
-  | 'active_power_l2_w'
-  | 'active_power_l3_w'
-  | 'total_gas_m3'
-  | 'gas_timestamp'
-  | 'active_liter_lpm'
-  | 'total_liter_m3'
+  | 'wifi_ssid'
+  | 'wifi_strength'
+  | 'total_power_import_t1_kwh'
+  | 'total_power_export_t1_kwh'
+  | 'active_power_w'
+  | 'active_power_l1_w'
 >;
 
 /**
  * API /data response for `SDM630-wifi`
+ *
+ * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#datapoints-for-sdm230-wifi-and-sdm630-wifi
  */
-export type KwhMeter3PhaseDataResponse = Omit<
+export type KwhMeter3PhaseDataResponse = Pick<
   BaseDataResponse,
-  | 'smr_version'
-  | 'meter_model'
-  | 'total_power_import_t2_kwh'
-  | 'total_power_export_t2_kwh'
+  | 'wifi_ssid'
+  | 'wifi_strength'
+  | 'total_power_import_t1_kwh'
+  | 'total_power_export_t1_kwh'
+  | 'active_power_w'
+  | 'active_power_l1_w'
   | 'active_power_l2_w'
   | 'active_power_l3_w'
-  | 'total_gas_m3'
-  | 'gas_timestamp'
-  | 'active_liter_lpm'
-  | 'total_liter_m3'
 >;
 
 /**
