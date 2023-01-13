@@ -95,15 +95,15 @@ export interface BasicInformationResponse {
  * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#external-datapoint
  */
 export interface ExternalData {
-  /** The unique identifier from the smart meter. Available for: `HWE-P1` */
+  /** The unique identifier from the smart meter.` */
   unique_id?: string;
-  /** The type of the device, can be gas_meter heat_meter warm_water_meter water_meter or inlet_heat_meter. Available for: `HWE-P1` */
+  /** The type of the device, can be `"gas_meter"`, `"heat_meter"`, `"warm_water_meter"`, `"water_meter"` or `"inlet_heat_meter"`. */
   type?: 'gas_meter' | 'heat_meter' | 'warm_water_meter' | 'water_meter' | 'inlet_heat_meter';
   /** The most recent value update time stamp structured as YYMMDDhhmmss. */
   timestamp?: number;
   /** The raw value */
   value?: number;
-  /** The unit of the value, for example: “m3” or “GJ” */
+  /** The unit of the value, for example: `“m3”` or `“GJ”` */
   unit?: string;
 }
 
