@@ -42,9 +42,9 @@ export class EnergySocketApi extends BaseApi {
 
     return {
       ...super.endpoints,
-      state: `${baseUrl}/api/${this.apiVersion}/state`, // HWE-SKT
-      identify: `${baseUrl}/api/${this.apiVersion}/identify`, // HWE-SKT
-      system: `${baseUrl}/api/${this.apiVersion}/system`, // HWE-SKT
+      state: `${baseUrl}/api/${this.apiVersion}/state`, // HWE-SKT only
+      identify: `${baseUrl}/api/${this.apiVersion}/identify`,
+      system: `${baseUrl}/api/${this.apiVersion}/system`,
     };
   }
 

@@ -1,5 +1,12 @@
 import { BaseApi, BaseApiOptions, BasePolling, PollMethod } from '@/base-api';
-import { BasicInformationResponse, P1MeterDataResponse, TelegramResponse } from '@/types';
+import {
+  BasicInformationResponse,
+  IdentifyResponse,
+  P1MeterDataResponse,
+  SystemPutParams,
+  SystemResponse,
+  TelegramResponse,
+} from '@/types';
 import { ParsedTelegram, parseTelegram } from './utils/telegram';
 
 export interface P1MeterPolling<
@@ -43,6 +50,8 @@ export class P1MeterApi extends BaseApi {
     return {
       ...super.endpoints,
       telegram: `${baseUrl}/api/${this.apiVersion}/telegram`,
+      identify: `${baseUrl}/api/${this.apiVersion}/identify`,
+      system: `${baseUrl}/api/${this.apiVersion}/system`,
     };
   }
 
@@ -118,5 +127,97 @@ export class P1MeterApi extends BaseApi {
     this.log(`Parsed telegram ${JSON.stringify(parsedTelegram)} from ${this.endpoints.telegram}`);
 
     return parsedTelegram;
+  }
+
+  /**
+   * The /api/v1/system endpoint can be used to configure system settings.
+   * Currently the only available option it to turn on and off all cloud communication.
+   *
+   * With GET will send the actual system state.
+   *
+   * This feature is currently only available for HWE-P1 running firmware version 4.00 or later.
+   *
+   * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system
+   */
+  async getSystem(): Promise<SystemResponse> {
+    const url = this.endpoints.system;
+
+    this.log(`Fetching system state at ${url}`);
+
+    const method = 'GET';
+    const response = await this.request(url, {
+      method,
+    });
+
+    if (!this.isResponseOk(response)) {
+      return this.throwResponseError(url, method, response);
+    }
+
+    const data = (await response.body.json()) as SystemResponse;
+
+    this.log(`Received system state ${JSON.stringify(data)} from ${this.endpoints.system}`);
+
+    return data;
+  }
+
+  /**
+   * The /api/v1/system endpoint can be used to configure system settings.
+   * Currently the only available option it to turn on and off all cloud communication.
+   *
+   * With PUT allows to set the system state.
+   *
+   * This feature is currently only available for HWE-P1 running firmware version 4.00 or later.
+   *
+   * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system
+   */
+  async updateSystem(params: SystemPutParams): Promise<SystemResponse> {
+    const url = this.endpoints.system;
+
+    this.log(`Setting system state to ${JSON.stringify(params)} at ${this.endpoints.system}`);
+
+    const method = 'PUT';
+    const response = await this.request(this.endpoints.system, {
+      method,
+      body: JSON.stringify(params),
+    });
+
+    if (!this.isResponseOk(response)) {
+      return this.throwResponseError(url, method, response);
+    }
+
+    const data = (await response.body.json()) as SystemResponse;
+
+    this.log(`Received updated system state ${JSON.stringify(data)} from ${this.endpoints.system}`);
+
+    return data;
+  }
+
+  /**
+   * The /api/v1/identify endpoint can be used to let the user identify the device. The status light will blink for a few seconds after calling this endpoint.
+   *
+   * This feature is currently only available for HWE-P1 running firmware version 4.00 or later.
+   *
+   * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#identify-api-v1-identify
+   */
+  async identify(): Promise<IdentifyResponse> {
+    const url = this.endpoints.identify;
+
+    this.log(`Fetching identify at ${url}`);
+
+    const method = 'PUT';
+
+    const response = await this.request(url, {
+      method,
+    });
+
+    if (!this.isResponseOk(response)) {
+      return this.throwResponseError(url, method, response);
+    }
+
+    const data = (await response.body.json()) as IdentifyResponse;
+
+    this.log(`Energy Socket identified: ${JSON.stringify(data)}`);
+
+    return data;
   }
 }
