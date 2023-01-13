@@ -2,7 +2,39 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [1.3.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.2.2...1.3.0)
+
+- chore: update dependencies [`5c6a019`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/5c6a019fdbd1c0b577de6506c6be1d8d4bbee7a3)
+- test: simpler api mocking [`0a6cd9c`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/0a6cd9cf5a006e2a77de85ac911ee32d8e2503f9)
+- chore(deps-dev): bump @vitest/coverage-istanbul from 0.26.2 to 0.26.3 [`a9f7337`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/a9f7337263cbea08ace43372c885f4c173124cdb)
+- chore(deps-dev): bump @typescript-eslint/eslint-plugin [`d0f23c7`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/d0f23c71c456574bc66e5fce9723422617ddf5a9)
+- chore(deps-dev): bump @typescript-eslint/eslint-plugin [`4fedd77`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/4fedd77b55f177d405585f74ee0b0b95678c2c93)
+- feat: update types using updated docs [`c0014d5`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/c0014d5b661fdad7452bf86d01f2424b1d4f7494)
+- chore(deps-dev): bump release-it from 15.5.1 to 15.6.0 [`78d7ac4`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/78d7ac475ddedb9ad8d9d59fbadd961127756703)
+- chore(deps-dev): bump vitest from 0.26.3 to 0.27.0 [`b86887f`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b86887f10f0b2ff105ee7a9d5e13e616e71ab2ac)
+- chore(deps-dev): bump @vitest/coverage-istanbul from 0.26.0 to 0.26.2 [`b6c4d2d`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b6c4d2dcdbf5e255259b92182a7caf2ccf1018b7)
+- test: extend tests on base api [`f4d7477`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/f4d7477832ac02bdacd497348e29f16992768aa4)
+- chore(deps-dev): bump @vitest/coverage-istanbul from 0.26.3 to 0.27.0 [`98c23c2`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/98c23c27762bf2cfdbbd5948b699be4b7c5492c0)
+- chore(deps-dev): bump @typescript-eslint/parser from 5.47.1 to 5.48.0 [`146851e`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/146851eaf03829fef5969f4add40a6af9fc9e7e6)
+- chore(deps-dev): bump @typescript-eslint/parser from 5.47.0 to 5.47.1 [`e60f4f9`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/e60f4f965e2c728019c631367ebcea5aade51655)
+- feat: added support for /identify and /system endpoints for p1 meter [`5867957`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/5867957d6d7176f69b69019c96825569e7ae417e)
+- test: up the test coverage [`e81120d`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/e81120d6b222d092373d375d69ed36a78de1c475)
+- test: added tests for new /system and /identify p1 meter endpoints [`0a36d88`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/0a36d88e6f2714797cf887ff604af156a2e0a3e8)
+- chore: update issue templates [`044496f`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/044496f751f5a4fb493ccc79fd587377004025a4)
+- chore: update dependencies [`ebfbb0b`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/ebfbb0b381dd64153c4f2d36066e6df58d875259)
+- chore(deps-dev): bump eslint from 8.30.0 to 8.31.0 [`0b2554b`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/0b2554b798ac215312fdd40fa937da5f773b1454)
+- chore(deps-dev): bump tsconfig-paths from 4.1.1 to 4.1.2 [`f09b773`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/f09b7731c8e26a6225f3e3d677dc917770c88edd)
+- chore(deps-dev): bump prettier from 2.8.1 to 2.8.2 [`b1eecf7`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b1eecf76ca6133094ee703944bbe741cceabf962)
+- chore: update mock data with new types [`0b57e55`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/0b57e552cd1ca3aa65fd7938c178e677e8486d19)
+- chore(deps-dev): bump @types/node from 18.11.17 to 18.11.18 [`e159015`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/e1590151ce12efcd34f1b623733eed189ff782c7)
+- chore: update issue templates [`badf0a5`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/badf0a5067cf3c133f176604453296f0a1469c32)
+- chore: update docs on types [`9adb101`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/9adb1018941816499921c2d3afb7c18a324363bb)
+- chore: include all coverage [`98ad082`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/98ad08232c991ac41b024fcb1808f42cfcdafb2d)
+- chore: update dependabot.yml [`c7dc1cc`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/c7dc1cced85ac7b4abe0e46b63318618b20ed835)
+
 #### [1.2.2](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.2.1...1.2.2)
+
+> 21 December 2022
 
 - chore: update dependencies [`273f3ad`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/273f3ad0d8dde9094bfcb25d9a95c1f11af9e3bf)
 - chore(deps-dev): bump vitest from 0.25.8 to 0.26.0 [`36b46f9`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/36b46f93281300e4569fe528336f0812c28df2f7)
@@ -14,6 +46,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - feat: expose getParsedTelegram to polling [`3ae639f`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/3ae639feb251b233304d14ba3b79e487a0a9c9de)
 - chore(deps-dev): bump eslint from 8.29.0 to 8.30.0 [`875d63d`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/875d63dd22f6f582591d8161b2d8ff371d4f1098)
 - test: up the test coverage on p1 meter and water meter [`41fddde`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/41fdddef2ab1f8b8cdd82feed860a500a73ce65b)
+- chore: release v1.2.2 [`7ea860e`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/7ea860e9b97f93dd3315da1c8083d389743ec1cd)
 - docs: update docs on types [`245ef10`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/245ef10a0825767dd570411f2c83104229204af1)
 - chore(deps-dev): bump @types/node from 18.11.15 to 18.11.17 [`03b7939`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/03b793993f029475db13c20ccb9054a0a5ca364c)
 - chore: update shields in readme [`93d76cb`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/93d76cb6ac1d86473b5650ed8b48166886da3d85)
