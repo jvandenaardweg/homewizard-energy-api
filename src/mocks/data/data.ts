@@ -40,33 +40,23 @@ export const mockWaterMeterDataResponse: WaterMeterDataResponse = {
 };
 
 export const mockKwhMeter1PhaseResponse: KwhMeter1PhaseDataResponse = {
-  // smr_version: 50, // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
-  // meter_model: 'ISKRA  2M550T-101', // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
   wifi_ssid: 'My Wi-Fi',
   wifi_strength: 100,
   total_power_import_t1_kwh: 10830.511,
-  // total_power_import_t2_kwh: 2948.827, // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
   total_power_export_t1_kwh: 1285.951,
-  // total_power_export_t2_kwh: 2876.51, // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
   active_power_w: -678,
   active_power_l1_w: -676,
 };
 
 export const mockKwhMeter3PhaseResponse: KwhMeter3PhaseDataResponse = {
-  // smr_version: 50, // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
-  // meter_model: 'ISKRA  2M550T-101', // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
   wifi_ssid: 'My Wi-Fi',
   wifi_strength: 100,
   total_power_import_t1_kwh: 10830.511,
-  // total_power_import_t2_kwh: 2948.827, // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
   total_power_export_t1_kwh: 1285.951,
-  // total_power_export_t2_kwh: 2876.51, // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
   active_power_w: -543,
   active_power_l1_w: -676,
-  // active_power_l2_w: 133, // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
-  // active_power_l3_w: 0, // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
-  // total_gas_m3: 2569.646, // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
-  // gas_timestamp: 210606140010, // example says available, but not in types? https://homewizard-energy-api.readthedocs.io/endpoints.html#examples
+  active_power_l2_w: 133,
+  active_power_l3_w: 0,
 };
 
 export const mockP1MeterDataResponseWithExternalPower: P1MeterDataResponse = {
