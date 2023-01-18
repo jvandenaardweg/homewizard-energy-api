@@ -25,7 +25,7 @@ export const SupportedDevicesList = [
   'SDM630-wifi',
 ] as const;
 
-export type SupportedDevices = typeof SupportedDevicesList[number];
+export type SupportedDevices = (typeof SupportedDevicesList)[number];
 
 /**
  * The txt record of the mDNS discovery response.
@@ -199,10 +199,8 @@ export interface BaseDataResponse {
   total_gas_m3?: number;
   /** The most recent gas update time stamp structured as YYMMDDhhmmss. Available for: `HWE-P1` */
   gas_timestamp?: number;
-  /** The unique identifier for the gas meter, can be used to migrate to the ‘external’ datapoint. Available for: `HWE-P1` */
-  unique_gas_id?: number; // TODO: determine which to use. unique_gas_id vs gas_unique_id. Docs say unique_gas_id, but example says gas_unique_id
   /** The unique identifier for the gas meter, can be used to migrate to the ‘external’ datapoint. Available for: `HWE-P1`  */
-  gas_unique_id?: string; // TODO: determine which to use. unique_gas_id vs gas_unique_id.  Docs say unique_gas_id, but example says gas_unique_id
+  gas_unique_id?: string;
   /** A list of externally connected utility meters, see External datapoint for more information. Available for: `HWE-P1` */
   external?: ExternalData[];
   /** Active water usage in liters per minute. Available for: `HWE-WTR` */
