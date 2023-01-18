@@ -2,7 +2,19 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [1.3.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.3.0...1.3.1)
+
+- chore: update dependencies [`b8da03c`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b8da03c125ab7327e1b2f2ee90d69f662cba8ab4)
+- chore: added p1 meter mock data [`978f283`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/978f2834bf86bb28b560117e93519db320b7d7ab)
+- chore(deps-dev): bump eslint from 8.31.0 to 8.32.0 [`6b968c0`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/6b968c0f06b0c91691b517d693b4a99627e4f44d)
+- chore(deps-dev): bump rimraf from 4.0.4 to 4.0.7 [`e7f629b`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/e7f629b82d4f400935457a3f6586665ae927bd5d)
+- chore(deps-dev): bump prettier from 2.8.2 to 2.8.3 [`45ac27b`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/45ac27b2d2f7230b1e21f3b86e581a3cdd20ed28)
+- refactor: remove unique_gas_idtype , prefer gas_unique_id [`e2c717d`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/e2c717d76a9fda285af2eea746f6f4ebe19564be)
+- docs: update docs on external data type [`e870827`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/e870827c0d730e5387f4119ae3c5e55ac4a047f1)
+
 #### [1.3.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.2.2...1.3.0)
+
+> 13 January 2023
 
 - chore: update dependencies [`5c6a019`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/5c6a019fdbd1c0b577de6506c6be1d8d4bbee7a3)
 - test: simpler api mocking [`0a6cd9c`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/0a6cd9cf5a006e2a77de85ac911ee32d8e2503f9)
@@ -22,6 +34,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - test: added tests for new /system and /identify p1 meter endpoints [`0a36d88`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/0a36d88e6f2714797cf887ff604af156a2e0a3e8)
 - chore: update issue templates [`044496f`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/044496f751f5a4fb493ccc79fd587377004025a4)
 - chore: update dependencies [`ebfbb0b`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/ebfbb0b381dd64153c4f2d36066e6df58d875259)
+- chore: release v1.3.0 [`9c42fb6`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/9c42fb6b01a65e34b5ddc0333238f05e4d21f058)
 - chore(deps-dev): bump eslint from 8.30.0 to 8.31.0 [`0b2554b`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/0b2554b798ac215312fdd40fa937da5f773b1454)
 - chore(deps-dev): bump tsconfig-paths from 4.1.1 to 4.1.2 [`f09b773`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/f09b7731c8e26a6225f3e3d677dc917770c88edd)
 - chore(deps-dev): bump prettier from 2.8.1 to 2.8.2 [`b1eecf7`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b1eecf76ca6133094ee703944bbe741cceabf962)
