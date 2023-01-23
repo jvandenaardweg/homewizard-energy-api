@@ -63,7 +63,7 @@
     "@typescript-eslint/eslint-plugin": "^5.48.2",
     "@typescript-eslint/parser": "^5.48.2",
     "@vitest/coverage-istanbul": "^0.27.2",
-    "dotenv-cli": "^6.0.0",
+    "dotenv-cli": "^7.0.0",
     "eslint": "^8.32.0",
     "eslint-plugin-prettier": "^4.2.1",
     "husky": "^8.0.3",
