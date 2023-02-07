@@ -119,7 +119,7 @@ describe('HomeWizardEnergyApi', () => {
     });
   });
 
-  describe('getSystem', () => {
+  describe('getSystem()', () => {
     it('should GET the "system" endpoint', async () => {
       apiMocks.getSystem({
         response: mockSystemResponse,
@@ -144,7 +144,7 @@ describe('HomeWizardEnergyApi', () => {
     });
   });
 
-  describe('updateSystem', () => {
+  describe('updateSystem()', () => {
     it('should PUT the "system" endpoint', async () => {
       const updatedCloudEnabled = false;
 
@@ -203,7 +203,7 @@ describe('HomeWizardEnergyApi', () => {
     });
   });
 
-  describe('polling.getData', () => {
+  describe('polling.getData()', () => {
     it('should start polling getData when start() is invoked', async () =>
       new Promise(done => {
         apiMocks.getData({

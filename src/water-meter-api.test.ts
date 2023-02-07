@@ -36,27 +36,31 @@ describe('WaterMeterApi', () => {
     expect(loggerSpy).toHaveBeenCalled();
   });
 
-  it('should GET the "basic" endpoint', async () => {
-    apiMocks.getBasicInformation({
-      response: mockBasicResponse,
+  describe('getBasicInformation()', () => {
+    it('should GET the "basic" endpoint', async () => {
+      apiMocks.getBasicInformation({
+        response: mockBasicResponse,
+      });
+
+      const basicInformation = await waterMeterApi.getBasicInformation();
+
+      expect(basicInformation).toStrictEqual(mockBasicResponse);
     });
-
-    const basicInformation = await waterMeterApi.getBasicInformation();
-
-    expect(basicInformation).toStrictEqual(mockBasicResponse);
   });
 
-  it('should GET the "data" endpoint', async () => {
-    apiMocks.getData({
-      response: mockWaterMeterDataResponse,
+  describe('getData()', () => {
+    it('should GET the "data" endpoint', async () => {
+      apiMocks.getData({
+        response: mockWaterMeterDataResponse,
+      });
+
+      const data = await waterMeterApi.getData();
+
+      expect(data).toStrictEqual(mockWaterMeterDataResponse);
     });
-
-    const data = await waterMeterApi.getData();
-
-    expect(data).toStrictEqual(mockWaterMeterDataResponse);
   });
 
-  describe('polling.start()', () => {
+  describe('polling.getData()', () => {
     it('should start polling the "data" endpoint', async () =>
       new Promise(done => {
         apiMocks.getData({
@@ -70,9 +74,7 @@ describe('WaterMeterApi', () => {
           done(response);
         });
       }));
-  });
 
-  describe('polling', () => {
     it('should start polling the "data" endpoint', async () =>
       new Promise(done => {
         apiMocks.getData({
