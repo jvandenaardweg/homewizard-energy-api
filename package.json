@@ -1,7 +1,7 @@
 {
   "displayName": "HomeWizard Energy API",
   "name": "homewizard-energy-api",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Typesafe Node implementation of the HomeWizard Energy API",
   "license": "MIT",
   "author": {

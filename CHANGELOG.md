@@ -2,7 +2,14 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [1.4.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.4.0...1.4.1)
+
+- chore: update dependencies [`4ed4260`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/4ed42602efbc5225a18c6cbaa047e27d56774d99)
+- docs: fix typo on firmware version [`792156f`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/792156fe19f70e64e0971d2deeb3c06e09aca602)
+
 #### [1.4.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.3.1...1.4.0)
+
+> 7 February 2023
 
 - feat: add system endpoints to kwh meter 1 and 3 phase [`b7030a6`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b7030a60f7e23c64dbebd3e973334f2aad6a9ea7)
 - chore(deps-dev): bump vitest from 0.27.2 to 0.28.1 [`7dab736`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/7dab736eecb473bdce7085abbb55691a76b16226)
@@ -13,6 +20,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore(deps-dev): bump @vitest/coverage-istanbul from 0.27.2 to 0.28.1 [`16493f6`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/16493f6ff4aa414f24fdd79f9a68725a1309a952)
 - chore(deps-dev): bump vitest from 0.28.3 to 0.28.4 [`94d74b9`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/94d74b95e8ce101f6b5b95ef4125d7a17229480d)
 - chore(deps-dev): bump dotenv-cli from 6.0.0 to 7.0.0 [`ee5947d`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/ee5947dfbfe3d93fbb1caae2efc79b316b29e984)
+- chore: release v1.4.0 [`2046446`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/2046446a80f06c697a318ae06ea8be3cf96f8d5d)
 - chore(deps-dev): bump @types/node from 18.11.19 to 18.13.0 [`f49f544`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/f49f544f531fd5fe0f49f882d4386966858c4a60)
 - chore(deps-dev): bump @types/node from 18.11.18 to 18.11.19 [`725f97c`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/725f97c86b363478600984c031b440045a0145c5)
 - chore(deps): bump undici from 5.16.0 to 5.18.0 [`1ea1af0`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/1ea1af0ba7001b8d2dc4c78af6e1e93b14f16067)
