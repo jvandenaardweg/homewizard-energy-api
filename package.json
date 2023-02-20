@@ -59,7 +59,7 @@
   ],
   "devDependencies": {
     "@types/multicast-dns": "^7.2.1",
-    "@types/node": "^18.13.0",
+    "@types/node": "^18.14.0",
     "@typescript-eslint/eslint-plugin": "^5.52.0",
     "@typescript-eslint/parser": "^5.52.0",
     "@vitest/coverage-istanbul": "^0.28.5",
@@ -82,7 +82,7 @@
   "dependencies": {
     "date-fns": "^2.29.3",
     "multicast-dns": "^7.2.5",
-    "undici": "^5.19.1"
+    "undici": "^5.20.0"
   },
   "release-it": {
     "git": {
