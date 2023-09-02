@@ -37,6 +37,7 @@ export const mockWaterMeterDataResponse: WaterMeterDataResponse = {
   wifi_strength: 100,
   total_liter_m3: 123.456,
   active_liter_lpm: 7.2,
+  total_liter_offset_m3: 0,
 };
 
 export const mockKwhMeter1PhaseResponse: KwhMeter1PhaseDataResponse = {
