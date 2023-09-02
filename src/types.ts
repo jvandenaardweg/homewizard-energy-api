@@ -207,6 +207,8 @@ export interface BaseDataResponse {
   active_liter_lpm?: number;
   /** Total water usage in cubic meters since installation. Available for: `HWE-WTR` */
   total_liter_m3?: number;
+  /** The usage of this value is in development and should not be used. Available for: `HWE-WTR` */
+  total_liter_offset_m3?: number;
   active_tariff?: number; // TODO: determine what this is, not in docs, but only found in example
 }
 
@@ -237,7 +239,7 @@ export type P1MeterDataResponse = Omit<BaseDataResponse, 'active_liter_lpm' | 't
  */
 export type WaterMeterDataResponse = Pick<
   BaseDataResponse,
-  'wifi_ssid' | 'wifi_strength' | 'total_liter_m3' | 'active_liter_lpm'
+  'wifi_ssid' | 'wifi_strength' | 'total_liter_m3' | 'active_liter_lpm' | 'total_liter_offset_m3'
 >;
 
 /**
