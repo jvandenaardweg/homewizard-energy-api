@@ -71,7 +71,7 @@
     "lint-staged": "^13.2.3",
     "nodemon": "^3.0.1",
     "prettier": "^2.8.8",
-    "release-it": "^16.1.5",
+    "release-it": "^16.2.1",
     "resolve-tspaths": "^0.8.8",
     "rimraf": "^5.0.1",
     "ts-node": "^10.9.1",
