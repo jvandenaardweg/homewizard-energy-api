@@ -82,7 +82,7 @@
   "dependencies": {
     "date-fns": "^2.30.0",
     "multicast-dns": "^7.2.5",
-    "undici": "^5.22.1"
+    "undici": "^5.25.3"
   },
   "release-it": {
     "git": {
