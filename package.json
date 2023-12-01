@@ -58,7 +58,7 @@
     "homewizard energy api"
   ],
   "devDependencies": {
-    "@types/multicast-dns": "^7.2.1",
+    "@types/multicast-dns": "^7.2.4",
     "@types/node": "^20.5.7",
     "@typescript-eslint/eslint-plugin": "^5.61.0",
     "@typescript-eslint/parser": "^5.60.1",
