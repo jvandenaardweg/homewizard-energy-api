@@ -241,6 +241,7 @@ export type P1MeterDataResponse = Omit<
   BaseDataResponse,
   | 'active_liter_lpm'
   | 'total_liter_m3'
+  | 'total_liter_offset_m3'
   | 'active_voltage_v'
   | 'active_current_a'
 >;
