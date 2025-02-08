@@ -155,12 +155,16 @@ export interface BaseDataResponse {
   active_power_l2_w?: number;
   /** The active usage for fase 3 in Watts. Available for: `HWE-P1`, `SDM630-wifi`  */
   active_power_l3_w?: number;
+  /** The active voltage in volts. Available for: `HWE-SKT`, `SDM230-wifi` */
+  active_voltage_v?: number;
   /** The active voltage for phase 1 in volt. Available for: `HWE-P1` */
   active_voltage_l1_v?: number;
   /** The active voltage for phase 2 in volt. Available for: `HWE-P1` */
   active_voltage_l2_v?: number;
   /** The active voltage for phase 3 in volt. Available for: `HWE-P1` */
   active_voltage_l3_v?: number;
+  /** The active current in amperes. Sum of all phases for 3-phase meter. Available for: `HWE-SKT`, `SDM230-wifi`, `SDM630-wifi` */
+  active_current_a?: number;
   /** The active current for phase 1 in ampere. Available for: `HWE-P1` */
   active_current_l1_a?: number;
   /** The active current for phase 2 in ampere. Available for: `HWE-P1` */
@@ -225,6 +229,9 @@ export type EnergySocketDataResponse = Pick<
   | 'total_power_export_t1_kwh'
   | 'active_power_w'
   | 'active_power_l1_w'
+  | 'active_voltage_v'
+  | 'active_current_a'
+  | 'active_frequency_hz'
 >;
 
 /**
@@ -234,6 +241,8 @@ export type P1MeterDataResponse = Omit<
   BaseDataResponse,
   | 'active_liter_lpm'
   | 'total_liter_m3'
+  | 'active_voltage_v'
+  | 'active_current_a'
 >;
 
 /**
@@ -259,6 +268,9 @@ export type KwhMeter1PhaseDataResponse = Pick<
   | 'total_power_export_t1_kwh'
   | 'active_power_w'
   | 'active_power_l1_w'
+  | 'active_voltage_v'
+  | 'active_current_a'
+  | 'active_frequency_hz'
 >;
 
 /**
@@ -276,6 +288,14 @@ export type KwhMeter3PhaseDataResponse = Pick<
   | 'active_power_l1_w'
   | 'active_power_l2_w'
   | 'active_power_l3_w'
+  | 'active_voltage_l1_v'
+  | 'active_voltage_l2_v'
+  | 'active_voltage_l3_v'
+  | 'active_current_a'
+  | 'active_current_l1_a'
+  | 'active_current_l2_a'
+  | 'active_current_l3_a'
+  | 'active_frequency_hz'
 >;
 
 /**
