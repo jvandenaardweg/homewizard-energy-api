@@ -230,7 +230,11 @@ export type EnergySocketDataResponse = Pick<
 /**
  * API /data response for `HWE-P1`
  */
-export type P1MeterDataResponse = Omit<BaseDataResponse, 'active_liter_lpm' | 'total_liter_m3'>;
+export type P1MeterDataResponse = Omit<
+  BaseDataResponse,
+  | 'active_liter_lpm'
+  | 'total_liter_m3'
+>;
 
 /**
  * API /data response for `HWE-WTR`
