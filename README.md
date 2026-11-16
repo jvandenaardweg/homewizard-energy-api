@@ -23,7 +23,7 @@ Full type-safe implementation of the HomeWizard Energy API in Node. Use the Loca
 - Provides a simple polling interface to request near real-time data from your devices
 - Transforms the P1 telegram text from the P1 meter into a readable detailed object
 - Includes inline documentation on each method, type and property
-- Follows the guidelines provided in the official [HomeWizard Energy API documentation](https://homewizard-energy-api.readthedocs.io/index.html)
+- Follows the guidelines provided in the official [HomeWizard Energy API documentation](https://api-documentation.homewizard.com/docs/introduction)
 
 ## Installation
 
@@ -64,15 +64,15 @@ const p1Meter = new P1MeterApi('http://192.168.1.11');
 const data = await p1Meter.getData();
 ```
 
-| Method | API              | Function              | Description                                                                                                                                                                                                                                                                 |
-| ------ | ---------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | /api             | `getBasic()`          | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).                                                                                                                 |
-| GET    | /api/v1/data     | `getData()`           | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).                                                                                          |
-| GET    | /api/v1/telegram | `getTelegram()`       | Returns the most recent, valid telegram in text format that was given by the P1 meter, therefore this endpoint is only available for the HWE-P1. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#p1-telegram-api-v1-telegram). |
-| GET    | /api/v1/telegram | `getParsedTelegram()` | Returns the telegram as a detailed JSON response. This is a feature of this library, and not of the API itself. See telegram docs for more info about the telegram endpoint                                                                                                 |
-| PUT    | /api/v1/identify | `identify()`          | Identify the device. The status light will blink for a few seconds after calling this endpoint. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#identify-api-v1-identify).                                                     |
-| GET    | /api/v1/system   | `getSystem()`         | Returns the actual system settings. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system).                                                                                                                     |
-| PUT    | /api/v1/system   | `updateSystem()`      | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system).                                           |
+| Method | API              | Function              | Description                                                                                                                                                                                                                                   |
+| ------ | ---------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /api             | `getBasic()`          | Get basic information from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/api).                                                                                                                |
+| GET    | /api/v1/data     | `getData()`           | Returns the most recent measurement from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/measurement).                                                                                          |
+| GET    | /api/v1/telegram | `getTelegram()`       | Returns the most recent, valid telegram in text format that was given by the P1 meter, therefore this endpoint is only available for the HWE-P1. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/telegram). |
+| GET    | /api/v1/telegram | `getParsedTelegram()` | Returns the telegram as a detailed JSON response. This is a feature of this library, and not of the API itself. See telegram docs for more info about the telegram endpoint                                                                   |
+| PUT    | /api/v1/identify | `identify()`          | Identify the device. The status light will blink for a few seconds after calling this endpoint. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/identify).                                                  |
+| GET    | /api/v1/system   | `getSystem()`         | Returns the actual system settings. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system).                                                                                                                |
+| PUT    | /api/v1/system   | `updateSystem()`      | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system).                                      |
 
 ### Data polling
 
@@ -128,15 +128,15 @@ const energySocket = new EnergySocketApi('http://192.168.1.10');
 const updatedState = await energySocket.updateState({ power_on: true });
 ```
 
-| Method | API              | Function         | Description                                                                                                                                                                                                                       |
-| ------ | ---------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | /api             | `getBasic()`     | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).                                                                       |
-| GET    | /api/v1/state    | `getState()`     | Returns the actual state of the Energy Socket. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#state-api-v1-state).                                                                  |
-| PUT    | /api/v1/state    | `updateState()`  | Control the state of the Energy Socket. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#state-api-v1-state).                                                                         |
-| GET    | /api/v1/data     | `getData()`      | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).                                                |
-| PUT    | /api/v1/identify | `identify()`     | Identify the device. The status light will blink for a few seconds after calling this endpoint. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#identify-api-v1-identify).           |
-| GET    | /api/v1/system   | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system).                                                                           |
-| PUT    | /api/v1/system   | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system). |
+| Method | API              | Function         | Description                                                                                                                                                                                              |
+| ------ | ---------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /api             | `getBasic()`     | Get basic information from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/api).                                                                           |
+| GET    | /api/v1/state    | `getState()`     | Returns the actual state of the Energy Socket. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/state).                                                                 |
+| PUT    | /api/v1/state    | `updateState()`  | Control the state of the Energy Socket. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/state).                                                                        |
+| GET    | /api/v1/data     | `getData()`      | Returns the most recent measurement from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/measurement).                                                     |
+| PUT    | /api/v1/identify | `identify()`     | Identify the device. The status light will blink for a few seconds after calling this endpoint. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/identify).             |
+| GET    | /api/v1/system   | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system).                                                                           |
+| PUT    | /api/v1/system   | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system). |
 
 ### Data polling
 
@@ -155,10 +155,10 @@ const waterMeter = new WaterMeterApi('http://192.168.1.12');
 const data = await waterMeter.getData();
 ```
 
-| Method | API          | Function     | Description                                                                                                                                                                        |
-| ------ | ------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | /api         | `getBasic()` | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).                        |
-| GET    | /api/v1/data | `getData()`  | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data). |
+| Method | API          | Function     | Description                                                                                                                                          |
+| ------ | ------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /api         | `getBasic()` | Get basic information from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/api).                       |
+| GET    | /api/v1/data | `getData()`  | Returns the most recent measurement from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/measurement). |
 
 ### Data polling
 
@@ -177,12 +177,12 @@ const kwhMeter1Phase = new KwhMeter1PhaseApi('http://192.168.1.13');
 const data = await kwhMeter1Phase.getData();
 ```
 
-| Method | API            | Function         | Description                                                                                                                                                                                                                       |
-| ------ | -------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | /api           | `getBasic()`     | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).                                                                       |
-| GET    | /api/v1/data   | `getData()`      | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).                                                |
-| GET    | /api/v1/system | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system).                                                                           |
-| PUT    | /api/v1/system | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system). |
+| Method | API            | Function         | Description                                                                                                                                                                                              |
+| ------ | -------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /api           | `getBasic()`     | Get basic information from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/api).                                                                           |
+| GET    | /api/v1/data   | `getData()`      | Returns the most recent measurement from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/measurement).                                                     |
+| GET    | /api/v1/system | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system).                                                                           |
+| PUT    | /api/v1/system | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system). |
 
 ### Data polling
 
@@ -201,12 +201,12 @@ const kwhMeter3Phase = new KwhMeter3PhaseApi('http://192.168.1.14');
 const data = await kwhMeter3Phase.getData();
 ```
 
-| Method | API            | Function         | Description                                                                                                                                                                                                                       |
-| ------ | -------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | /api           | `getBasic()`     | Get basic information from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api).                                                                       |
-| GET    | /api/v1/data   | `getData()`      | Returns the most recent measurement from the device. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data).                                                |
-| GET    | /api/v1/system | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system).                                                                           |
-| PUT    | /api/v1/system | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system). |
+| Method | API            | Function         | Description                                                                                                                                                                                              |
+| ------ | -------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /api           | `getBasic()`     | Get basic information from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/api).                                                                           |
+| GET    | /api/v1/data   | `getData()`      | Returns the most recent measurement from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/measurement).                                                     |
+| GET    | /api/v1/system | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system).                                                                           |
+| PUT    | /api/v1/system | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system). |
 
 ### Data polling
 
@@ -214,7 +214,7 @@ A simple polling interface for the kWh Meter 3-phase is exposed via `api.polling
 
 ## Discover HomeWizard devices in your network
 
-This library exposes a discovery method to discover HomeWizard Energy devices in your local network. Each HomeWizard device broadcasts itself on your local network using Multicast DNS. This allows you to use all the devices in your network without knowing the actual IP address of the device. You can find more details about this in the [official docs](https://homewizard-energy-api.readthedocs.io/discovery.html).
+This library exposes a discovery method to discover HomeWizard Energy devices in your local network. Each HomeWizard device broadcasts itself on your local network using Multicast DNS. This allows you to use all the devices in your network without knowing the actual IP address of the device. You can find more details about this in the [official docs](https://api-documentation.homewizard.com/docs/discovery).
 
 ### Discovery example
 

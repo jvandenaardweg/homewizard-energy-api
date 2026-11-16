@@ -72,7 +72,7 @@ export class EnergySocketApi extends BaseApi {
   /**
    * Returns the actual state of the Energy Socket. This endpoint is only available for the HWE-SKT.
    *
-   * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#state-api-v1-state
+   * @link https://api-documentation.homewizard.com/docs/v1/state
    */
   async getState<T extends StateResponse>(): Promise<T> {
     const url = this.endpoints.state;
@@ -98,7 +98,7 @@ export class EnergySocketApi extends BaseApi {
   /**
    * Control the state of the Energy Socket. This endpoint is only available for the HWE-SKT.
    *
-   * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#state-api-v1-state
+   * @link https://api-documentation.homewizard.com/docs/v1/state
    */
   async updateState<Keys extends keyof StateResponse>(
     params: StatePutParams<Keys>,
@@ -133,7 +133,7 @@ export class EnergySocketApi extends BaseApi {
    * This feature is currently available for `HWE-P1` running firmware version 4.00 or later.
    * And `HWE-SKT`, `SDM230-wifi` and `SDM630-wifi` running firmware version 3.00 or later.
    *
-   * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system
+   * @link https://api-documentation.homewizard.com/docs/v1/system
    */
   async getSystem(): Promise<SystemResponse> {
     const url = this.endpoints.system;
@@ -165,7 +165,7 @@ export class EnergySocketApi extends BaseApi {
    * This feature is currently available for `HWE-P1` running firmware version 4.00 or later.
    * And `HWE-SKT`, `SDM230-wifi` and `SDM630-wifi` running firmware version 3.00 or later.
    *
-   * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system
+   * @link https://api-documentation.homewizard.com/docs/v1/system
    */
   async updateSystem(params: SystemPutParams): Promise<SystemResponse> {
     const url = this.endpoints.system;
@@ -194,7 +194,7 @@ export class EnergySocketApi extends BaseApi {
    *
    * This feature is currently only available for HWE-SKT running firmware version 3.00 or later.
    *
-   * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#identify-api-v1-identify
+   * @link https://api-documentation.homewizard.com/docs/v1/identify
    */
   async identify(): Promise<IdentifyResponse> {
     const url = this.endpoints.identify;
