@@ -4,6 +4,16 @@ This plan builds [v2-design.md](v2-design.md) in small PRs. Each PR passes `npm 
 
 Work taken from [jvandenaardweg/homewizard-energy-api#135](https://github.com/jvandenaardweg/homewizard-energy-api/pull/135) gets a `Co-authored-by: Nebz <…>` trailer on the commit that uses it, so NebzHB shows up under Contributors in the release notes.
 
+## Status (16 November 2026)
+
+Steps 0 to 8 are built on one branch, one commit per PR. What's still open:
+
+- **Hardware checks that need a button press.** On a real P1 Meter (API 2.2.0) the following are confirmed: the certificate CN matches the mDNS `id`, a strict check rejects another identifier, `checkServerIdentity` runs on each connection, 401 `user:unauthorized` is parsed, a pairing times out without a button press, the WebSocket sends `authorization_requested`, and a wrong token makes the device drop the connection (now reported as `user:unauthorized`). Still unchecked: pairing with the button, and every authorized endpoint and WebSocket topic.
+- **kWh meters and Plug-In Battery:** built from the docs, untested on hardware.
+- **Deprecations of the v1 classes:** not done, because they wait for the hardware checks.
+- **The WebSocket heartbeat** assumes the device answers a `{"type":"device"}` request, as the docs describe. If it answers with an error instead, users get an `error` event every interval. This needs a token to check.
+- **The token-rejection rule** comes from one P1: a drop between sending the token and `authorized` stops reconnecting for good, so a network drop in that short window does too.
+
 ## Order and dependencies
 
 ```
@@ -49,7 +59,7 @@ No public change. This PR exists so that v2 can reuse the code without extending
 - New `src/shared/errors.ts`: `HomeWizardEnergyApiError`, `…ResponseError` and `…TimeoutError`, moved and re-exported from `base-api.ts` under the same names.
 - New `src/shared/logger.ts`: the log function and default prefix.
 - New `src/shared/poller.ts`: the interval loop, `stopOnError` and the method-scoped emitter (today's `startPolling`, `stopPolling`, `pollingOn` and `emitPollingEvent`).
-- New `src/shared/mdns.ts`: TXT, PTR and A record parsing from `homewizard-energy-discovery.ts`, with the service type as a parameter.
+- New `src/shared/mdns-discovery.ts`: an `MdnsDiscovery` class with the TXT, PTR and A record parsing from `homewizard-energy-discovery.ts`, with the service type as a parameter.
 - `BaseApi` and `HomeWizardEnergyDiscovery` call these modules, and every protected method keeps its signature.
 - Done when:
   - all existing tests pass unchanged, and coverage stays the same;
@@ -66,12 +76,12 @@ No public change. This PR exists so that v2 can reuse the code without extending
 - `src/v2/errors.ts`:
   - `HomeWizardApiV2Error` with `code`, typed as the known codes from the error-handling docs plus `string`;
   - `HomeWizardApiV2PairingError` with `reason: 'timeout' | 'aborted'`.
-- `src/v2/client.ts` (`V2Client`):
+- `src/v2/client.ts` (`Client`, internal; the device classes take its `DeviceOptions`):
   - builds `https://<host>`, the TLS `Agent` (or an injected `dispatcher`), and the `X-Api-Version: 2`, `Authorization` and `Content-Type` headers;
   - parses errors from JSON (`{"error": …}`) and from plain text (telegram);
   - throws when `identifier` is missing without `insecure: true`;
   - `close()` closes the agent.
-- `src/v2/endpoints/`: one function per endpoint for all devices. PRs 4 and 6 then only add classes.
+- `src/v2/endpoints.ts`: one function per endpoint for all devices. PRs 4 and 6 then only add classes.
   - `device.ts`: `getDevice`.
   - `measurement.ts`: `getMeasurement<T>`.
   - `system.ts`: `getSystem`, `updateSystem`, `identify` and `reboot`.
@@ -80,7 +90,7 @@ No public change. This PR exists so that v2 can reuse the code without extending
   - `users.ts`: `createUser`, `listUsers` and `deleteUser`. `createUser` adds the `local/` prefix and checks the name against `^local\/[a-zA-Z0-9\-_/\\# ]{1,40}$` before sending.
 - `src/v2/pairing.ts`: `pair(host, name, options)`.
   - It retries on `user:creation-not-enabled` (403) and on network errors, and stops on any other API error.
-  - Options: `timeout` (default 120 s), `interval` (default 2 s), `signal` and `onAttempt(remainingMs)`.
+  - Options: `pairTimeout` (default 120 s), `interval` (default 2 s), `signal` and `onAttempt(remainingMs)`.
   - It returns `{ token, identifier }`, with the identifier taken from the certificate CN.
   - It uses its own short-lived agent with the chain-only check. A `dispatcher` option lets tests inject one.
 - `src/v2/poll.ts`: `v2.poll(fn, { interval, stopOnError })` returns `{ start, stop, on }`, built on `shared/poller.ts`.
@@ -118,7 +128,7 @@ No public change. This PR exists so that v2 can reuse the code without extending
   - `subscribe`, `unsubscribe`, `request(topic)`, `set(topic, data)`, `identify` and `close`;
   - typed `on()` for each topic, plus `authorized`, `close` and `error`;
   - errors from `{"type":"error","data":{"message":…}}` become `HomeWizardApiV2Error`;
-  - subscriptions are sent again after reconnect, with exponential backoff, and a watchdog closes and reconnects after N seconds of silence.
+  - subscriptions are sent again after reconnect, with exponential backoff, and a heartbeat sends `{"type":"device"}` after a silent interval and reconnects after two.
 - `P1Meter.openWebSocket()`, with topics narrowed per device.
 - Port the PR's message handling from `websocket-v2.ts`, adapted to undici events.
 - Tests:
@@ -136,8 +146,8 @@ No public change. This PR exists so that v2 can reuse the code without extending
 
 ## PR 7: `feat: add v2 discovery`
 
-- `v2.Discovery` on `_homewizard._tcp`, using `shared/mdns.ts`. Its `DiscoveryResponse` has the `api_version`, `id`, `serial`, `product_name` and `product_type` TXT records. The v1 `HomeWizardEnergyDiscovery` and its types stay as they are.
-- `v2.fromDiscovery(response, { token })` picks the class from `product_type`, uses `id` as the identifier, and throws on an unknown product type.
+- `v2.Discovery` on `_homewizard._tcp`, extending `shared/mdns-discovery.ts`. Its `DiscoveryResponse` has the `api_version`, `id`, `serial`, `product_name` and `product_type` TXT records. The v1 `HomeWizardEnergyDiscovery` and its types stay as they are.
+- `v2.fromDiscovery(response, { token, identifier })` picks the class from `product_type` and throws on an unknown product type. mDNS is unauthenticated, so it takes the identifier stored at pairing and throws when the discovered `id` differs, so the token is never sent to another device.
 - Tests with the `src/mocks/mdns.ts` helpers: a v2 response; a device that answers on both services; and an unknown product type.
 
 ## PR 8: docs and deprecations

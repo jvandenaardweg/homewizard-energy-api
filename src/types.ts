@@ -1,8 +1,7 @@
 /**
  * We can discover devices on the local network using the `_hwenergy._tcp` domain, which devices advertise for API v1.
  *
- * Devices that support API v2 also advertise `_homewizard._tcp`. This library doesn't support API v2 yet,
- * so it only discovers `_hwenergy._tcp`.
+ * Devices that support API v2 also advertise `_homewizard._tcp`, which `v2.Discovery` finds.
  *
  * @link https://api-documentation.homewizard.com/docs/discovery
  */
