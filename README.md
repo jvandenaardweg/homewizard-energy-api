@@ -102,6 +102,18 @@ const { token, identifier, name } = await v2.pair('192.168.1.35', 'my-app', {
 
 When the button isn't pressed in time, or the pairing is aborted, `pair()` throws a `v2.HomeWizardApiV2PairingError` with a `reason` of `'timeout'` or `'aborted'`.
 
+### Storing the token
+
+`pair()` gives you two values to keep: the `token` and the `identifier`. Together with the device's IP address, they're all you need to connect again. HomeWizard leaves storage to your app, so use what your platform offers:
+
+- **Scripts:** environment variables, or a `.env` file that only you can read.
+- **Home automation plugins** (Homebridge, Node-RED and others): the platform's config or credential store.
+- **Servers:** a secret manager.
+
+The token gives full access to the device, so keep it out of logs and version control. The library never logs it.
+
+When the token is lost, pair again with the same name: the device gives a new token, and the old one stops working. A request with a token the device no longer knows throws a `v2.HomeWizardApiV2Error` with code `user:unauthorized`, which means it's time to pair again. To revoke a token, delete its user with `users.delete('local/my-app')`.
+
 ### Using a device
 
 ```typescript
