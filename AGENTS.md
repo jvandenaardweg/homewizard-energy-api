@@ -4,7 +4,7 @@ This is a typed Node client for the HomeWizard Energy local HTTP API (P1 meter, 
 
 ## Verifying changes
 
-- `npm test` is the full gate: lint (including Prettier formatting), type-check, then vitest with coverage. The husky pre-commit hook runs lint-staged to format staged files, then `npm test`.
+- `npm test` is the full gate: lint (including Prettier formatting), type-check, then vitest with coverage. Aim for 100% coverage, so new code comes with tests for each branch. It's a target, and the config doesn't enforce a threshold. The husky pre-commit hook runs lint-staged to format staged files, then `npm test`.
 - To run a single test file: `TZ=Europe/Amsterdam npx vitest run src/utils/telegram.test.ts`. Always set `TZ=Europe/Amsterdam`, because telegram timestamps are formatted in local time and the expected test values are hard-coded to Amsterdam offsets.
 - Scripts in `src/examples/` call hard-coded LAN IPs and need a real device, so tests are the way to verify behaviour.
 
