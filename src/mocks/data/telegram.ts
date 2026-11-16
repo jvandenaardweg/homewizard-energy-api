@@ -1,4 +1,7 @@
-const v50l3_1 = `/ISK5\\2M550T-1012
+// Devices end each telegram line with CRLF, so the fixtures do too
+const crlf = (telegram: string) => telegram.replace(/\n/g, '\r\n');
+
+const v50l3_1 = crlf(`/ISK5\\2M550T-1012
 
 1-3:0.2.8(50)
 0-0:1.0.0(191229233714W)
@@ -32,9 +35,10 @@ const v50l3_1 = `/ISK5\\2M550T-1012
 1-0:22.7.0(00.000*kW)
 1-0:42.7.0(00.000*kW)
 1-0:62.7.0(00.000*kW)
-!58E5`;
+!58E5
+`);
 
-const v50l3_2 = `/ISK5\\2M550T-1012
+const v50l3_2 = crlf(`/ISK5\\2M550T-1012
 
 1-3:0.2.8(50)
 0-0:1.0.0(221218224820W)
@@ -71,9 +75,10 @@ const v50l3_2 = `/ISK5\\2M550T-1012
 0-1:24.1.0(003)
 0-1:96.1.0(4730303132333435363738393031323334)
 0-1:24.2.1(221218224501W)(06798.545*m3)
-!A6BC`;
+!A6BC
+`);
 
-const v50be = `/FLU5\\253770234_A
+const v50be = crlf(`/FLU5\\253770234_A
 
 0-0:96.1.4(50215)
 0-0:96.1.1(3153414731313030303736363136)
@@ -97,9 +102,10 @@ const v50be = `/FLU5\\253770234_A
 0-1:96.1.1(37464C4F32313139303331393634)
 0-1:24.4.0(1)
 0-1:24.2.3(210320214626W)(02559.077*m3)
-!85AF`;
+!85AF
+`);
 
-const v22 = `/XMX5XMXABCE000063181
+const v22 = crlf(`/XMX5XMXABCE000063181
 
 0-0:96.1.1(31333634303033302020202020202020)
 1-0:1.8.1(32586.251*kWh)
@@ -115,9 +121,10 @@ const v22 = `/XMX5XMXABCE000063181
 0-1:24.1.0(03)
 0-1:24.3.0(180902110000)(08)(60)(1)(0-1:24.2.0)(m3)
 (12007.760)
-!`;
+!
+`);
 
-const v42 = `/KFM5KAIFA-METER
+const v42 = crlf(`/KFM5KAIFA-METER
 
 1-3:0.2.8(42)
 0-0:1.0.0(190228205019W)
@@ -142,9 +149,10 @@ const v42 = `/KFM5KAIFA-METER
 0-2:24.1.0(003)
 0-2:96.1.0(4730303139333430333231323232383136)
 0-2:24.2.1(190228200000W)(03514.244*m3)
-!4983`;
+!4983
+`);
 
-const v42l3 = `/KFM5KAIFA-METER
+const v42l3 = crlf(`/KFM5KAIFA-METER
 
 1-3:0.2.8(42)
 0-0:1.0.0(220108000226W)
@@ -176,9 +184,10 @@ const v42l3 = `/KFM5KAIFA-METER
 1-0:22.7.0(00.000*kW)
 1-0:42.7.0(00.000*kW)
 1-0:62.7.0(00.000*kW)
-!EF9E`;
+!EF9E
+`);
 
-const v50 = `/XMX5LGBBLA4415290514
+const v50 = crlf(`/XMX5LGBBLA4415290514
 
 1-3:0.2.8(50)
 0-0:1.0.0(180901194246S)
@@ -203,11 +212,12 @@ const v50 = `/XMX5LGBBLA4415290514
 0-1:24.1.0(003)
 0-1:96.1.0(4730303339303031373637383534313137)
 0-1:24.2.1(180901194004S)(00485.627*m3)
-!22EE`;
+!22EE
+`);
 
 // A real telegram from an ISKRA 2M550T (DSMR 5.0, 3-phase, gas on channel 1), read from a HWE-P1 on firmware 6.
-// Its equipment IDs are replaced and the CRC recalculated. Like on the device, the lines end with CRLF.
-const v50l3_3 = `/ISK5\\2M550T-1012
+// Its equipment IDs are replaced and the CRC recalculated.
+const v50l3_3 = crlf(`/ISK5\\2M550T-1012
 
 1-3:0.2.8(50)
 0-0:1.0.0(261116200707W)
@@ -245,7 +255,7 @@ const v50l3_3 = `/ISK5\\2M550T-1012
 0-1:96.1.0(4730303939303031323334353637383930)
 0-1:24.2.1(261116200501W)(11312.684*m3)
 !6946
-`.replace(/\n/g, '\r\n');
+`);
 
 export const mockTelegramResponse = {
   v50l3_1,
