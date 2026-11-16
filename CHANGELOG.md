@@ -1,5 +1,36 @@
 # Changelog
 
+## [2.0.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.7.0...2.0.0) (2026-11-16)
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** Node 22.19.0 or later is required (was 14.18.1), because
+  undici 8 no longer supports older Node versions. `requestOptions.throwOnError`
+  and `requestOptions.maxRedirections` are no longer supported and throw an
+  InvalidArgumentError, and `requestOptions.responseHeader` is now
+  `responseHeaders`. Requests use undici 8's global dispatcher, so a dispatcher
+  set with `setGlobalDispatcher` from undici 7 or older (for example a MockAgent
+  in tests) no longer applies. Use undici 8's `setGlobalDispatcher`, or pass
+  `requestOptions.dispatcher`.
+
+### Bug Fixes
+
+* **deps:** upgrade undici to 8 and date-fns to 4 ([4b4f9d1](https://github.com/jvandenaardweg/homewizard-energy-api/commit/4b4f9d11628001df3529cf370e2673ec3d77bd9b))
+* ship the multicast-dns types that the declarations use ([3080dac](https://github.com/jvandenaardweg/homewizard-energy-api/commit/3080dac35e46cec7067ed145d0f57c1893e25408))
+
+### Documentation
+
+* state the Node 22.19 requirement ([848ebfd](https://github.com/jvandenaardweg/homewizard-energy-api/commit/848ebfd8f02d02463f66c86f8810674e0fc9a61f))
+
+### Other Changes
+
+* compile with TypeScript 7 ([ef9ac3d](https://github.com/jvandenaardweg/homewizard-energy-api/commit/ef9ac3d512c50440b2e468b8383fc69ebe216a21))
+* **deps:** clear the remaining dev dependency advisories ([3c7392e](https://github.com/jvandenaardweg/homewizard-energy-api/commit/3c7392e548d3d393af06aa08ae63f3561dfe1cce))
+* replace eslint with oxlint and upgrade prettier, husky and lint-staged ([021b03a](https://github.com/jvandenaardweg/homewizard-energy-api/commit/021b03ad9611c87f901c2cd11874df7375578650))
+* test on Node 22, 24 and 26 ([d599ae2](https://github.com/jvandenaardweg/homewizard-energy-api/commit/d599ae254de0bfeea53133eb1594bf8c54b72159))
+* upgrade release-it to 21 and conventional-changelog to 12 ([838aa57](https://github.com/jvandenaardweg/homewizard-energy-api/commit/838aa579af2d4ef03421dc023958a752a0f02386))
+* upgrade vitest and its istanbul coverage provider to 5 ([8dd70be](https://github.com/jvandenaardweg/homewizard-energy-api/commit/8dd70beffce4aa82e0f99c0138030271093ae677))
+
 ## [1.7.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.6.1...1.7.0) (2026-11-16)
 
 
