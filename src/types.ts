@@ -255,7 +255,8 @@ export interface BaseDataResponse {
   total_liter_m3?: number;
   /** The usage of this value is in development and should not be used. Available for: `HWE-WTR` */
   total_liter_offset_m3?: number;
-  active_tariff?: number; // TODO: determine what this is, not in docs, but only found in example
+  /** The active tariff, matching one of the `total_power_import_t{n}_kwh` / `total_power_export_t{n}_kwh` readings. Only shown in the upstream v1 example response, not in its parameter table. Available for: `HWE-P1` */
+  active_tariff?: number;
 }
 
 /**
