@@ -18,7 +18,7 @@ Full type-safe implementation of the HomeWizard Energy API in Node. Use the Loca
 ## Features
 
 - Complete type-safety on all API methods, responses, and errors
-- Supports all HomeWizard Wi-Fi devices that have a Local API
+- Supports the HomeWizard Wi-Fi devices that have the v1 Local API
 - Exposes a discovery method to discover devices on your local network using Multicast DNS
 - Provides a simple polling interface to request near real-time data from your devices
 - Transforms the P1 telegram text from the P1 meter into a readable detailed object
@@ -41,7 +41,7 @@ yarn add homewizard-energy-api
 
 ## Supported devices
 
-This library supports all devices from HomeWizard that expose an API. This includes:
+This library supports the HomeWizard devices that have the v1 Local API:
 
 - [Wi-Fi P1 meter](#p1-meter) `HWE-P1`
 - [Wi-Fi Energy Socket](#energy-socket) `HWE-SKT`
@@ -49,7 +49,11 @@ This library supports all devices from HomeWizard that expose an API. This inclu
 - [Wi-Fi kWh meter (1 phase)](#kwh-meter-1-phase) `HWE-KWH1`, `SDM230-wifi`
 - [Wi-Fi kWh meter (3 phase)](#kwh-meter-3-phase) `HWE-KWH3`, `SDM630-wifi`
 
-Make sure to enable the `Local API` setting for each device you want to use with this library. You can do this in the Energy app.
+Make sure to enable the `Local API` setting for each device you want to use with this library. You can do this in the HomeWizard app.
+
+The library doesn't support the v2 Local API yet. That leaves out devices that only have API v2, like the Plug-In Battery (`HWE-BAT`). HomeWizard no longer develops API v1 and plans to remove it in the future, but hasn't given a date. On devices that have both, such as the P1 meter and kWh meters, API v1 can be turned off, so keep it enabled to use this library.
+
+Each class assumes it talks to the device type it's named after and doesn't check this. For example, a `P1MeterApi` pointed at an Energy Socket returns the socket's data from `getData()`. Use `getBasicInformation()` and its `product_type`, or the discovery `txt.product_type`, to pick the right class.
 
 ## P1 Meter
 
@@ -243,6 +247,20 @@ try {
 }
 ```
 
+A path the device doesn't know, or a method an endpoint doesn't accept, returns a 404 or 405 with a plain-text body like `Nothing matches the given URI`. `apiError` is `undefined` for those.
+
+### Timeouts and network errors
+
+A request that takes longer than 5 seconds, including connecting to the device, throws a `HomeWizardEnergyApiTimeoutError`. Change it with the `timeout` option, or set it to `0` to turn it off. It isn't used when you pass your own `requestOptions.signal`.
+
+```typescript
+const p1Meter = new P1MeterApi('http://192.168.1.35', {
+  timeout: 3000, // Defaults to 5000
+});
+```
+
+Other network failures, like a refused connection, throw the error from [undici](https://github.com/nodejs/undici) as is. Its `code`, like `ECONNREFUSED`, tells you what went wrong.
+
 ## Discover HomeWizard devices in your network
 
 This library exposes a discovery method to discover HomeWizard Energy devices in your local network. Each HomeWizard device broadcasts itself on your local network using Multicast DNS. This allows you to use all the devices in your network without knowing the actual IP address of the device. You can find more details about this in the [official docs](https://api-documentation.homewizard.com/docs/discovery).
@@ -294,4 +312,4 @@ With the HomeWizard Energy platform, you can get insights in your energy usage. 
 
 ## API Introduction
 
-The HomeWizard Wi-Fi P1 meter, Wi-Fi Energy Socket, Wi-Fi kWh meter and Wi-Fi Watermeter (‘device’) have a local API to retrieve the most recent measurements or control the device. You can access this API as long as you are connected to the same (Wi-Fi) network as the device and the API is enabled in the HomeWizard Energy app. This API is intended to connect your device to your own automation, home automation or graphing system. It is not possible to retrieve data history with the local API, as this is not stored on the device itself.
+The HomeWizard Wi-Fi P1 meter, Wi-Fi Energy Socket, Wi-Fi kWh meter and Wi-Fi Watermeter (‘device’) have a local API to retrieve the most recent measurements or control the device. You can access this API as long as you are connected to the same (Wi-Fi) network as the device and the API is enabled in the HomeWizard app. This API is intended to connect your device to your own automation, home automation or graphing system. It is not possible to retrieve data history with the local API, as this is not stored on the device itself.
