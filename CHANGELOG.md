@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.6.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.6.0...1.6.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* publish only dist and CHANGELOG.md to npm ([3659d3e](https://github.com/jvandenaardweg/homewizard-energy-api/commit/3659d3ed64a952e8f4d056550dc17debcaa57bb8))
+
+
+### Documentation
+
+* regenerate CHANGELOG.md in the grouped release-notes format ([26becf7](https://github.com/jvandenaardweg/homewizard-energy-api/commit/26becf729a6db05ec57e6bfe501003b4487495b6))
+
+
+### Other Changes
+
+* group release notes by commit type with conventional-changelog ([080b4c3](https://github.com/jvandenaardweg/homewizard-energy-api/commit/080b4c3984196baea8f0e2e427a02fa61f73e0da))
+* publish to npm with trusted publishing (OIDC) ([b1a09ee](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b1a09ee9195f668411ea4cabbc2129124fa7951c))
+
 ## [1.6.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.5.0...1.6.0) (2026-11-16)
 
 
