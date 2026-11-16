@@ -165,17 +165,12 @@ export class HomeWizardEnergyDiscovery {
     const answer = response.answers.find(answer => answer.type === 'A');
     const additional = response.additionals.find(additional => additional.type === 'A');
 
-    if (!answer && !additional) return null;
+    // Prefer the additional section when both have an A record
+    const hostRecord = additional || answer;
 
-    if (answer && !additional) {
-      return this.getHostDetailsFromAnswer(answer);
-    }
+    if (!hostRecord) return null;
 
-    if (additional) {
-      return this.getHostDetailsFromAnswer(additional);
-    }
-
-    return null;
+    return this.getHostDetailsFromAnswer(hostRecord);
   }
 
   protected getFqdnFromResponse(response: multicastDns.ResponsePacket): string | null {

@@ -405,5 +405,168 @@ describe('HomeWizardEnergyDiscovery', () => {
     });
   });
 
-  // TODO: test on response and error/warning
+  describe('stop() without start()', () => {
+    it('should not touch mDNS when it was never started', () => {
+      discoveryService.stop();
+
+      expect(removeAllListenersSpy).not.toHaveBeenCalled();
+      expect(destroySpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('on()', () => {
+    it.each(['response', 'error', 'warning'] as const)(
+      'should register a "%s" listener on mDNS',
+      event => {
+        discoveryService.start();
+
+        discoveryService.on(event as 'response', vi.fn());
+
+        expect(onSpy).toHaveBeenCalledOnce();
+        expect(onSpy).toHaveBeenCalledWith(event, expect.any(Function));
+      },
+    );
+
+    it('should forward mDNS errors and warnings to the callback', () => {
+      const errorCallback = vi.fn();
+      const warningCallback = vi.fn();
+      const error = new Error('mDNS error');
+      const warning = new Error('mDNS warning');
+
+      discoveryService.start();
+      discoveryService.on('error', errorCallback);
+      discoveryService.on('warning', warningCallback);
+
+      onSpy.mock.calls[0][1](error);
+      onSpy.mock.calls[1][1](warning);
+
+      expect(errorCallback).toHaveBeenCalledWith(error);
+      expect(warningCallback).toHaveBeenCalledWith(warning);
+    });
+
+    it('should forward HomeWizard Energy responses to the callback', () => {
+      const responseCallback = vi.fn();
+
+      discoveryService.start();
+      discoveryService.on('response', responseCallback);
+
+      onSpy.mock.calls[0][1](mockMdnsResponse);
+
+      expect(responseCallback).toHaveBeenCalledWith(mockDiscoveryResponse);
+    });
+  });
+
+  describe('handleMdnsResponse() edge cases', () => {
+    it('should remove a cached device when its goodbye response arrives', () => {
+      const callback = vi.fn();
+      const handler = discoveryService['handleMdnsResponse'](callback);
+
+      handler(mockMdnsResponse);
+      expect(discoveryService['cachedDiscoveryResponses']).toHaveLength(1);
+
+      handler(mockMdnsGoodbyeResponse);
+      expect(discoveryService['cachedDiscoveryResponses']).toHaveLength(0);
+    });
+
+    it('should call the callback once for a repeated, unchanged response', () => {
+      const callback = vi.fn();
+      const handler = discoveryService['handleMdnsResponse'](callback);
+
+      handler(mockMdnsResponse);
+      handler(mockMdnsResponse);
+
+      expect(callback).toHaveBeenCalledOnce();
+    });
+
+    it('should throw when the response has no host details', () => {
+      const mockMdnsResponseWithoutHost = {
+        ...mockMdnsResponse,
+        additionals: [],
+      };
+
+      expect(() =>
+        discoveryService['handleMdnsResponse'](vi.fn())(mockMdnsResponseWithoutHost),
+      ).toThrowError('No host details found in mDNS response');
+    });
+
+    it('should throw when the response has no txt record', () => {
+      const mockMdnsResponseWithoutTxt = {
+        ...mockMdnsResponse,
+        answers: mockMdnsResponse.answers.filter(answer => answer.type !== 'TXT'),
+      };
+
+      expect(() =>
+        discoveryService['handleMdnsResponse'](vi.fn())(mockMdnsResponseWithoutTxt),
+      ).toThrowError('No txt record data found in mDNS response');
+    });
+  });
+
+  describe('record shape edge cases', () => {
+    type Answer = multicastDns.ResponsePacket['answers'][number];
+
+    const aRecord = mockMdnsResponse.additionals[0];
+
+    const withoutKey = (record: Answer, key: string): Answer => {
+      const copy = { ...record } as Record<string, unknown>;
+      delete copy[key];
+      return copy as unknown as Answer;
+    };
+
+    it('should not treat an answer without a ttl as a goodbye', () => {
+      expect(
+        discoveryService['isGoodbyeResponse']({
+          ...mockMdnsGoodbyeResponse,
+          answers: [withoutKey(mockMdnsGoodbyeResponse.answers[0], 'ttl')],
+        }),
+      ).toBe(false);
+    });
+
+    it('should return no txt record when the TXT answer has no data key', () => {
+      const answers = mockMdnsResponse.answers.map(answer =>
+        answer.type === 'TXT' ? withoutKey(answer, 'data') : answer,
+      );
+
+      expect(
+        discoveryService['getTxtRecordFromResponse']({ ...mockMdnsResponse, answers }),
+      ).toBeNull();
+    });
+
+    it('should return no host details for an A record without data', () => {
+      expect(discoveryService['getHostDetailsFromAnswer'](withoutKey(aRecord, 'data'))).toBeNull();
+    });
+
+    it('should return no host details for an A record whose data is not a string', () => {
+      expect(
+        discoveryService['getHostDetailsFromAnswer']({
+          ...aRecord,
+          data: 42,
+        } as unknown as Answer),
+      ).toBeNull();
+    });
+
+    it('should return no host details when no section has an A record', () => {
+      expect(
+        discoveryService['getHostDetailsFromResponse']({ ...mockMdnsResponse, additionals: [] }),
+      ).toBeNull();
+    });
+
+    it('should read the host details from the answers when only they have an A record', () => {
+      expect(
+        discoveryService['getHostDetailsFromResponse']({
+          ...mockMdnsResponse,
+          answers: [...mockMdnsResponse.answers, aRecord],
+          additionals: [],
+        }),
+      ).toStrictEqual({ ip: '192.168.1.34', hostname: 'energysocket-27FF1E.local' });
+    });
+
+    it('should prefer the additionals when both sections have an A record', () => {
+      expect(
+        discoveryService['getHostDetailsFromResponse']({
+          ...mockMdnsResponse,
+          answers: [...mockMdnsResponse.answers, { ...aRecord, data: '10.0.0.1' } as Answer],
+        }),
+      ).toStrictEqual({ ip: '192.168.1.34', hostname: 'energysocket-27FF1E.local' });
+    });
+  });
 });
