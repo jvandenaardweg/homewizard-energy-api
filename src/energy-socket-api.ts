@@ -69,7 +69,9 @@ export class EnergySocketApi extends BaseApi {
     return {
       ...super.polling,
       [getState]: {
-        start: () => super.startPolling(getState, this.getState.bind(this)),
+        start: () => {
+          void super.startPolling(getState, this.getState.bind(this));
+        },
         stop: () => super.stopPolling(getState),
         on: super.pollingOn(getState),
       },

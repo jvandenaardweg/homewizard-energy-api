@@ -490,7 +490,9 @@ export class BaseApi {
 
     return {
       [getData]: {
-        start: () => this.startPolling(getData, this.getData.bind(this)),
+        start: () => {
+          void this.startPolling(getData, this.getData.bind(this));
+        },
         stop: () => this.stopPolling(getData),
         on: this.pollingOn(getData),
       },

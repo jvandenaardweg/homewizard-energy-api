@@ -463,6 +463,34 @@ describe('BaseApi', () => {
       await run;
     });
 
+    it('should return nothing from start()', () => {
+      const startPollingSpy = vi.fn().mockResolvedValue(undefined);
+
+      baseApi['startPolling'] = startPollingSpy;
+
+      expect(baseApi.polling.getData.start()).toBeUndefined();
+    });
+
+    it('should emit an error when a response listener throws', async () => {
+      const apiMethod = vi.fn().mockResolvedValue('ok');
+      const listenerError = new Error('Response listener failed');
+      const errorListener = vi.fn();
+
+      baseApi.polling.getData.on('response', () => {
+        throw listenerError;
+      });
+      baseApi.polling.getData.on('error', errorListener);
+
+      const run = baseApi['startPolling']('getData', apiMethod);
+      await flushPromises();
+
+      expect(errorListener).toHaveBeenCalledWith(listenerError);
+
+      baseApi['stopPolling']('getData');
+      vi.advanceTimersByTime(1000);
+      await run;
+    });
+
     it('should log errors that are not an Error as JSON', async () => {
       const apiMethod = vi.fn().mockRejectedValue({ code: 'ECONNRESET' });
 
