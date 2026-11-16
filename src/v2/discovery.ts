@@ -5,7 +5,7 @@ import { DeviceOptions } from './client';
 import { KwhMeter1Phase, KwhMeter3Phase } from './devices/kwh-meter';
 import { P1Meter } from './devices/p1-meter';
 import { PlugInBattery } from './devices/plug-in-battery';
-import { MDNS_DISCOVERY_TYPE, MdnsTxtRecord } from './types';
+import { MDNS_DISCOVERY_TYPE, MdnsTxtRecord, ProductType } from './types';
 
 /**
  * A device found on `_homewizard._tcp`. Pass it to `v2.fromDiscovery()` to get its device class.
@@ -38,7 +38,7 @@ export class Discovery extends MdnsDiscovery<MdnsTxtRecord> {
 export type DiscoveredDevice = P1Meter | KwhMeter1Phase | KwhMeter3Phase | PlugInBattery;
 
 const DEVICE_CLASSES: Record<
-  string,
+  ProductType,
   new (host: string, options: DeviceOptions) => DiscoveredDevice
 > = {
   'HWE-P1': P1Meter,
@@ -72,7 +72,7 @@ export function fromDiscovery(
   options: DeviceOptions,
 ): DiscoveredDevice {
   const { txt } = response;
-  const DeviceClass = DEVICE_CLASSES[txt.product_type];
+  const DeviceClass = DEVICE_CLASSES[txt.product_type as ProductType];
 
   if (!DeviceClass) {
     throw new HomeWizardEnergyApiError(

@@ -1,6 +1,6 @@
 import { Client, DeviceOptions } from '../client';
 import * as endpoints from '../endpoints';
-import { pair, PairOptions, PairResult } from '../pairing';
+import { pair, PairOptions, PairResult, splitPairOptions } from '../pairing';
 import { DeviceInformation, System, User } from '../types';
 import { CommonTopics, DeviceSocket, WebSocketOptions } from '../websocket';
 
@@ -35,6 +35,7 @@ export abstract class Device<
   TSystem extends Partial<System>,
   TSystemUpdate,
   TTopics extends CommonTopics<TMeasurement, TSystem> = CommonTopics<TMeasurement, TSystem>,
+  TUpdates extends object = { system: TSystemUpdate },
 > {
   protected readonly client: Client;
 
@@ -56,20 +57,17 @@ export abstract class Device<
    *
    * @link https://api-documentation.homewizard.com/docs/v2/websocket
    */
-  openWebSocket(options?: WebSocketOptions): DeviceSocket<TTopics> {
-    const socket = new DeviceSocket<TTopics>(
-      {
-        url: `${this.client.baseUrl.replace(/^https:/i, 'wss:')}/api/ws`,
-        token: this.client.token,
-        dispatcher: this.client.dispatcher,
-        logger: this.client.loggerOptions,
-      },
-      options,
-    );
+  openWebSocket(options?: WebSocketOptions): DeviceSocket<TTopics, TUpdates> {
+    const socket = this.createWebSocket(options);
 
     socket.connect();
 
     return socket;
+  }
+
+  /** Creates the socket for `openWebSocket()`. Devices that can identify return an `IdentifiableDeviceSocket`. */
+  protected createWebSocket(options?: WebSocketOptions): DeviceSocket<TTopics, TUpdates> {
+    return new DeviceSocket<TTopics, TUpdates>(this.client.webSocketConnection(), options);
   }
 
   /**
@@ -86,14 +84,9 @@ export abstract class Device<
     options: PairOptions = {},
   ): Promise<PairedDevice<TDevice>> {
     const result = await pair(host, name, options);
-    const { insecure, timeout, logger, dispatcher, ca } = options;
 
     const device = new this(host, {
-      insecure,
-      timeout,
-      logger,
-      dispatcher,
-      ca,
+      ...splitPairOptions(options).deviceOptions,
       token: result.token,
       identifier: result.identifier,
     });

@@ -121,7 +121,7 @@ socket.close();
 ```
 
 - Handshake: the device sends `authorization_requested`, and the client must send `authorization` with the token within 40 s. Subscriptions are sent again after every reconnect, and `request()`, `set()` and `identify()` wait until the connection is authorized.
-- A wrong token gets no error message: the real P1 drops the connection. A drop between sending the token and `authorized` is reported as `user:unauthorized` and stops reconnecting.
+- A wrong token gets no error message: the real P1 drops the connection. Two drops in a row between sending the token and `authorized` are reported as `user:unauthorized` and stop reconnecting. A single drop reconnects, because a network drop in that moment looks the same.
 - Reconnect with exponential backoff. Liveness is an application-level heartbeat: after a silent interval the socket sends `{"type":"device"}`, and the answer is hidden unless the user subscribed to `device`. After two silent intervals the connection counts as dead and is reconnected. undici exports `ping(ws)` but no pong event, so pings can't detect a dead connection.
 - Transport: undici's `WebSocket` with the same TLS `Agent` as HTTPS, passed as `dispatcher`. Checked against the real P1: the certificate check runs, and `authorization_requested` arrives. The PR's `ws` dependency isn't needed.
 
@@ -146,7 +146,7 @@ mDNS is unauthenticated, so the discovered `id` is not trusted as the identifier
 | `wss /api/ws`                      | ✓             | ✓                                       | ✓                                       | ✓                                                       |
 | API version listed in the docs     | 2.3.0         | 2.3.0                                   | 2.3.0                                   | 2.0.1                                                   |
 
-Field availability by API version, for `/api/batteries`: `mode` from 2.1.0 (`predictive` from 2.3.0), `permissions` and `battery_count` from 2.2.0, `charge_to_full` from 2.3.0. `standby` and `to_full` are legacy modes. Mark them `@deprecated` in the JSDoc.
+Field availability by API version, for `/api/batteries`: `mode` from 2.1.0 (`predictive` from 2.3.0), `permissions` and `battery_count` from 2.2.0, `charge_to_full` from 2.3.0. `standby` and `to_full` are legacy modes. TypeScript can't mark single members of a string union `@deprecated`, so the `BatteriesMode` JSDoc names them legacy and points to `permissions: []` and `charge_to_full` instead.
 
 No v2 yet: Energy Socket, Watermeter and Energy Display are "planned"; the Temperature Humidity Meter is "exploring alternatives". None of these get v2 classes until they are documented.
 

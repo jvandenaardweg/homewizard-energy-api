@@ -100,10 +100,12 @@ describe('v2.fromDiscovery', () => {
 
   it('should use the discovered IP and the given identifier', () => {
     const device = fromDiscovery(discovered, options);
-    const { client } = device as unknown as { client: { baseUrl: string; identifier: string } };
+    const { client } = device as unknown as {
+      client: { baseUrl: string; options: { identifier: string } };
+    };
 
     expect(client.baseUrl).toBe('https://192.168.1.35');
-    expect(client.identifier).toBe('appliance/p1dongle/3c39e7aabb02');
+    expect(client.options.identifier).toBe('appliance/p1dongle/3c39e7aabb02');
   });
 
   it('should refuse a device announced with another identifier, so the token is not sent to it', () => {

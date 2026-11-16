@@ -59,9 +59,12 @@ This is optional. Pull requests are verified by the test suite.
 
 ## How the code is organised
 
-`BaseApi` (`src/base-api.ts`) holds the shared request, error handling, logging and polling logic as `protected` methods. Each device class (`P1MeterApi`, `EnergySocketApi` and so on) extends it and re-exposes the methods that device supports, typed with that device's response type.
+The library has two APIs side by side, which share the request, error, logging, polling and mDNS code in `src/shared/`:
 
-The response types in `src/types.ts` mirror the HomeWizard API exactly. Field names stay snake_case, and data points are optional because devices leave out null values. Each field's JSDoc lists the devices that send it, and each type links to the upstream docs at https://api-documentation.homewizard.com. These comments ship to users as editor docs, so keep them accurate.
+- **API v1** (HTTP): `BaseApi` (`src/base-api.ts`) holds the request, error handling, logging and polling logic as `protected` methods. Each device class (`P1MeterApi`, `EnergySocketApi` and so on) extends it and re-exposes the methods that device supports, typed with that device's response type.
+- **API v2** (HTTPS with a token), in `src/v2/` and exported as the `v2` namespace: `src/v2/endpoints.ts` has one function per endpoint. The device classes in `src/v2/devices/` extend a small `Device` base class with what every device has, and add only the endpoints their device supports. The design is in [`docs/v2-design.md`](docs/v2-design.md).
+
+The response types in `src/types.ts` and `src/v2/types.ts` mirror the HomeWizard API exactly. Field names stay snake_case, and data points are optional because devices leave out null values. Each field's JSDoc lists the devices that send it, and each type links to the upstream docs at https://api-documentation.homewizard.com. These comments ship to users as editor docs, so keep them accurate.
 
 ## Adding an endpoint or a device
 
@@ -77,6 +80,8 @@ A new device also needs:
 5. Its product type in `SupportedDevicesList` in `src/types.ts` and in `mockBasicInformationResponse` in `src/mocks/data/basic.ts`.
 6. The new class exported from `src/index.ts`.
 7. An example in `src/examples/` and a section in `README.md`.
+
+For the API v2, the files differ: see "Adding an endpoint or device" in [`AGENTS.md`](AGENTS.md).
 
 ## Commits and pull requests
 

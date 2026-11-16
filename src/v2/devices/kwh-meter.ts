@@ -18,7 +18,8 @@ abstract class KwhMeter<TMeasurement> extends Device<
   TMeasurement,
   KwhMeterSystem,
   KwhMeterSystemUpdate,
-  CommonTopics<TMeasurement, KwhMeterSystem> & BatteriesTopic
+  CommonTopics<TMeasurement, KwhMeterSystem> & BatteriesTopic,
+  { system: KwhMeterSystemUpdate; batteries: BatteriesUpdate }
 > {
   /**
    * Reboots the device. Usually not needed: when the user needs it often, they should contact HomeWizard support.

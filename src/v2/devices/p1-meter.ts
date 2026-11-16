@@ -6,8 +6,16 @@ import {
   P1MeterSystem,
   P1MeterSystemUpdate,
 } from '../types';
-import { BatteriesTopic, CommonTopics } from '../websocket';
+import {
+  BatteriesTopic,
+  CommonTopics,
+  IdentifiableDeviceSocket,
+  WebSocketOptions,
+} from '../websocket';
 import { Device } from './device';
+
+type P1MeterTopics = CommonTopics<P1MeterMeasurement, P1MeterSystem> & BatteriesTopic;
+type P1MeterUpdates = { system: P1MeterSystemUpdate; batteries: BatteriesUpdate };
 
 /**
  * The P1 Meter (`HWE-P1`) over the API v2.
@@ -27,8 +35,22 @@ export class P1Meter extends Device<
   P1MeterMeasurement,
   P1MeterSystem,
   P1MeterSystemUpdate,
-  CommonTopics<P1MeterMeasurement, P1MeterSystem> & BatteriesTopic
+  P1MeterTopics,
+  P1MeterUpdates
 > {
+  openWebSocket(
+    options?: WebSocketOptions,
+  ): IdentifiableDeviceSocket<P1MeterTopics, P1MeterUpdates> {
+    return super.openWebSocket(options) as IdentifiableDeviceSocket<P1MeterTopics, P1MeterUpdates>;
+  }
+
+  protected createWebSocket(options?: WebSocketOptions) {
+    return new IdentifiableDeviceSocket<P1MeterTopics, P1MeterUpdates>(
+      this.client.webSocketConnection(),
+      options,
+    );
+  }
+
   /**
    * Blinks the status LED for a few seconds, so the user can find the device.
    *

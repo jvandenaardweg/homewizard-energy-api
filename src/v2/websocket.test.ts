@@ -6,7 +6,9 @@ import {
   MockWebSocketServer,
   startMockWebSocketServer,
 } from '@/mocks/tls/websocket-server';
+import { KwhMeter1Phase } from './devices/kwh-meter';
 import { P1Meter } from './devices/p1-meter';
+import { PlugInBattery } from './devices/plug-in-battery';
 import { HomeWizardApiV2WebSocketError } from './errors';
 import { DeviceSocket, WebSocketOptions } from './websocket';
 
@@ -128,7 +130,7 @@ describe('v2/DeviceSocket', () => {
     expect(server.connections).toHaveLength(1);
   });
 
-  it('should report a rejected token and not reconnect', async () => {
+  it('should report a rejected token after two drops in a row, and stop reconnecting', async () => {
     const socket = open({}, 'WRONG');
     const errors: HomeWizardApiV2WebSocketError[] = [];
     socket.on('error', error => errors.push(error as HomeWizardApiV2WebSocketError));
@@ -136,8 +138,30 @@ describe('v2/DeviceSocket', () => {
     await waitFor(() => errors.some(error => error.code === 'user:unauthorized'));
     await sleep(50);
 
-    expect(server.connections).toHaveLength(1);
+    expect(server.connections).toHaveLength(2);
+    expect(errors.filter(error => error.code === 'user:unauthorized')).toHaveLength(1);
     expect(socket.isAuthorized).toBe(false);
+  });
+
+  it('should reconnect after a single drop right after the token, like a network blip', async () => {
+    onConnection = connection => {
+      if (server.connections.length === 1) {
+        connection.send({ type: 'authorization_requested', data: { api_version: '2.2.0' } });
+        connection.on('message', () => connection.destroy());
+        return;
+      }
+
+      authorizeLikeADevice(connection, mockV2Token);
+    };
+
+    const socket = open();
+    const errors: HomeWizardApiV2WebSocketError[] = [];
+    socket.on('error', error => errors.push(error as HomeWizardApiV2WebSocketError));
+
+    await waitFor(() => socket.isAuthorized);
+
+    expect(server.connections).toHaveLength(2);
+    expect(errors.some(error => error.code === 'user:unauthorized')).toBe(false);
   });
 
   it('should emit error messages from the device with their code', async () => {
@@ -327,6 +351,26 @@ describe('v2/DeviceSocket', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledWith(1000, 'closed');
     expect(server.connections).toHaveLength(1);
+  });
+
+  it('should only offer the commands each device supports', () => {
+    const options = { ca: mockTlsCa, identifier: mockTlsIdentifier, token: mockV2Token };
+    const kwh = new KwhMeter1Phase(server.host, options).openWebSocket({ reconnect: false });
+    const battery = new PlugInBattery(server.host, options).openWebSocket({ reconnect: false });
+    sockets.push(kwh as DeviceSocket<object>, battery as DeviceSocket<object>);
+
+    // The kWh meters can't identify, and their status LED isn't adjustable
+    // @ts-expect-error identify() is not available on a kWh meter
+    expect(kwh.identify).toBeUndefined();
+    // @ts-expect-error status_led_brightness_pct is not writable on a kWh meter
+    kwh.set('system', { status_led_brightness_pct: 50 });
+
+    // cloud_enabled is read-only on the battery, and the battery has no batteries topic
+    // @ts-expect-error cloud_enabled is read-only on the Plug-In Battery
+    battery.set('system', { cloud_enabled: false });
+    // @ts-expect-error the Plug-In Battery has no batteries topic
+    battery.set('batteries', { mode: 'zero' });
+    expect(battery.identify).toBeTypeOf('function');
   });
 
   it('should remove a listener with off()', async () => {

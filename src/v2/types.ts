@@ -1,9 +1,9 @@
 /**
- * The major version sent in the `X-Api-Version` header.
+ * The major API version this library speaks, sent in the `X-Api-Version` header.
  *
  * @link https://api-documentation.homewizard.com/docs/versioning
  */
-export const API_VERSION_HEADER = '2';
+export const API_MAJOR_VERSION = '2';
 
 /**
  * Devices with the API v2 announce `_homewizard._tcp` over mDNS. Devices with the API v1 announce `_hwenergy._tcp`,
@@ -36,18 +36,21 @@ export type ProductType = (typeof ProductTypeList)[number];
  * @link https://api-documentation.homewizard.com/docs/discovery#_homewizard_tcp
  */
 export interface MdnsTxtRecord {
-  /** The latest API version of the device. Example: `"2.2.0"` */
+  /** The latest API version of the device. Example: `"2.2.0"` Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   api_version: string;
   /**
    * The identifier the device's certificate is issued to, formatted as `appliance/<product type>/<serial>`.
-   * Pass it as the `identifier` option. Example: `"appliance/p1dongle/5c2fafaabbcc"`
+   * Anyone on the network can announce a device, so compare it with the identifier you stored at pairing instead
+   * of passing it as the `identifier` option. Example: `"appliance/p1dongle/5c2fafaabbcc"`
+   *
+   * Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT`
    */
   id: string;
-  /** The serial number, also the MAC address. 12 hexadecimal characters. */
+  /** The serial number, also the MAC address. 12 hexadecimal characters. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   serial: string;
-  /** A user-friendly name that may change at any time. Example: `"P1 Meter"` */
+  /** A user-friendly name that may change at any time. Example: `"P1 Meter"` Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   product_name: string;
-  /** The product type. Your application should handle other values for future products. Example: `"HWE-P1"` */
+  /** The product type. Your application should handle other values for future products. Example: `"HWE-P1"` Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   product_type: ProductType | (string & {});
 }
 
@@ -98,15 +101,15 @@ export interface ErrorResponse {
  * @link https://api-documentation.homewizard.com/docs/v2/device_information
  */
 export interface DeviceInformation {
-  /** A fixed, user-friendly name. Not the name the user set in the app. Example: `"P1 Meter"` */
+  /** A fixed, user-friendly name. Not the name the user set in the app. Example: `"P1 Meter"` Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   product_name: string;
-  /** The product type. Your application should handle other values for future products. Example: `"HWE-P1"` */
+  /** The product type. Your application should handle other values for future products. Example: `"HWE-P1"` Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   product_type: ProductType | (string & {});
-  /** The serial number, also the MAC address. 12 hexadecimal characters. */
+  /** The serial number, also the MAC address. 12 hexadecimal characters. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   serial: string;
-  /** The firmware version. Make sure your application can handle other formats. Example: `"6.00"` */
+  /** The firmware version. Make sure your application can handle other formats. Example: `"6.00"` Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   firmware_version: string;
-  /** The API version of the device. Example: `"2.2.0"` */
+  /** The API version of the device. Example: `"2.2.0"` Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   api_version: string;
 }
 
@@ -130,9 +133,9 @@ export const USER_NAME_PATTERN = /^[a-zA-Z0-9\-_/\\# ]{1,40}$/;
  * @link https://api-documentation.homewizard.com/docs/v2/authorization#token
  */
 export interface UserCreated {
-  /** The name of the user, prefixed with `local/`. */
+  /** The name of the user, prefixed with `local/`. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   name: string;
-  /** The token for the `Authorization: Bearer <token>` header. 32 characters of `A-F` and `0-9`. Keep it secret. */
+  /** The token for the `Authorization: Bearer <token>` header. 32 characters of `A-F` and `0-9`. Keep it secret. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   token: string;
 }
 
@@ -142,9 +145,9 @@ export interface UserCreated {
  * @link https://api-documentation.homewizard.com/docs/v2/authorization#list-users
  */
 export interface User {
-  /** The name of the user, prefixed with `local/` or `cloud/`. */
+  /** The name of the user, prefixed with `local/` or `cloud/`. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   name: string;
-  /** `true` for the user whose token made the request. */
+  /** `true` for the user whose token made the request. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   current?: boolean;
 }
 
@@ -162,9 +165,9 @@ export type Timestamp = string;
  * @link https://api-documentation.homewizard.com/docs/v2/measurement#external-devices
  */
 export interface ExternalMeter {
-  /** The unique identifier of this meter. */
+  /** The unique identifier of this meter. Available for: `HWE-P1` */
   unique_id: string;
-  /** The type of meter. Your application should handle other values. */
+  /** The type of meter. Your application should handle other values. Available for: `HWE-P1` */
   type:
     | 'gas_meter'
     | 'heat_meter'
@@ -172,11 +175,11 @@ export interface ExternalMeter {
     | 'water_meter'
     | 'inlet_heat_meter'
     | (string & {});
-  /** When the meter sent this value. */
+  /** When the meter sent this value. Available for: `HWE-P1` */
   timestamp: Timestamp;
-  /** The raw value. */
+  /** The raw value. Available for: `HWE-P1` */
   value: number;
-  /** The unit of the value. Examples: `"m3"`, `"GJ"` */
+  /** The unit of the value. Examples: `"m3"`, `"GJ"` Available for: `HWE-P1` */
   unit: string;
 }
 
@@ -191,85 +194,85 @@ export interface ExternalMeter {
  * @link https://api-documentation.homewizard.com/docs/v2/measurement#p1-meter-hwe-p1
  */
 export interface P1MeterMeasurement {
-  /** The unique identifier of the smart meter. */
+  /** The unique identifier of the smart meter. Available for: `HWE-P1` */
   unique_id?: string;
-  /** The DSMR version of the smart meter. */
+  /** The DSMR version of the smart meter. Available for: `HWE-P1` */
   protocol_version?: number;
-  /** The brand identification of the smart meter. */
+  /** The brand identification of the smart meter. Available for: `HWE-P1` */
   meter_model?: string;
-  /** When the smart meter sent this measurement to the P1 Meter. */
+  /** When the smart meter sent this measurement to the P1 Meter. Available for: `HWE-P1` */
   timestamp?: Timestamp;
-  /** The active tariff, which matches one of the totals. */
+  /** The active tariff, which matches one of the totals. Available for: `HWE-P1` */
   tariff?: number;
-  /** The energy import meter reading for all tariffs in kWh. */
+  /** The energy import meter reading for all tariffs in kWh. Available for: `HWE-P1` */
   energy_import_kwh?: number;
-  /** The energy import meter reading for tariff 1 in kWh. */
+  /** The energy import meter reading for tariff 1 in kWh. Available for: `HWE-P1` */
   energy_import_t1_kwh?: number;
-  /** The energy import meter reading for tariff 2 in kWh. */
+  /** The energy import meter reading for tariff 2 in kWh. Available for: `HWE-P1` */
   energy_import_t2_kwh?: number;
-  /** The energy import meter reading for tariff 3 in kWh. */
+  /** The energy import meter reading for tariff 3 in kWh. Available for: `HWE-P1` */
   energy_import_t3_kwh?: number;
-  /** The energy import meter reading for tariff 4 in kWh. */
+  /** The energy import meter reading for tariff 4 in kWh. Available for: `HWE-P1` */
   energy_import_t4_kwh?: number;
-  /** The energy export meter reading for all tariffs in kWh. */
+  /** The energy export meter reading for all tariffs in kWh. Available for: `HWE-P1` */
   energy_export_kwh?: number;
-  /** The energy export meter reading for tariff 1 in kWh. */
+  /** The energy export meter reading for tariff 1 in kWh. Available for: `HWE-P1` */
   energy_export_t1_kwh?: number;
-  /** The energy export meter reading for tariff 2 in kWh. */
+  /** The energy export meter reading for tariff 2 in kWh. Available for: `HWE-P1` */
   energy_export_t2_kwh?: number;
-  /** The energy export meter reading for tariff 3 in kWh. */
+  /** The energy export meter reading for tariff 3 in kWh. Available for: `HWE-P1` */
   energy_export_t3_kwh?: number;
-  /** The energy export meter reading for tariff 4 in kWh. */
+  /** The energy export meter reading for tariff 4 in kWh. Available for: `HWE-P1` */
   energy_export_t4_kwh?: number;
-  /** The total active power in watt, the sum of all phases. Negative when exporting. */
+  /** The total active power in watt, the sum of all phases. Negative when exporting. Available for: `HWE-P1` */
   power_w?: number;
-  /** The active power of phase 1 in watt. Negative when exporting. */
+  /** The active power of phase 1 in watt. Negative when exporting. Available for: `HWE-P1` */
   power_l1_w?: number;
-  /** The active power of phase 2 in watt. Negative when exporting. */
+  /** The active power of phase 2 in watt. Negative when exporting. Available for: `HWE-P1` */
   power_l2_w?: number;
-  /** The active power of phase 3 in watt. Negative when exporting. */
+  /** The active power of phase 3 in watt. Negative when exporting. Available for: `HWE-P1` */
   power_l3_w?: number;
-  /** The active voltage in volt. */
+  /** The active voltage in volt. Available for: `HWE-P1` */
   voltage_v?: number;
-  /** The active voltage of phase 1 in volt. */
+  /** The active voltage of phase 1 in volt. Available for: `HWE-P1` */
   voltage_l1_v?: number;
-  /** The active voltage of phase 2 in volt. */
+  /** The active voltage of phase 2 in volt. Available for: `HWE-P1` */
   voltage_l2_v?: number;
-  /** The active voltage of phase 3 in volt. */
+  /** The active voltage of phase 3 in volt. Available for: `HWE-P1` */
   voltage_l3_v?: number;
-  /** The active current in ampere, the sum of the absolute values of all phases. */
+  /** The active current in ampere, the sum of the absolute values of all phases. Available for: `HWE-P1` */
   current_a?: number;
-  /** The active current of phase 1 in ampere. Negative when exporting. */
+  /** The active current of phase 1 in ampere. Negative when exporting. Available for: `HWE-P1` */
   current_l1_a?: number;
-  /** The active current of phase 2 in ampere. Negative when exporting. */
+  /** The active current of phase 2 in ampere. Negative when exporting. Available for: `HWE-P1` */
   current_l2_a?: number;
-  /** The active current of phase 3 in ampere. Negative when exporting. */
+  /** The active current of phase 3 in ampere. Negative when exporting. Available for: `HWE-P1` */
   current_l3_a?: number;
-  /** The line frequency in hertz. */
+  /** The line frequency in hertz. Available for: `HWE-P1` */
   frequency_hz?: number;
-  /** The number of voltage sags the meter detected on phase 1. */
+  /** The number of voltage sags the meter detected on phase 1. Available for: `HWE-P1` */
   voltage_sag_l1_count?: number;
-  /** The number of voltage sags the meter detected on phase 2. */
+  /** The number of voltage sags the meter detected on phase 2. Available for: `HWE-P1` */
   voltage_sag_l2_count?: number;
-  /** The number of voltage sags the meter detected on phase 3. */
+  /** The number of voltage sags the meter detected on phase 3. Available for: `HWE-P1` */
   voltage_sag_l3_count?: number;
-  /** The number of voltage swells the meter detected on phase 1. */
+  /** The number of voltage swells the meter detected on phase 1. Available for: `HWE-P1` */
   voltage_swell_l1_count?: number;
-  /** The number of voltage swells the meter detected on phase 2. */
+  /** The number of voltage swells the meter detected on phase 2. Available for: `HWE-P1` */
   voltage_swell_l2_count?: number;
-  /** The number of voltage swells the meter detected on phase 3. */
+  /** The number of voltage swells the meter detected on phase 3. Available for: `HWE-P1` */
   voltage_swell_l3_count?: number;
-  /** The number of power failures the meter detected. */
+  /** The number of power failures the meter detected. Available for: `HWE-P1` */
   any_power_fail_count?: number;
-  /** The number of long power failures the meter detected. */
+  /** The number of long power failures the meter detected. Available for: `HWE-P1` */
   long_power_fail_count?: number;
-  /** The average demand of the current quarter-hour in watt, for meters with a capacity tariff (Belgium). */
+  /** The average demand of the current quarter-hour in watt, for meters with a capacity tariff (Belgium). Available for: `HWE-P1` */
   average_power_15m_w?: number;
-  /** The peak average demand of this month in watt, for meters with a capacity tariff (Belgium). */
+  /** The peak average demand of this month in watt, for meters with a capacity tariff (Belgium). Available for: `HWE-P1` */
   monthly_power_peak_w?: number;
-  /** When the peak demand of this month was registered, for meters with a capacity tariff (Belgium). */
+  /** When the peak demand of this month was registered, for meters with a capacity tariff (Belgium). Available for: `HWE-P1` */
   monthly_power_peak_timestamp?: Timestamp;
-  /** The utility meters connected to the smart meter, such as gas and water meters. */
+  /** The utility meters connected to the smart meter, such as gas and water meters. Available for: `HWE-P1` */
   external?: ExternalMeter[];
 }
 
@@ -281,27 +284,27 @@ export interface P1MeterMeasurement {
  * @link https://api-documentation.homewizard.com/docs/v2/measurement#kwh-meter-1-phase-hwe-kwh1-and-sdm230-wifi
  */
 export interface KwhMeter1PhaseMeasurement {
-  /** The energy import meter reading in kWh. */
+  /** The energy import meter reading in kWh. Available for: `HWE-KWH1`, `SDM230-wifi` */
   energy_import_kwh?: number;
-  /** The energy export meter reading in kWh. */
+  /** The energy export meter reading in kWh. Available for: `HWE-KWH1`, `SDM230-wifi` */
   energy_export_kwh?: number;
-  /** The total active power in watt. */
+  /** The total active power in watt. Available for: `HWE-KWH1`, `SDM230-wifi` */
   power_w?: number;
-  /** The active voltage in volt. */
+  /** The active voltage in volt. Available for: `HWE-KWH1`, `SDM230-wifi` */
   voltage_v?: number;
-  /** The active current in ampere. */
+  /** The active current in ampere. Available for: `HWE-KWH1`, `SDM230-wifi` */
   current_a?: number;
-  /** The apparent current in ampere. */
+  /** The apparent current in ampere. Available for: `HWE-KWH1`, `SDM230-wifi` */
   apparent_current_a?: number;
-  /** The reactive current in ampere. */
+  /** The reactive current in ampere. Available for: `HWE-KWH1`, `SDM230-wifi` */
   reactive_current_a?: number;
-  /** The apparent power in volt-ampere. */
+  /** The apparent power in volt-ampere. Available for: `HWE-KWH1`, `SDM230-wifi` */
   apparent_power_va?: number;
-  /** The reactive power in volt-ampere reactive. */
+  /** The reactive power in volt-ampere reactive. Available for: `HWE-KWH1`, `SDM230-wifi` */
   reactive_power_var?: number;
-  /** The power factor. */
+  /** The power factor. Available for: `HWE-KWH1`, `SDM230-wifi` */
   power_factor?: number;
-  /** The line frequency in hertz. */
+  /** The line frequency in hertz. Available for: `HWE-KWH1`, `SDM230-wifi` */
   frequency_hz?: number;
 }
 
@@ -313,71 +316,71 @@ export interface KwhMeter1PhaseMeasurement {
  * @link https://api-documentation.homewizard.com/docs/v2/measurement#kwh-meter-3-phase-hwe-kwh3-and-sdm630-wifi
  */
 export interface KwhMeter3PhaseMeasurement {
-  /** The energy import meter reading in kWh. */
+  /** The energy import meter reading in kWh. Available for: `HWE-KWH3`, `SDM630-wifi` */
   energy_import_kwh?: number;
-  /** The energy export meter reading in kWh. */
+  /** The energy export meter reading in kWh. Available for: `HWE-KWH3`, `SDM630-wifi` */
   energy_export_kwh?: number;
-  /** The total active power in watt, the sum of all phases. Negative when exporting. */
+  /** The total active power in watt, the sum of all phases. Negative when exporting. Available for: `HWE-KWH3`, `SDM630-wifi` */
   power_w?: number;
-  /** The active power of phase 1 in watt. Negative when exporting. */
+  /** The active power of phase 1 in watt. Negative when exporting. Available for: `HWE-KWH3`, `SDM630-wifi` */
   power_l1_w?: number;
-  /** The active power of phase 2 in watt. Negative when exporting. */
+  /** The active power of phase 2 in watt. Negative when exporting. Available for: `HWE-KWH3`, `SDM630-wifi` */
   power_l2_w?: number;
-  /** The active power of phase 3 in watt. Negative when exporting. */
+  /** The active power of phase 3 in watt. Negative when exporting. Available for: `HWE-KWH3`, `SDM630-wifi` */
   power_l3_w?: number;
-  /** The active voltage of phase 1 in volt. */
+  /** The active voltage of phase 1 in volt. Available for: `HWE-KWH3`, `SDM630-wifi` */
   voltage_l1_v?: number;
-  /** The active voltage of phase 2 in volt. */
+  /** The active voltage of phase 2 in volt. Available for: `HWE-KWH3`, `SDM630-wifi` */
   voltage_l2_v?: number;
-  /** The active voltage of phase 3 in volt. */
+  /** The active voltage of phase 3 in volt. Available for: `HWE-KWH3`, `SDM630-wifi` */
   voltage_l3_v?: number;
-  /** The active current in ampere, the sum of the absolute values of all phases. */
+  /** The active current in ampere, the sum of the absolute values of all phases. Available for: `HWE-KWH3`, `SDM630-wifi` */
   current_a?: number;
-  /** The active current of phase 1 in ampere. Negative when exporting. */
+  /** The active current of phase 1 in ampere. Negative when exporting. Available for: `HWE-KWH3`, `SDM630-wifi` */
   current_l1_a?: number;
-  /** The active current of phase 2 in ampere. Negative when exporting. */
+  /** The active current of phase 2 in ampere. Negative when exporting. Available for: `HWE-KWH3`, `SDM630-wifi` */
   current_l2_a?: number;
-  /** The active current of phase 3 in ampere. Negative when exporting. */
+  /** The active current of phase 3 in ampere. Negative when exporting. Available for: `HWE-KWH3`, `SDM630-wifi` */
   current_l3_a?: number;
-  /** The apparent current in ampere. */
+  /** The apparent current in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
   apparent_current_a?: number;
-  /** The apparent current of phase 1 in ampere. */
+  /** The apparent current of phase 1 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
   apparent_current_l1_a?: number;
-  /** The apparent current of phase 2 in ampere. */
+  /** The apparent current of phase 2 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
   apparent_current_l2_a?: number;
-  /** The apparent current of phase 3 in ampere. */
+  /** The apparent current of phase 3 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
   apparent_current_l3_a?: number;
-  /** The reactive current in ampere. */
+  /** The reactive current in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
   reactive_current_a?: number;
-  /** The reactive current of phase 1 in ampere. */
+  /** The reactive current of phase 1 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
   reactive_current_l1_a?: number;
-  /** The reactive current of phase 2 in ampere. */
+  /** The reactive current of phase 2 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
   reactive_current_l2_a?: number;
-  /** The reactive current of phase 3 in ampere. */
+  /** The reactive current of phase 3 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
   reactive_current_l3_a?: number;
-  /** The apparent power in volt-ampere. */
+  /** The apparent power in volt-ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
   apparent_power_va?: number;
-  /** The apparent power of phase 1 in volt-ampere. */
+  /** The apparent power of phase 1 in volt-ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
   apparent_power_l1_va?: number;
-  /** The apparent power of phase 2 in volt-ampere. */
+  /** The apparent power of phase 2 in volt-ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
   apparent_power_l2_va?: number;
-  /** The apparent power of phase 3 in volt-ampere. */
+  /** The apparent power of phase 3 in volt-ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
   apparent_power_l3_va?: number;
-  /** The reactive power in volt-ampere reactive. */
+  /** The reactive power in volt-ampere reactive. Available for: `HWE-KWH3`, `SDM630-wifi` */
   reactive_power_var?: number;
-  /** The reactive power of phase 1 in volt-ampere reactive. */
+  /** The reactive power of phase 1 in volt-ampere reactive. Available for: `HWE-KWH3`, `SDM630-wifi` */
   reactive_power_l1_var?: number;
-  /** The reactive power of phase 2 in volt-ampere reactive. */
+  /** The reactive power of phase 2 in volt-ampere reactive. Available for: `HWE-KWH3`, `SDM630-wifi` */
   reactive_power_l2_var?: number;
-  /** The reactive power of phase 3 in volt-ampere reactive. */
+  /** The reactive power of phase 3 in volt-ampere reactive. Available for: `HWE-KWH3`, `SDM630-wifi` */
   reactive_power_l3_var?: number;
-  /** The power factor of phase 1. */
+  /** The power factor of phase 1. Available for: `HWE-KWH3`, `SDM630-wifi` */
   power_factor_l1?: number;
-  /** The power factor of phase 2. */
+  /** The power factor of phase 2. Available for: `HWE-KWH3`, `SDM630-wifi` */
   power_factor_l2?: number;
-  /** The power factor of phase 3. */
+  /** The power factor of phase 3. Available for: `HWE-KWH3`, `SDM630-wifi` */
   power_factor_l3?: number;
-  /** The line frequency in hertz. */
+  /** The line frequency in hertz. Available for: `HWE-KWH3`, `SDM630-wifi` */
   frequency_hz?: number;
 }
 
@@ -389,21 +392,21 @@ export interface KwhMeter3PhaseMeasurement {
  * @link https://api-documentation.homewizard.com/docs/v2/measurement#plug-in-battery-hwe-bat
  */
 export interface PlugInBatteryMeasurement {
-  /** The energy import (charge) meter reading in kWh. */
+  /** The energy import (charge) meter reading in kWh. Available for: `HWE-BAT` */
   energy_import_kwh?: number;
-  /** The energy export (discharge) meter reading in kWh. */
+  /** The energy export (discharge) meter reading in kWh. Available for: `HWE-BAT` */
   energy_export_kwh?: number;
-  /** The total active power in watt. */
+  /** The total active power in watt. Available for: `HWE-BAT` */
   power_w?: number;
-  /** The active voltage in volt. */
+  /** The active voltage in volt. Available for: `HWE-BAT` */
   voltage_v?: number;
-  /** The active current in ampere. */
+  /** The active current in ampere. Available for: `HWE-BAT` */
   current_a?: number;
-  /** The line frequency in hertz. */
+  /** The line frequency in hertz. Available for: `HWE-BAT` */
   frequency_hz?: number;
-  /** The state of charge in percent. */
+  /** The state of charge in percent. Available for: `HWE-BAT` */
   state_of_charge_pct?: number;
-  /** The number of battery cycles. */
+  /** The number of battery cycles. Available for: `HWE-BAT` */
   cycles?: number;
 }
 
@@ -445,21 +448,45 @@ export interface System {
   api_v1_enabled?: boolean;
 }
 
-/** The system response of the P1 Meter. */
+/**
+ * The system response of the P1 Meter.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v2/system
+ */
 export type P1MeterSystem = System;
-/** The writable system settings of the P1 Meter. */
+/**
+ * The writable system settings of the P1 Meter.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v2/system
+ */
 export type P1MeterSystemUpdate = Partial<
   Pick<System, 'cloud_enabled' | 'status_led_brightness_pct' | 'api_v1_enabled'>
 >;
 
-/** The system response of the kWh meters, which have no status LED setting. */
+/**
+ * The system response of the kWh meters, which have no status LED setting.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v2/system
+ */
 export type KwhMeterSystem = Omit<System, 'status_led_brightness_pct'>;
-/** The writable system settings of the kWh meters. */
+/**
+ * The writable system settings of the kWh meters.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v2/system
+ */
 export type KwhMeterSystemUpdate = Partial<Pick<System, 'cloud_enabled' | 'api_v1_enabled'>>;
 
-/** The system response of the Plug-In Battery, which only has the API v2. */
+/**
+ * The system response of the Plug-In Battery, which only has the API v2.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v2/system
+ */
 export type PlugInBatterySystem = Omit<System, 'api_v1_enabled'>;
-/** The writable system settings of the Plug-In Battery. `cloud_enabled` is read-only on this device. */
+/**
+ * The writable system settings of the Plug-In Battery. `cloud_enabled` is read-only on this device.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v2/system
+ */
 export type PlugInBatterySystemUpdate = Partial<Pick<System, 'status_led_brightness_pct'>>;
 
 /**
@@ -490,21 +517,21 @@ export type BatteriesPermission = 'charge_allowed' | 'discharge_allowed';
  * @link https://api-documentation.homewizard.com/docs/v2/batteries
  */
 export interface Batteries {
-  /** The control mode. From API 2.1.0; `predictive` from API 2.3.0. */
+  /** The control mode. From API 2.1.0; `predictive` from API 2.3.0. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
   mode: BatteriesMode;
-  /** Whether the batteries may charge and discharge. Read-only in mode `to_full`. From API 2.2.0. */
+  /** Whether the batteries may charge and discharge. Read-only in mode `to_full`. From API 2.2.0. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
   permissions?: BatteriesPermission[];
-  /** `true` while all batteries charge to 100%. Replaces mode `to_full`. From API 2.3.0. */
+  /** `true` while all batteries charge to 100%. Replaces mode `to_full`. From API 2.3.0. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
   charge_to_full?: boolean;
-  /** The number of connected Plug-In Batteries. From API 2.2.0. */
+  /** The number of connected Plug-In Batteries. From API 2.2.0. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
   battery_count?: number;
-  /** The combined power of the batteries in watt. From API 2.1.0. */
+  /** The combined power of the batteries in watt. From API 2.1.0. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
   power_w: number;
-  /** The combined target power of the batteries in watt. From API 2.1.0. */
+  /** The combined target power of the batteries in watt. From API 2.1.0. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
   target_power_w: number;
-  /** The maximum combined charge power in watt. From API 2.1.0. */
+  /** The maximum combined charge power in watt. From API 2.1.0. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
   max_consumption_w: number;
-  /** The maximum combined discharge power in watt. From API 2.1.0. */
+  /** The maximum combined discharge power in watt. From API 2.1.0. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
   max_production_w: number;
 }
 

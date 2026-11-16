@@ -334,7 +334,7 @@ const { token, identifier } = await v2.pair('192.168.1.35', 'my-app', {
 
 Store both values. The `token` is a secret that gives full access to the device, and the device can't return it again. Pairing again with the same name gives a new token, and the old one stops working.
 
-The `identifier`, such as `appliance/p1dongle/5c2fafaabbcc`, is what the device's certificate is issued to. `pair()` reads it from the certificate, after checking that HomeWizard signed it. The device classes require it, and refuse a device whose certificate is issued to another identifier. Discovery has it as the `id` txt record, and `v2.getCertificateIdentifier(productType, serial)` builds it. Use `insecure: true` to skip the certificate checks, for debugging only.
+The `identifier`, such as `appliance/p1dongle/5c2fafaabbcc`, is what the device's certificate is issued to. `pair()` reads it from the certificate, after checking that HomeWizard signed it. The device classes require it, and refuse a device whose certificate is issued to another identifier. `v2.getCertificateIdentifier(productType, serial)` builds it from the serial on the device's label. Discovery announces it as the `id` txt record, but anyone on the network can announce a device, so use that only to [find a paired device](#discovery). Use `insecure: true` to skip the certificate checks, for debugging only.
 
 ### Using a device
 
@@ -380,7 +380,7 @@ socket.subscribe('measurement');
 socket.close();
 ```
 
-`socket.request('system')` asks for the current data once, `socket.set('system', { status_led_brightness_pct: 50 })` changes settings, and `socket.identify()` blinks the LED.
+`socket.request('system')` asks for the current data once, `socket.set('system', { status_led_brightness_pct: 50 })` changes settings, and on the P1 meter and Plug-In Battery `socket.identify()` blinks the LED. `set()` only takes the fields that the device's `updateSystem()` and `updateBatteries()` take.
 
 ### Polling
 
@@ -419,7 +419,7 @@ Anyone on the network can announce a device, so pass the identifier you stored a
 
 ### Errors
 
-An error response throws a `v2.HomeWizardApiV2Error`, with the error `code` from the device, such as `user:unauthorized` or `json:parameter-invalid-type:status_led_brightness_pct`. It extends `HomeWizardEnergyApiResponseError`, so it has the same `url`, `statusCode` and `response` as the v1 errors, and timeouts throw a `HomeWizardEnergyApiTimeoutError`. See the [official docs](https://api-documentation.homewizard.com/docs/v2/error-handling) for the codes.
+An error response throws a `v2.HomeWizardApiV2Error`, with the error `code` from the device, such as `user:unauthorized` or `json:parameter-invalid-type:status_led_brightness_pct`. It extends `HomeWizardEnergyApiResponseError`, so it has the same `url`, `statusCode` and `response` as the v1 errors, and timeouts throw a `HomeWizardEnergyApiTimeoutError`. WebSocket errors arrive as `error` events with a `v2.HomeWizardApiV2WebSocketError`, which has the `code` too. See the [official docs](https://api-documentation.homewizard.com/docs/v2/error-handling) for the codes.
 
 ```typescript
 try {
@@ -435,20 +435,23 @@ try {
 
 The measurement fields have new names in API v2:
 
-| API v1 (`getData()`)                                     | API v2 (`getMeasurement()`)                            |
-| -------------------------------------------------------- | ------------------------------------------------------ |
-| `total_power_import_kwh`, `total_power_import_t1_kwh`, … | `energy_import_kwh`, `energy_import_t1_kwh`, …         |
-| `total_power_export_kwh`, `total_power_export_t1_kwh`, … | `energy_export_kwh`, `energy_export_t1_kwh`, …         |
-| `active_power_w`, `active_power_l1_w`, …                 | `power_w`, `power_l1_w`, …                             |
-| `active_voltage_v`, `active_current_a`, …                | `voltage_v`, `current_a`, …                            |
-| `active_frequency_hz`                                    | `frequency_hz`                                         |
-| `smr_version`                                            | `protocol_version`                                     |
-| `active_power_average_w`                                 | `average_power_15m_w`                                  |
-| `montly_power_peak_w`, `montly_power_peak_timestamp`     | `monthly_power_peak_w`, `monthly_power_peak_timestamp` |
-| `total_gas_m3`, `gas_timestamp`                          | An item in `external` with `type: 'gas_meter'`         |
-| `wifi_ssid`, `wifi_strength` (percent)                   | `getSystem()`: `wifi_ssid`, `wifi_rssi_db` (dB)        |
+| API v1 (`getData()`)                                        | API v2 (`getMeasurement()`)                            |
+| ----------------------------------------------------------- | ------------------------------------------------------ |
+| `total_power_import_kwh`, `total_power_import_t1_kwh`, …    | `energy_import_kwh`, `energy_import_t1_kwh`, …         |
+| `total_power_export_kwh`, `total_power_export_t1_kwh`, …    | `energy_export_kwh`, `energy_export_t1_kwh`, …         |
+| `active_power_w`, `active_power_l1_w`, …                    | `power_w`, `power_l1_w`, …                             |
+| `active_voltage_v`, `active_current_a`, …                   | `voltage_v`, `current_a`, …                            |
+| `active_apparent_power_va`, `active_apparent_current_a`, …  | `apparent_power_va`, `apparent_current_a`, …           |
+| `active_reactive_power_var`, `active_reactive_current_a`, … | `reactive_power_var`, `reactive_current_a`, …          |
+| `active_power_factor`, `active_power_factor_l1`, …          | `power_factor`, `power_factor_l1`, …                   |
+| `active_frequency_hz`                                       | `frequency_hz`                                         |
+| `smr_version`                                               | `protocol_version`                                     |
+| `active_power_average_w`                                    | `average_power_15m_w`                                  |
+| `montly_power_peak_w`, `montly_power_peak_timestamp`        | `monthly_power_peak_w`, `monthly_power_peak_timestamp` |
+| `total_gas_m3`, `gas_timestamp`                             | An item in `external` with `type: 'gas_meter'`         |
+| `wifi_ssid`, `wifi_strength` (percent)                      | `getSystem()`: `wifi_ssid`, `wifi_rssi_db` (dB)        |
 
-Timestamps are ISO 8601 strings without a timezone, such as `2024-06-28T14:12:34`, instead of numbers in the `YYMMDDhhmmss` format. The v2 measurement has the parsed values of the telegram, so there's no `getParsedTelegram()`: `getTelegram()` returns the raw telegram, and `parseTelegram()` parses one yourself.
+The endpoints moved from `/api/v1/…` to `/api/…`: `getSystem()` and `updateSystem()` use `/api/system`, and `identify()` uses `/api/system/identify`. Timestamps are ISO 8601 strings without a timezone, such as `2024-06-28T14:12:34`, instead of numbers in the `YYMMDDhhmmss` format. The v2 measurement has the parsed values of the telegram, so there's no `getParsedTelegram()`: `getTelegram()` returns the raw telegram, and `parseTelegram()` parses one yourself.
 
 ## Contributing
 

@@ -2,17 +2,16 @@ import { Agent, Dispatcher } from 'undici';
 import { HomeWizardEnergyApiError } from '@/shared/errors';
 import { log, LoggerOptions } from '@/shared/logger';
 import {
-  describeCall,
+  DEFAULT_TIMEOUT,
+  describeFailure,
   isResponseOk,
   parseJsonResponse,
   requestWithTimeout,
 } from '@/shared/request';
 import { HomeWizardApiV2Error } from './errors';
 import { createCheckServerIdentity, HOMEWIZARD_CA_CERT } from './tls';
-import { API_VERSION_HEADER } from './types';
-
-/** 5 seconds: the TLS handshake on the device takes longer than a plain HTTP request. */
-export const DEFAULT_TIMEOUT = 5000;
+import { API_MAJOR_VERSION } from './types';
+import type { DeviceSocketConnection } from './websocket';
 
 export interface DeviceOptions {
   /**
@@ -23,7 +22,8 @@ export interface DeviceOptions {
   token?: string;
   /**
    * The identifier the device's certificate is issued to, formatted as `appliance/<product type>/<serial>`.
-   * `pair()` returns it, discovery has it as the `id` txt record, and `getCertificateIdentifier()` builds it.
+   * Store the one `pair()` returns. `getCertificateIdentifier()` builds it from the product type and the serial on
+   * the device's label. Don't take it from discovery: anyone on the network can announce a device.
    *
    * Required, unless `insecure` is `true`. Requests fail when the certificate isn't issued to this identifier.
    *
@@ -89,7 +89,6 @@ export function toBaseUrl(host: string): string {
  */
 export class Client {
   readonly baseUrl: string;
-  readonly identifier: string | undefined;
   readonly dispatcher: Dispatcher;
   readonly loggerOptions: LoggerOptions | undefined;
   readonly options: ClientOptions;
@@ -100,14 +99,13 @@ export class Client {
   constructor(host: string, options: ClientOptions = {}) {
     if (!options.identifier && !options.insecure && !options.allowMissingIdentifier) {
       throw new HomeWizardEnergyApiError(
-        'The "identifier" option is required to check the certificate of the device. Use the identifier that pair() returned, the "id" txt record from discovery, or getCertificateIdentifier(). Set "insecure: true" to skip the check.',
+        'The "identifier" option is required to check the certificate of the device. Use the identifier that pair() returned, or getCertificateIdentifier() with the serial on the device label. Set "insecure: true" to skip the check.',
       );
     }
 
     this.baseUrl = toBaseUrl(host);
     this.options = options;
     this.token = options.token;
-    this.identifier = options.identifier;
     this.loggerOptions = options.logger;
     this.timeout = options.timeout ?? DEFAULT_TIMEOUT;
     this.ownsDispatcher = !options.dispatcher;
@@ -129,6 +127,16 @@ export class Client {
     };
   }
 
+  /** What the WebSocket needs to connect to this device: the same TLS agent, token and logger. */
+  webSocketConnection(): DeviceSocketConnection {
+    return {
+      url: `${this.baseUrl.replace(/^https:/i, 'wss:')}/api/ws`,
+      token: this.token,
+      dispatcher: this.dispatcher,
+      logger: this.loggerOptions,
+    };
+  }
+
   log(...args: unknown[]): void {
     log(this.loggerOptions, ...args);
   }
@@ -145,7 +153,7 @@ export class Client {
     const hasBody = options.body !== undefined;
 
     const headers: Record<string, string> = {
-      'X-Api-Version': API_VERSION_HEADER,
+      'X-Api-Version': API_MAJOR_VERSION,
       Accept: options.accept ?? 'application/json',
     };
 
@@ -170,7 +178,7 @@ export class Client {
       const text = await response.body.text();
 
       throw new HomeWizardApiV2Error(
-        `${describeCall(method, url)} failed with status ${response.statusCode} and response data: ${text}`,
+        describeFailure(method, url, response.statusCode, text),
         url,
         response.statusCode,
         text,

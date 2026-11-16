@@ -2,7 +2,8 @@ import { PeerCertificate } from 'tls';
 import { Agent } from 'undici';
 import { HomeWizardEnergyApiError, HomeWizardEnergyApiTimeoutError } from '@/shared/errors';
 import { mockV2, mockV2DeviceOptions, mockV2Host, mockV2Pool, mockV2Url } from '@/mocks/api-v2';
-import { Client, DEFAULT_TIMEOUT, toBaseUrl } from './client';
+import { DEFAULT_TIMEOUT } from '@/shared/request';
+import { Client, toBaseUrl } from './client';
 import { HomeWizardApiV2Error } from './errors';
 import { HOMEWIZARD_CA_CERT } from './tls';
 
