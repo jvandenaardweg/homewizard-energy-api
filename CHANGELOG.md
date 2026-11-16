@@ -4,14 +4,10 @@
 
 ### ⚠ BREAKING CHANGES
 
-* **deps:** Node 22.19.0 or later is required (was 14.18.1), because
-  undici 8 no longer supports older Node versions. `requestOptions.throwOnError`
-  and `requestOptions.maxRedirections` are no longer supported and throw an
-  InvalidArgumentError, and `requestOptions.responseHeader` is now
-  `responseHeaders`. Requests use undici 8's global dispatcher, so a dispatcher
-  set with `setGlobalDispatcher` from undici 7 or older (for example a MockAgent
-  in tests) no longer applies. Use undici 8's `setGlobalDispatcher`, or pass
-  `requestOptions.dispatcher`.
+* **deps:** Requires Node 22.19.0 or later (was 14.18.1). `requestOptions` now
+  follows undici 8: `throwOnError` and `maxRedirections` are removed,
+  `responseHeader` is now `responseHeaders`, and `setGlobalDispatcher` must come
+  from undici 8.
 
 ### Bug Fixes
 
