@@ -7,6 +7,7 @@ import {
   KwhMeterSystem,
   KwhMeterSystemUpdate,
 } from '../types';
+import { BatteriesTopic, CommonTopics } from '../websocket';
 import { Device } from './device';
 
 /**
@@ -16,7 +17,8 @@ import { Device } from './device';
 abstract class KwhMeter<TMeasurement> extends Device<
   TMeasurement,
   KwhMeterSystem,
-  KwhMeterSystemUpdate
+  KwhMeterSystemUpdate,
+  CommonTopics<TMeasurement, KwhMeterSystem> & BatteriesTopic
 > {
   /**
    * Reboots the device. Usually not needed: when the user needs it often, they should contact HomeWizard support.

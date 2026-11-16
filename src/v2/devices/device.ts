@@ -2,6 +2,7 @@ import { Client, DeviceOptions } from '../client';
 import * as endpoints from '../endpoints';
 import { pair, PairOptions, PairResult } from '../pairing';
 import { DeviceInformation, System, User } from '../types';
+import { CommonTopics, DeviceSocket, WebSocketOptions } from '../websocket';
 
 export interface Users {
   /**
@@ -25,11 +26,16 @@ export interface PairedDevice<TDevice> extends PairResult {
 }
 
 /**
- * What every device with the API v2 has: device information, measurement, system and users.
+ * What every device with the API v2 has: device information, measurement, system, users and the WebSocket.
  *
  * @internal Use the device classes, such as `v2.P1Meter`.
  */
-export abstract class Device<TMeasurement, TSystem extends Partial<System>, TSystemUpdate> {
+export abstract class Device<
+  TMeasurement,
+  TSystem extends Partial<System>,
+  TSystemUpdate,
+  TTopics extends CommonTopics<TMeasurement, TSystem> = CommonTopics<TMeasurement, TSystem>,
+> {
   protected readonly client: Client;
 
   /**
@@ -37,6 +43,33 @@ export abstract class Device<TMeasurement, TSystem extends Partial<System>, TSys
    */
   constructor(host: string, options: DeviceOptions) {
     this.client = new Client(host, options);
+  }
+
+  /**
+   * Opens the WebSocket of the device, which pushes the data of the topics you subscribe to when it changes.
+   * Each call opens a new connection: close it with `socket.close()`.
+   *
+   * @example
+   * const socket = p1.openWebSocket();
+   * socket.on('measurement', measurement => console.log(measurement.power_w));
+   * socket.subscribe('measurement');
+   *
+   * @link https://api-documentation.homewizard.com/docs/v2/websocket
+   */
+  openWebSocket(options?: WebSocketOptions): DeviceSocket<TTopics> {
+    const socket = new DeviceSocket<TTopics>(
+      {
+        url: `${this.client.baseUrl.replace(/^https:/i, 'wss:')}/api/ws`,
+        token: this.client.token,
+        dispatcher: this.client.dispatcher,
+        logger: this.client.loggerOptions,
+      },
+      options,
+    );
+
+    socket.connect();
+
+    return socket;
   }
 
   /**
