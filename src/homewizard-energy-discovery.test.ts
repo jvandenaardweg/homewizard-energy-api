@@ -478,26 +478,41 @@ describe('HomeWizardEnergyDiscovery', () => {
       expect(callback).toHaveBeenCalledOnce();
     });
 
-    it('should throw when the response has no host details', () => {
+    it('should ignore a response without host details instead of throwing', () => {
+      const callback = vi.fn();
       const mockMdnsResponseWithoutHost = {
         ...mockMdnsResponse,
         additionals: [],
       };
 
       expect(() =>
-        discoveryService['handleMdnsResponse'](vi.fn())(mockMdnsResponseWithoutHost),
-      ).toThrowError('No host details found in mDNS response');
+        discoveryService['handleMdnsResponse'](callback)(mockMdnsResponseWithoutHost),
+      ).not.toThrow();
+      expect(callback).not.toHaveBeenCalled();
+      expect(discoveryService['cachedDiscoveryResponses']).toHaveLength(0);
     });
 
-    it('should throw when the response has no txt record', () => {
+    it('should ignore a response without a txt record instead of throwing', () => {
+      const callback = vi.fn();
       const mockMdnsResponseWithoutTxt = {
         ...mockMdnsResponse,
         answers: mockMdnsResponse.answers.filter(answer => answer.type !== 'TXT'),
       };
 
       expect(() =>
-        discoveryService['handleMdnsResponse'](vi.fn())(mockMdnsResponseWithoutTxt),
-      ).toThrowError('No txt record data found in mDNS response');
+        discoveryService['handleMdnsResponse'](callback)(mockMdnsResponseWithoutTxt),
+      ).not.toThrow();
+      expect(callback).not.toHaveBeenCalled();
+      expect(discoveryService['cachedDiscoveryResponses']).toHaveLength(0);
+    });
+
+    it('should leave the cache alone when a goodbye arrives for an uncached device', () => {
+      const removeSpy = vi.fn();
+      discoveryService['removeCachedResponseByFqdn'] = removeSpy;
+
+      discoveryService['handleMdnsResponse'](vi.fn())(mockMdnsGoodbyeResponse);
+
+      expect(removeSpy).not.toHaveBeenCalled();
     });
   });
 

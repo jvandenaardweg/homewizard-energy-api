@@ -236,6 +236,8 @@ export class HomeWizardEnergyDiscovery {
 
         if (!cachedResponse) {
           this.log(`No cached response found for ${fqdn}, ignoring.`);
+
+          return;
         }
 
         this.log('down!', cachedResponse);
@@ -254,14 +256,20 @@ export class HomeWizardEnergyDiscovery {
 
       const txtRecord = this.getTxtRecordFromResponse(response);
 
-      // This should not happen, but just in case
+      // Don't throw here: this runs inside an mDNS event listener, so a throw would be uncaught
+      // and any host on the network could crash the consuming process with one malformed packet.
       if (!hostDetails) {
-        throw new Error(`No host details found in mDNS response: ${JSON.stringify(response)}`);
+        this.log(`No host details found in mDNS response, ignoring: ${JSON.stringify(response)}`);
+
+        return;
       }
 
-      // This should not happen, but just in case
       if (!txtRecord) {
-        throw new Error(`No txt record data found in mDNS response: ${JSON.stringify(response)}`);
+        this.log(
+          `No txt record data found in mDNS response, ignoring: ${JSON.stringify(response)}`,
+        );
+
+        return;
       }
 
       const discoveryResponse = {
