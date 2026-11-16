@@ -47,7 +47,7 @@ The goal is 100% coverage, so new code should come with a test for each branch. 
 The scripts in `src/examples/` talk to real devices on hard-coded LAN IP addresses. To use one, enable the local API for your device in the HomeWizard Energy app, change the IP in the example, and run it:
 
 ```bash
-npx ts-node -r tsconfig-paths/register src/examples/p1-meter.ts
+npx tsx src/examples/p1-meter.ts
 ```
 
 This is optional. Pull requests are verified by the test suite.

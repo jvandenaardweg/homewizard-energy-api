@@ -1,6 +1,6 @@
 {
   "execMap": {
-    "ts": "ts-node -r tsconfig-paths/register"
+    "ts": "tsx"
   },
   "ext": "ts"
 }

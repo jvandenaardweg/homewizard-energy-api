@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "target": "ES2020",
-    "module": "CommonJS",
     "lib": ["ES2020"], // support minimum node 14 lts
+    // CommonJS output with Node's own module resolution, as package.json has no "type": "module"
+    "module": "Node20",
+    "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -14,7 +15,6 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "incremental": false,
-    "moduleResolution": "node",
     "allowJs": false,
     "removeComments": false, // keep false, we want to have docs in dist
     "allowSyntheticDefaultImports": true,
@@ -24,7 +24,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
     "types": ["vitest/globals"]
   },
