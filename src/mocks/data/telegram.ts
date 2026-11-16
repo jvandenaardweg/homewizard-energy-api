@@ -222,7 +222,7 @@ export const mockParsedTelegramResponse = {
       model: '2M550T-1012',
     },
     version: '50',
-    timestamp: '2022-12-18T23:48:20+01:00',
+    timestamp: '2022-12-18T22:48:20+01:00',
     equipmentId: '4530303434303037303138303138313137',
     textMessage: {
       codes: null,
@@ -273,8 +273,8 @@ export const mockParsedTelegramResponse = {
         count: 1,
         log: [
           {
-            startOfFailure: '2017-11-30T19:14:43+01:00',
-            endOfFailure: '2017-11-30T19:30:27+01:00',
+            startOfFailure: '2017-11-30T18:14:43+01:00',
+            endOfFailure: '2017-11-30T18:30:27+01:00',
             duration: 944,
             unit: 's',
           },
@@ -354,7 +354,7 @@ export const mockParsedTelegramResponse = {
     gas: {
       deviceType: '003',
       equipmentId: '4730303332353635353330393732333137',
-      timestamp: '2022-12-18T23:45:01+01:00',
+      timestamp: '2022-12-18T22:45:01+01:00',
       value: 6798.545,
       unit: 'm3',
       valvePosition: null,

@@ -612,23 +612,58 @@ export function parseLine(line: string): TelegramParsedLine {
   return output;
 }
 
+const HOUR_IN_MS = 60 * 60 * 1000;
+
+/**
+ * Returns the UTC time of the last Sunday of the given month (0-based) at 01:00 UTC,
+ * which is when European summer time starts (March) and ends (October).
+ */
+function getEuropeanDstSwitch(year: number, month: number): number {
+  const lastDayOfMonth = new Date(Date.UTC(year, month + 1, 0, 1));
+  const lastSunday = lastDayOfMonth.getUTCDate() - lastDayOfMonth.getUTCDay();
+
+  return Date.UTC(year, month, lastSunday, 1);
+}
+
 /**
  * Parse timestamp of format: YYMMDDhhmmssX
+ *
+ * The timestamp is the meter's local time (CET/CEST, as used in the Netherlands, Belgium and Luxembourg).
+ * `X` is `S` for summer time (UTC+2) or `W` for winter time (UTC+1). Timestamps without it (DSMR 2.2)
+ * use the European summer time rules to determine the offset.
  */
 export function parseTimestamp(timestamp: string | null | undefined): string | null {
   if (!timestamp) return null;
 
-  const parsedTimestamp = new Date();
+  const year = parseInt(timestamp.substring(0, 2)) + 2000;
 
-  parsedTimestamp.setUTCFullYear(parseInt(timestamp.substring(0, 2)) + 2000);
-  parsedTimestamp.setUTCMonth(parseInt(timestamp.substring(2, 4)) - 1);
-  parsedTimestamp.setUTCDate(parseInt(timestamp.substring(4, 6)));
-  parsedTimestamp.setUTCHours(parseInt(timestamp.substring(6, 8)));
-  parsedTimestamp.setUTCMinutes(parseInt(timestamp.substring(8, 10)));
-  parsedTimestamp.setUTCSeconds(parseInt(timestamp.substring(10, 12)));
-  parsedTimestamp.setUTCMilliseconds(0);
+  // Build the timestamp in one go, so the current date can't overflow the day or month while setting each part
+  const localTimeAsUtc = Date.UTC(
+    year,
+    parseInt(timestamp.substring(2, 4)) - 1,
+    parseInt(timestamp.substring(4, 6)),
+    parseInt(timestamp.substring(6, 8)),
+    parseInt(timestamp.substring(8, 10)),
+    parseInt(timestamp.substring(10, 12)),
+  );
 
-  return formatISO(parsedTimestamp);
+  const dstMarker = timestamp.substring(12, 13);
+
+  let offsetInHours: number;
+
+  if (dstMarker === 'S') {
+    offsetInHours = 2;
+  } else if (dstMarker === 'W') {
+    offsetInHours = 1;
+  } else {
+    const winterTime = localTimeAsUtc - HOUR_IN_MS;
+    const isSummerTime =
+      winterTime >= getEuropeanDstSwitch(year, 2) && winterTime < getEuropeanDstSwitch(year, 9);
+
+    offsetInHours = isSummerTime ? 2 : 1;
+  }
+
+  return formatISO(new Date(localTimeAsUtc - offsetInHours * HOUR_IN_MS));
 }
 
 /**

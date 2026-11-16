@@ -61,14 +61,14 @@ describe('utils/telegram', () => {
     it('should parse a timestamp', () => {
       const parsedTimestamp = parseTimestamp('221219072214W');
 
-      const expected = '2022-12-19T08:22:14+01:00';
+      const expected = '2022-12-19T07:22:14+01:00';
 
       expect(parsedTimestamp).toBe(expected);
     });
     it('should parse a timestamp', () => {
       const parsedTimestamp = parseTimestamp('171130183027W');
 
-      const expected = '2017-11-30T19:30:27+01:00';
+      const expected = '2017-11-30T18:30:27+01:00';
 
       expect(parsedTimestamp).toBe(expected);
     });
@@ -86,6 +86,32 @@ describe('utils/telegram', () => {
 
       expect(parsedTimestamp).toBe(expected);
     });
+
+    it('should use UTC+2 for summer time timestamps', () => {
+      expect(parseTimestamp('260617151212S')).toBe('2026-06-17T15:12:12+02:00');
+    });
+
+    it('should use UTC+1 for winter time timestamps', () => {
+      expect(parseTimestamp('261116200707W')).toBe('2026-11-16T20:07:07+01:00');
+    });
+
+    it('should not depend on the current date', () => {
+      // On the 31st, setting the month before the day used to overflow into the next month
+      vi.setSystemTime(new Date('2026-10-31T12:00:00Z'));
+      expect(parseTimestamp('261116200707W')).toBe('2026-11-16T20:07:07+01:00');
+
+      vi.setSystemTime(new Date('2026-03-31T22:30:00Z'));
+      expect(parseTimestamp('260401003000S')).toBe('2026-04-01T00:30:00+02:00');
+    });
+
+    it('should determine the offset from the date when there is no DST marker', () => {
+      expect(parseTimestamp('180902110000')).toBe('2018-09-02T11:00:00+02:00');
+      expect(parseTimestamp('180102110000')).toBe('2018-01-02T11:00:00+01:00');
+      // European summer time starts on the last Sunday of March and ends on the last Sunday of October
+      expect(parseTimestamp('260329015959')).toBe('2026-03-29T01:59:59+01:00');
+      expect(parseTimestamp('260329030000')).toBe('2026-03-29T03:00:00+02:00');
+      expect(parseTimestamp('261025040000')).toBe('2026-10-25T04:00:00+01:00');
+    });
   });
 
   describe('parsePowerFailureEventLog', () => {
@@ -98,8 +124,8 @@ describe('utils/telegram', () => {
         count: 1,
         log: [
           {
-            startOfFailure: '2017-11-30T19:14:43+01:00',
-            endOfFailure: '2017-11-30T19:30:27+01:00',
+            startOfFailure: '2017-11-30T18:14:43+01:00',
+            endOfFailure: '2017-11-30T18:30:27+01:00',
             duration: 944,
             unit: 's',
           },
@@ -117,14 +143,14 @@ describe('utils/telegram', () => {
         count: 2,
         log: [
           {
-            startOfFailure: '2018-03-27T08:38:11+02:00',
-            endOfFailure: '2018-03-27T08:41:11+02:00',
+            startOfFailure: '2018-03-27T06:38:11+02:00',
+            endOfFailure: '2018-03-27T06:41:11+02:00',
             duration: 180,
             unit: 's',
           },
           {
-            startOfFailure: '2019-01-08T11:16:00+01:00',
-            endOfFailure: '2019-01-08T11:59:23+01:00',
+            startOfFailure: '2019-01-08T10:16:00+01:00',
+            endOfFailure: '2019-01-08T10:59:23+01:00',
             duration: 2603,
             unit: 's',
           },
@@ -143,14 +169,14 @@ describe('utils/telegram', () => {
         count: 2,
         log: [
           {
-            startOfFailure: '2018-08-24T15:03:42+02:00',
-            endOfFailure: '2018-08-24T16:37:02+02:00',
+            startOfFailure: '2018-08-24T13:03:42+02:00',
+            endOfFailure: '2018-08-24T14:37:02+02:00',
             duration: 5600,
             unit: 's',
           },
           {
-            startOfFailure: '1931-12-13T21:45:54Z',
-            endOfFailure: '2000-01-01T01:00:01+01:00',
+            startOfFailure: '1931-12-13T20:45:54Z',
+            endOfFailure: '2000-01-01T00:00:01+01:00',
             duration: 2147483647,
             unit: 's',
           },
