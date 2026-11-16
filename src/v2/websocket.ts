@@ -45,6 +45,9 @@ export interface DeviceSocketConnection {
   logger: LoggerOptions | undefined;
 }
 
+/** After this many drops in a row between sending the token and `authorized`, the token counts as rejected. */
+const REJECTED_TOKEN_DROPS = 2;
+
 const DEFAULT_RECONNECT_DELAY = 1000;
 const DEFAULT_MAX_RECONNECT_DELAY = 30000;
 const DEFAULT_HEARTBEAT_INTERVAL = 30000;
@@ -53,8 +56,6 @@ interface Message {
   type: string;
   data?: unknown;
 }
-
-type WritableTopic<TTopics> = Extract<keyof TTopics, 'system' | 'batteries'>;
 
 /**
  * The WebSocket of a device: it pushes the data of the topics you subscribe to when it changes, so there's no
@@ -68,15 +69,19 @@ type WritableTopic<TTopics> = Extract<keyof TTopics, 'system' | 'batteries'>;
  * socket.on('error', error => console.error(error));
  * socket.subscribe('measurement');
  *
+ * `TUpdates` holds the writable settings per topic, so `set()` only takes what the device lets you change.
+ *
  * @link https://api-documentation.homewizard.com/docs/v2/websocket
  */
-export class DeviceSocket<TTopics extends object> {
+export class DeviceSocket<TTopics extends object, TUpdates extends object = object> {
   protected readonly emitter = new EventEmitter();
   protected readonly subscriptions = new Set<keyof TTopics | '*'>();
   protected readonly queue: Message[] = [];
   protected socket: WebSocket | null = null;
   protected authorized = false;
   protected authorizationSent = false;
+  /** Connections in a row that the device dropped after the token was sent, before it authorized. */
+  protected droppedAfterToken = 0;
   protected closedByUser = false;
   protected reconnectAttempt = 0;
   protected reconnectTimer: ReturnType<typeof setTimeout> | undefined;
@@ -194,14 +199,12 @@ export class DeviceSocket<TTopics extends object> {
     this.send({ type: topic });
   }
 
-  /** Changes writable settings over the WebSocket. The new data arrives as the event of that topic. */
-  set<K extends WritableTopic<TTopics>>(topic: K, data: Partial<TTopics[K]>): void {
+  /**
+   * Changes writable settings over the WebSocket, with the same fields as the device's `updateSystem()` and
+   * `updateBatteries()`. The new data arrives as the event of that topic.
+   */
+  set<K extends keyof TUpdates & string>(topic: K, data: TUpdates[K]): void {
     this.send({ type: topic, data });
-  }
-
-  /** Blinks the status LED of the device. */
-  identify(): void {
-    this.send({ type: 'identify' });
   }
 
   /**
@@ -313,14 +316,19 @@ export class DeviceSocket<TTopics extends object> {
   protected handleClose(code: number, reason: string): void {
     this.log(`Connection closed (${code}${reason ? `: ${reason}` : ''})`);
 
-    const rejectedToken = this.authorizationSent && !this.authorized;
+    // The device drops the connection without an error message when the token is wrong. A network drop in that
+    // moment looks the same, so only two in a row count as a rejected token.
+    if (this.authorizationSent && !this.authorized) {
+      this.droppedAfterToken++;
+    } else {
+      this.droppedAfterToken = 0;
+    }
 
     this.socket = null;
     this.authorized = false;
     this.stopHeartbeat();
 
-    // The device drops the connection without an error message when the token is wrong
-    if (rejectedToken) {
+    if (this.droppedAfterToken >= REJECTED_TOKEN_DROPS) {
       this.closedByUser = true;
       this.emitter.emit(
         'error',
@@ -382,5 +390,20 @@ export class DeviceSocket<TTopics extends object> {
     (this.socket as WebSocket).close();
 
     this.handleClose(1006, 'no response');
+  }
+}
+
+/**
+ * The WebSocket of a device with a status LED it can blink: the P1 Meter and the Plug-In Battery.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v2/websocket#identify
+ */
+export class IdentifiableDeviceSocket<
+  TTopics extends object,
+  TUpdates extends object = object,
+> extends DeviceSocket<TTopics, TUpdates> {
+  /** Blinks the status LED of the device. */
+  identify(): void {
+    this.send({ type: 'identify' });
   }
 }

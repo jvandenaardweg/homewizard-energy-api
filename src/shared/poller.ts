@@ -1,5 +1,8 @@
 import { formatError } from './errors';
 
+/** The default time between polls, in milliseconds. */
+export const DEFAULT_POLL_INTERVAL = 1000;
+
 export interface PollLoopOptions {
   /** The name used in log lines, for example the method name. */
   name: string;

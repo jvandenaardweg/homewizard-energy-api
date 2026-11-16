@@ -3,6 +3,9 @@ import { HomeWizardEnergyApiResponseError, HomeWizardEnergyApiTimeoutError } fro
 
 export type RequestParameters = Parameters<typeof undiciRequest>;
 
+/** Until the response headers arrive, including connecting, which undici otherwise allows 10 seconds for. */
+export const DEFAULT_TIMEOUT = 5000;
+
 /** Describes a request for error messages, for example `Api GET call at http://192.168.1.35/api/v1/data`. */
 export function describeCall(method: string, url: RequestParameters[0]): string {
   return `Api ${method} call at ${url}`;
@@ -70,6 +73,16 @@ export async function requestWithTimeout(
   } finally {
     timeoutError.cancel();
   }
+}
+
+/** The message of an error response, for example `Api GET call at … failed with status 500 and response data: …`. */
+export function describeFailure(
+  method: string,
+  url: RequestParameters[0],
+  statusCode: number,
+  body: string,
+): string {
+  return `${describeCall(method, url)} failed with status ${statusCode} and response data: ${body}`;
 }
 
 export function isResponseOk(response: Dispatcher.ResponseData<unknown>): boolean {

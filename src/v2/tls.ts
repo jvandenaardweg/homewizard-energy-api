@@ -43,7 +43,8 @@ export const CERTIFICATE_PRODUCT_TYPES: Record<ProductType, string> = {
 
 /**
  * Returns the identifier a device's certificate is issued to: `appliance/<certificate product type>/<serial>`.
- * It's the same value as the `id` txt record in discovery. Returns `undefined` for an unknown product type.
+ * Discovery announces the same value as its `id` txt record, but unauthenticated, so build it from the serial on
+ * the device's label instead. Returns `undefined` for an unknown product type.
  *
  * @example
  * getCertificateIdentifier('HWE-P1', '5c2fafaabbcc'); // 'appliance/p1dongle/5c2fafaabbcc'

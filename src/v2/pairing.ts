@@ -29,8 +29,26 @@ export interface PairResult {
   token: string;
   /** The name of the user, prefixed with `local/`. */
   name: string;
-  /** The identifier the device's certificate is issued to. Store it with the token, for the `identifier` option. */
+  /**
+   * The identifier the device's certificate is issued to. Store it with the token, for the `identifier` option.
+   * With `insecure`, it's empty for a product type whose identifier isn't known.
+   */
   identifier: string;
+}
+
+/**
+ * Splits the options that only pairing uses from the device options, which pairing and the device after it share.
+ */
+export function splitPairOptions(options: PairOptions) {
+  const { pairTimeout, interval, signal, onAttempt, ...deviceOptions } = options;
+
+  return {
+    pairTimeout,
+    interval,
+    signal,
+    onAttempt,
+    deviceOptions: deviceOptions as DeviceOptions,
+  };
 }
 
 function wait(ms: number, signal?: AbortSignal): Promise<void> {
@@ -72,8 +90,16 @@ export async function pair(
     interval = DEFAULT_PAIR_INTERVAL,
     signal,
     onAttempt,
-    ...clientOptions
-  } = options;
+    deviceOptions: clientOptions,
+  } = splitPairOptions(options);
+
+  // Checked before the token is created: a token without an identifier can't be used, and the button would need
+  // another press. Your own dispatcher doesn't run the certificate check that learns the identifier.
+  if (clientOptions.dispatcher && !clientOptions.identifier && !clientOptions.insecure) {
+    throw new HomeWizardEnergyApiError(
+      'Pairing with your own "dispatcher" can\'t read the identifier from the certificate. Pass the "identifier" option, or set "insecure: true".',
+    );
+  }
 
   const seenIdentifiers = new Set<string>();
 
@@ -84,6 +110,7 @@ export async function pair(
   });
 
   const startedAt = Date.now();
+  const timeLeft = () => pairTimeout - (Date.now() - startedAt);
 
   client.log(`Pairing with ${client.baseUrl}, waiting ${pairTimeout}ms for the button press`);
 
@@ -93,7 +120,7 @@ export async function pair(
         throw new HomeWizardApiV2PairingError('Pairing was aborted', 'aborted');
       }
 
-      const remainingMs = pairTimeout - (Date.now() - startedAt);
+      const remainingMs = timeLeft();
 
       if (remainingMs <= 0) {
         throw new HomeWizardApiV2PairingError(
@@ -121,8 +148,7 @@ export async function pair(
         );
 
         // Don't wait past the pair timeout
-        const timeLeft = pairTimeout - (Date.now() - startedAt);
-        await wait(Math.max(0, Math.min(interval, timeLeft)), signal);
+        await wait(Math.max(0, Math.min(interval, timeLeft())), signal);
         continue;
       }
 
@@ -137,7 +163,8 @@ export async function pair(
 
 /**
  * Returns the identifier: the given one, or the one in the certificate. With `insecure`, the certificate isn't
- * checked, so it's built from the product type and serial in `GET /api` instead.
+ * checked, so it's built from the product type and serial in `GET /api` instead, and is empty for a product type
+ * whose identifier isn't known. It doesn't throw for that, because the token would be lost.
  */
 async function learnIdentifier(
   client: Client,
@@ -155,12 +182,10 @@ async function learnIdentifier(
   const identifier = getCertificateIdentifier(device.product_type, device.serial);
 
   if (!identifier) {
-    throw new HomeWizardEnergyApiError(
-      `The identifier of a "${device.product_type}" is not known. Pass the "identifier" option, for example the "id" txt record from discovery.`,
-    );
+    client.log(`The identifier of a "${device.product_type}" is not known, so it stays empty`);
   }
 
-  return identifier;
+  return identifier ?? '';
 }
 
 /**
@@ -189,7 +214,7 @@ export function getIdentifier(expected: string | undefined, seen: Set<string>): 
 
   if (!identifier) {
     throw new HomeWizardEnergyApiError(
-      'The identifier of the device could not be read from its certificate. Pass the "identifier" option, for example the "id" txt record from discovery.',
+      'The identifier of the device could not be read from its certificate. Pass the "identifier" option, built with getCertificateIdentifier() from the serial on the device label.',
     );
   }
 

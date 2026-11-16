@@ -12,7 +12,7 @@ Steps 0 to 8 are built on one branch, one commit per PR. What's still open:
 - **kWh meters and Plug-In Battery:** built from the docs, untested on hardware.
 - **Deprecations of the v1 classes:** not done, because they wait for the hardware checks.
 - **The WebSocket heartbeat** assumes the device answers a `{"type":"device"}` request, as the docs describe. If it answers with an error instead, users get an `error` event every interval. This needs a token to check.
-- **The token-rejection rule** comes from one P1: a drop between sending the token and `authorized` stops reconnecting for good, so a network drop in that short window does too.
+- **The token-rejection rule** comes from one P1: two drops in a row between sending the token and `authorized` stop reconnecting.
 
 ## Order and dependencies
 
@@ -103,7 +103,7 @@ No public change. This PR exists so that v2 can reuse the code without extending
   - TLS, against the local server with real timers: matching, different and missing CN; `pair()` capturing the CN; and a rejection without the CA.
   - Client: a missing identifier throws; the headers are sent; JSON and text errors parse into `code`; an unknown code is kept as a string.
   - Pairing, with fake timers: button pressed on the third attempt, timeout, abort during the wait, `user:name-invalid` stops immediately, a network error retries, and the name is validated.
-  - Users: list, delete by name, and delete the current user.
+  - Users: list, and delete by name (upstream requires the name, prefix included).
   - Poll: start, stop, response, error and `stopOnError`.
   - Every endpoint: success and a 500.
 - Done when: `npm test` passes at 100% coverage for `src/v2`, and `import { v2 } from 'homewizard-energy-api'` works from `dist`.
@@ -127,7 +127,7 @@ No public change. This PR exists so that v2 can reuse the code without extending
 - `src/v2/websocket.ts` (`DeviceSocket<Topic>`):
   - `subscribe`, `unsubscribe`, `request(topic)`, `set(topic, data)`, `identify` and `close`;
   - typed `on()` for each topic, plus `authorized`, `close` and `error`;
-  - errors from `{"type":"error","data":{"message":…}}` become `HomeWizardApiV2Error`;
+  - errors from `{"type":"error","data":{"message":…}}` become `HomeWizardApiV2WebSocketError` with the `code`. It doesn't extend `HomeWizardApiV2Error`, which is the HTTP error with a URL and status code;
   - subscriptions are sent again after reconnect, with exponential backoff, and a heartbeat sends `{"type":"device"}` after a silent interval and reconnects after two.
 - `P1Meter.openWebSocket()`, with topics narrowed per device.
 - Port the PR's message handling from `websocket-v2.ts`, adapted to undici events.

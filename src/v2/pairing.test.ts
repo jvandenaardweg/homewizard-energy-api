@@ -102,12 +102,17 @@ describe('v2/pair', () => {
     expect(JSON.stringify(method.mock.calls)).toContain('Pairing attempt failed, trying again');
   });
 
-  it('should throw when the identifier is not given and no certificate was seen', async () => {
-    mockV2('/api/user', 'POST', { response: mockV2UserCreated });
+  it('should refuse a custom dispatcher without an identifier before creating a token', async () => {
+    const onRequest = vi.fn();
+    mockV2('/api/user', 'POST', { response: mockV2UserCreated, onRequest });
 
     await expect(pair(mockV2Host, 'new_user', { dispatcher: mockApiAgent })).rejects.toThrow(
-      /could not be read from its certificate/,
+      /can't read the identifier from the certificate/,
     );
+    expect(onRequest).not.toHaveBeenCalled();
+
+    // Use up the interceptor, so it doesn't answer a later test
+    await pair(mockV2Host, 'new_user', options);
   });
 
   it('should build the identifier from the device information when insecure', async () => {
@@ -126,7 +131,7 @@ describe('v2/pair', () => {
     );
   });
 
-  it('should throw when insecure and the product type is unknown', async () => {
+  it('should keep the token with an empty identifier when insecure and the product type is unknown', async () => {
     mockV2('/api/user', 'POST', { response: mockV2UserCreated });
     mockV2('/api', 'GET', {
       response: { ...mockV2DeviceInformation['HWE-P1'], product_type: 'HWE-NEW' },
@@ -134,7 +139,7 @@ describe('v2/pair', () => {
 
     await expect(
       pair(mockV2Host, 'new_user', { dispatcher: mockApiAgent, insecure: true }),
-    ).rejects.toThrow('The identifier of a "HWE-NEW" is not known');
+    ).resolves.toStrictEqual({ ...mockV2UserCreated, identifier: '' });
   });
 
   it('should never log the token', async () => {
@@ -167,6 +172,12 @@ describe('v2/pair', () => {
 
     it('should use the one identifier seen', () => {
       expect(getIdentifier(undefined, new Set(['b']))).toBe('b');
+    });
+
+    it('should refuse when no certificate was seen', () => {
+      expect(() => getIdentifier(undefined, new Set())).toThrow(
+        /could not be read from its certificate/,
+      );
     });
 
     it('should refuse when different devices answered', () => {

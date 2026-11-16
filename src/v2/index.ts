@@ -3,6 +3,9 @@
  *
  *   import { v2 } from 'homewizard-energy-api';
  *
+ * Everything exported here is public API. Keep helpers and constants that users don't need out of it: adding an
+ * export later is a feature, removing one is a breaking change.
+ *
  * @link https://api-documentation.homewizard.com/docs/category/api-v2
  */
 export type { DeviceOptions } from './client';
@@ -18,7 +21,37 @@ export { pair } from './pairing';
 export type { PairOptions, PairResult } from './pairing';
 export { poll } from './poll';
 export type { Poller, PollOptions } from './poll';
-export { CERTIFICATE_PRODUCT_TYPES, getCertificateIdentifier, HOMEWIZARD_CA_CERT } from './tls';
-export * from './types';
-export { DeviceSocket } from './websocket';
-export type { BatteriesTopic, CommonTopics, WebSocketOptions } from './websocket';
+export { getCertificateIdentifier } from './tls';
+export { MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_TYPE, ProductTypeList } from './types';
+export type {
+  Batteries,
+  BatteriesMode,
+  BatteriesPermission,
+  BatteriesUpdate,
+  DeviceInformation,
+  ErrorCode,
+  ExternalMeter,
+  KwhMeter1PhaseMeasurement,
+  KwhMeter3PhaseMeasurement,
+  KwhMeterSystem,
+  KwhMeterSystemUpdate,
+  MdnsTxtRecord,
+  P1MeterMeasurement,
+  P1MeterSystem,
+  P1MeterSystemUpdate,
+  PlugInBatteryMeasurement,
+  PlugInBatterySystem,
+  PlugInBatterySystemUpdate,
+  ProductType,
+  System,
+  Timestamp,
+  User,
+  UserCreated,
+} from './types';
+export type {
+  BatteriesTopic,
+  CommonTopics,
+  DeviceSocket,
+  IdentifiableDeviceSocket,
+  WebSocketOptions,
+} from './websocket';

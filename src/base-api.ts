@@ -2,9 +2,10 @@ import { EventEmitter } from 'events';
 import { Dispatcher } from 'undici';
 import { HomeWizardEnergyApiResponseError } from './shared/errors';
 import { log, LoggerOptions } from './shared/logger';
-import { runPollLoop } from './shared/poller';
+import { DEFAULT_POLL_INTERVAL, runPollLoop } from './shared/poller';
 import {
-  describeCall,
+  DEFAULT_TIMEOUT,
+  describeFailure,
   isResponseOk,
   parseJsonResponse,
   RequestParameters,
@@ -98,8 +99,7 @@ export interface BaseApiOptions {
 // 2 seconds, we are on a local network, so all request should be fast
 export const DEFAULT_BODY_TIMEOUT = 2000;
 export const DEFAULT_HEADERS_TIMEOUT = 2000;
-// Covers connecting too, which undici otherwise allows 10 seconds for
-export const DEFAULT_TIMEOUT = 5000;
+export { DEFAULT_TIMEOUT } from './shared/request';
 
 export const DEFAULT_API_VERSION = 'v1';
 
@@ -204,7 +204,7 @@ export class BaseApi {
     const text = await body.text();
 
     throw new HomeWizardEnergyApiResponseError(
-      `${describeCall(method, url)} failed with status ${statusCode} and response data: ${text}`,
+      describeFailure(method, url, statusCode, text),
       url,
       statusCode,
       text,
@@ -417,7 +417,7 @@ export class BaseApi {
       return;
     }
 
-    const interval = this.pollingOptions?.interval || 1000;
+    const interval = this.pollingOptions?.interval || DEFAULT_POLL_INTERVAL;
     const stopOnError = !!this.pollingOptions?.stopOnError;
 
     const run = {};

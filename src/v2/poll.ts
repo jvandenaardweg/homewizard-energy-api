@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { log, LoggerOptions } from '@/shared/logger';
-import { runPollLoop } from '@/shared/poller';
+import { DEFAULT_POLL_INTERVAL, runPollLoop } from '@/shared/poller';
 
 export interface PollOptions {
   /**
@@ -53,7 +53,7 @@ export function poll<T>(fn: () => Promise<T>, options: PollOptions = {}): Poller
 
       void runPollLoop({
         name,
-        interval: options.interval || 1000,
+        interval: options.interval || DEFAULT_POLL_INTERVAL,
         stopOnError: !!options.stopOnError,
         call: fn,
         isActive: () => activeRun === run,
