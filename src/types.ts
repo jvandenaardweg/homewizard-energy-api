@@ -168,7 +168,7 @@ export interface BaseDataResponse {
   active_voltage_l2_v?: number;
   /** The active voltage for phase 3 in volt. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
   active_voltage_l3_v?: number;
-  /** The active current in amperes. Sum of all phases for 3-phase meter. Available for: `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  /** The active current in amperes. Sum of all phases for 3-phase meter. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   active_current_a?: number;
   /** The active current for phase 1 in ampere. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
   active_current_l1_a?: number;
@@ -322,6 +322,7 @@ export type P1MeterDataResponse = Pick<
   | 'active_voltage_l1_v'
   | 'active_voltage_l2_v'
   | 'active_voltage_l3_v'
+  | 'active_current_a'
   | 'active_current_l1_a'
   | 'active_current_l2_a'
   | 'active_current_l3_a'
