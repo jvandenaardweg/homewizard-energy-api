@@ -215,6 +215,25 @@ describe('BaseApi', () => {
     });
   });
 
+  describe('parseJsonResponse()', () => {
+    it('should throw a HomeWizardEnergyApiResponseError when the body is not valid JSON', async () => {
+      apiMocks.getData({
+        response: '<html>Not JSON</html>',
+      });
+
+      const error = await baseApi['getData']().catch(error => error);
+
+      expect(error).toBeInstanceOf(HomeWizardEnergyApiResponseError);
+      expect(error).toMatchObject({
+        message:
+          'Api GET call at http://localhost/api/v1/data returned a response that is not valid JSON: <html>Not JSON</html>',
+        url: 'http://localhost/api/v1/data',
+        statusCode: 200,
+        response: '<html>Not JSON</html>',
+      });
+    });
+  });
+
   describe('errors', () => {
     it('should create a HomeWizardEnergyApiError instance', () => {
       const error = new HomeWizardEnergyApiError('Test error');

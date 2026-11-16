@@ -295,6 +295,29 @@ export class BaseApi {
   }
 
   /**
+   * Reads the response body as JSON. A body that isn't valid JSON throws a `HomeWizardEnergyApiResponseError`
+   * instead of a bare `SyntaxError`, so it has the URL and the raw body.
+   */
+  protected async parseJsonResponse<T>(
+    url: string,
+    method: string,
+    response: Dispatcher.ResponseData,
+  ): Promise<T> {
+    const text = await response.body.text();
+
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      throw new HomeWizardEnergyApiResponseError(
+        `Api ${method} call at ${url} returned a response that is not valid JSON: ${text}`,
+        url,
+        response.statusCode,
+        text,
+      );
+    }
+  }
+
+  /**
    * Returns basic information from the device.
    *
    * Your application can use this endpoint to see if your integration is designed to work with this version of the API.
@@ -317,7 +340,7 @@ export class BaseApi {
       return this.throwResponseError(url, method, response);
     }
 
-    const data = (await response.body.json()) as T;
+    const data = await this.parseJsonResponse<T>(url, method, response);
 
     this.log(`Fetched basic information: ${JSON.stringify(data)}`);
 
@@ -345,7 +368,7 @@ export class BaseApi {
       return this.throwResponseError(url, method, response);
     }
 
-    const data = (await response.body.json()) as T;
+    const data = await this.parseJsonResponse<T>(url, method, response);
 
     this.log(`Fetched data: ${JSON.stringify(data)}`);
 
@@ -376,7 +399,7 @@ export class BaseApi {
       return this.throwResponseError(url, method, response);
     }
 
-    const data = (await response.body.json()) as SystemResponse;
+    const data = await this.parseJsonResponse<SystemResponse>(url, method, response);
 
     this.log(`Received system state ${JSON.stringify(data)} from ${url}`);
 
@@ -408,7 +431,7 @@ export class BaseApi {
       return this.throwResponseError(url, method, response);
     }
 
-    const data = (await response.body.json()) as SystemResponse;
+    const data = await this.parseJsonResponse<SystemResponse>(url, method, response);
 
     this.log(`Received updated system state ${JSON.stringify(data)} from ${url}`);
 
@@ -437,7 +460,7 @@ export class BaseApi {
       return this.throwResponseError(url, method, response);
     }
 
-    const data = (await response.body.json()) as IdentifyResponse;
+    const data = await this.parseJsonResponse<IdentifyResponse>(url, method, response);
 
     this.log(`Device identified: ${JSON.stringify(data)}`);
 

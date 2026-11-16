@@ -95,7 +95,7 @@ export class EnergySocketApi extends BaseApi {
       return this.throwResponseError(url, method, response);
     }
 
-    const data = (await response.body.json()) as T;
+    const data = await this.parseJsonResponse<T>(url, method, response);
 
     this.log(`Received state ${JSON.stringify(data)} from ${this.endpoints.state}`);
 
@@ -124,7 +124,7 @@ export class EnergySocketApi extends BaseApi {
       return this.throwResponseError(url, method, response);
     }
 
-    const data = (await response.body.json()) as StatePutParams<Keys>;
+    const data = await this.parseJsonResponse<StatePutParams<Keys>>(url, method, response);
 
     this.log(`Received updated state ${JSON.stringify(data)} from ${this.endpoints.state}`);
 
