@@ -283,34 +283,53 @@ export type EnergySocketDataResponse = Pick<
 
 /**
  * API /data response for `HWE-P1`
+ *
+ * @link: https://api-documentation.homewizard.com/docs/v1/measurement
  */
-export type P1MeterDataResponse = Omit<
+export type P1MeterDataResponse = Pick<
   BaseDataResponse,
-  | 'active_liter_lpm'
-  | 'total_liter_m3'
-  | 'total_liter_offset_m3'
-  | 'active_voltage_v'
-  | 'active_current_a'
-  | 'active_apparent_current_a'
-  | 'active_reactive_current_a'
-  | 'active_apparent_power_va'
-  | 'active_reactive_power_var'
-  | 'active_power_factor'
-  | 'active_apparent_current_l1_a'
-  | 'active_apparent_current_l2_a'
-  | 'active_apparent_current_l3_a'
-  | 'active_reactive_current_l1_a'
-  | 'active_reactive_current_l2_a'
-  | 'active_reactive_current_l3_a'
-  | 'active_apparent_power_l1_va'
-  | 'active_apparent_power_l2_va'
-  | 'active_apparent_power_l3_va'
-  | 'active_reactive_power_l1_var'
-  | 'active_reactive_power_l2_var'
-  | 'active_reactive_power_l3_var'
-  | 'active_power_factor_l1'
-  | 'active_power_factor_l2'
-  | 'active_power_factor_l3'
+  | 'unique_id'
+  | 'smr_version'
+  | 'meter_model'
+  | 'wifi_ssid'
+  | 'wifi_strength'
+  | 'total_power_import_kwh'
+  | 'total_power_import_t1_kwh'
+  | 'total_power_import_t2_kwh'
+  | 'total_power_import_t3_kwh'
+  | 'total_power_import_t4_kwh'
+  | 'total_power_export_kwh'
+  | 'total_power_export_t1_kwh'
+  | 'total_power_export_t2_kwh'
+  | 'total_power_export_t3_kwh'
+  | 'total_power_export_t4_kwh'
+  | 'active_power_w'
+  | 'active_power_l1_w'
+  | 'active_power_l2_w'
+  | 'active_power_l3_w'
+  | 'active_voltage_l1_v'
+  | 'active_voltage_l2_v'
+  | 'active_voltage_l3_v'
+  | 'active_current_l1_a'
+  | 'active_current_l2_a'
+  | 'active_current_l3_a'
+  | 'active_frequency_hz'
+  | 'voltage_sag_l1_count'
+  | 'voltage_sag_l2_count'
+  | 'voltage_sag_l3_count'
+  | 'voltage_swell_l1_count'
+  | 'voltage_swell_l2_count'
+  | 'voltage_swell_l3_count'
+  | 'any_power_fail_count'
+  | 'long_power_fail_count'
+  | 'active_power_average_w'
+  | 'montly_power_peak_w'
+  | 'montly_power_peak_timestamp'
+  | 'total_gas_m3'
+  | 'gas_timestamp'
+  | 'gas_unique_id'
+  | 'external'
+  | 'active_tariff'
 >;
 
 /**
@@ -323,13 +342,8 @@ export type WaterMeterDataResponse = Pick<
   'wifi_ssid' | 'wifi_strength' | 'total_liter_m3' | 'active_liter_lpm' | 'total_liter_offset_m3'
 >;
 
-/**
- * API /data response for `HWE-KWH1` and `SDM230-wifi`
- *
- * @link: https://api-documentation.homewizard.com/docs/v1/measurement
- */
-export type KwhMeter1PhaseDataResponse = Pick<
-  BaseDataResponse,
+/** Keys sent by every kWh meter, both 1-phase (`HWE-KWH1`, `SDM230-wifi`) and 3-phase (`HWE-KWH3`, `SDM630-wifi`). */
+type KwhMeterDataKeys =
   | 'wifi_ssid'
   | 'wifi_strength'
   | 'total_power_import_kwh'
@@ -338,14 +352,21 @@ export type KwhMeter1PhaseDataResponse = Pick<
   | 'total_power_export_t1_kwh'
   | 'active_power_w'
   | 'active_power_l1_w'
-  | 'active_voltage_v'
   | 'active_current_a'
   | 'active_apparent_current_a'
   | 'active_reactive_current_a'
   | 'active_apparent_power_va'
   | 'active_reactive_power_var'
-  | 'active_power_factor'
-  | 'active_frequency_hz'
+  | 'active_frequency_hz';
+
+/**
+ * API /data response for `HWE-KWH1` and `SDM230-wifi`
+ *
+ * @link: https://api-documentation.homewizard.com/docs/v1/measurement
+ */
+export type KwhMeter1PhaseDataResponse = Pick<
+  BaseDataResponse,
+  KwhMeterDataKeys | 'active_voltage_v' | 'active_power_factor'
 >;
 
 /**
@@ -355,43 +376,30 @@ export type KwhMeter1PhaseDataResponse = Pick<
  */
 export type KwhMeter3PhaseDataResponse = Pick<
   BaseDataResponse,
-  | 'wifi_ssid'
-  | 'wifi_strength'
-  | 'total_power_import_kwh'
-  | 'total_power_import_t1_kwh'
-  | 'total_power_export_kwh'
-  | 'total_power_export_t1_kwh'
-  | 'active_power_w'
-  | 'active_power_l1_w'
+  | KwhMeterDataKeys
   | 'active_power_l2_w'
   | 'active_power_l3_w'
   | 'active_voltage_l1_v'
   | 'active_voltage_l2_v'
   | 'active_voltage_l3_v'
-  | 'active_current_a'
   | 'active_current_l1_a'
   | 'active_current_l2_a'
   | 'active_current_l3_a'
-  | 'active_apparent_current_a'
   | 'active_apparent_current_l1_a'
   | 'active_apparent_current_l2_a'
   | 'active_apparent_current_l3_a'
-  | 'active_reactive_current_a'
   | 'active_reactive_current_l1_a'
   | 'active_reactive_current_l2_a'
   | 'active_reactive_current_l3_a'
-  | 'active_apparent_power_va'
   | 'active_apparent_power_l1_va'
   | 'active_apparent_power_l2_va'
   | 'active_apparent_power_l3_va'
-  | 'active_reactive_power_var'
   | 'active_reactive_power_l1_var'
   | 'active_reactive_power_l2_var'
   | 'active_reactive_power_l3_var'
   | 'active_power_factor_l1'
   | 'active_power_factor_l2'
   | 'active_power_factor_l3'
-  | 'active_frequency_hz'
 >;
 
 /**
