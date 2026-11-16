@@ -583,10 +583,11 @@ export function parseTelegram(telegram: string): ParsedTelegram {
   return parsedTelegram;
 }
 
-export function getMeterBrandModelFromHeader(header: string): string[] {
+export function getMeterBrandModelFromHeader(header: string): [string, string | null] {
   const [meterBrand, meterModel] = header.split('\\');
 
-  return [meterBrand, meterModel];
+  // A header without a backslash has no model
+  return [meterBrand, meterModel ?? null];
 }
 
 /**

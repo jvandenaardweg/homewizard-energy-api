@@ -343,6 +343,12 @@ describe('utils/telegram', () => {
       expect(gas.timestamp).toBe('2026-11-16T20:05:01+01:00');
     });
 
+    it('should return null for the meter model when the header has none', () => {
+      const parsedTelegram = parseTelegram(mockTelegramResponse['v42']);
+
+      expect(parsedTelegram.meter).toStrictEqual({ brand: 'KFM5KAIFA-METER', model: null });
+    });
+
     it('should keep the decimals of voltages and currents', () => {
       const parsedTelegram = parseTelegram(mockTelegramResponse['v50be']);
       const { voltage, current } = parsedTelegram.power.instantaneous;
