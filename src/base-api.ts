@@ -255,8 +255,6 @@ export class BaseApi {
   /**
    * The /api/v1/data endpoint allows you to get the most recent measurement from the device.
    *
-   * This response type only relates to the Energy Socket.
-   *
    * All datapoints are “optional”; The API does not send datapoints that are null. Make sure your application can handle this.
    *
    * @link: https://api-documentation.homewizard.com/docs/v1/measurement
