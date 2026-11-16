@@ -27,7 +27,7 @@
     }
   ],
   "engines": {
-    "node": ">=14.18.1"
+    "node": ">=22.19.0"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -63,7 +63,7 @@
   ],
   "devDependencies": {
     "@release-it/conventional-changelog": "7.0.1",
-    "@types/multicast-dns": "^7.2.1",
+    "@types/multicast-dns": "^7.2.4",
     "@types/node": "^22.20.5",
     "@vitest/coverage-istanbul": "^5.1.0",
     "conventional-changelog-conventionalcommits": "7.0.2",
@@ -83,9 +83,9 @@
     "vitest": "^5.1.0"
   },
   "dependencies": {
-    "date-fns": "^2.30.0",
+    "date-fns": "^4.4.0",
     "multicast-dns": "^7.2.5",
-    "undici": "^5.22.1"
+    "undici": "^8.12.4"
   },
   "lint-staged": {
     "*.{ts,js,mjs,cjs,json,md,yml,yaml}": [

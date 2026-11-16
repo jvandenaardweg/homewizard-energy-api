@@ -175,6 +175,49 @@ describe('BaseApi', () => {
       await assertion;
     });
 
+    describe('when the request ignores the abort', () => {
+      // A MockAgent interceptor always honours the abort, so a stub dispatcher stands in for
+      // undici 7 and later, which don't interrupt a pending connect when the request is aborted.
+      let signal: AbortSignal | undefined;
+
+      beforeEach(() => {
+        signal = undefined;
+      });
+
+      const requestWithHangingConnect = () =>
+        baseApi['request']('http://localhost/api/v1/data', {
+          method: 'GET',
+          dispatcher: {
+            // Never calls back into the handler, like a connect that hangs
+            dispatch: (options: { signal?: AbortSignal }) => {
+              signal = options.signal;
+              return true;
+            },
+          } as unknown as Dispatcher,
+        });
+
+      it('should still throw a HomeWizardEnergyApiTimeoutError after the timeout', async () => {
+        const assertion = expect(requestWithHangingConnect()).rejects.toThrowError(
+          'Api GET call at http://localhost/api/v1/data timed out after 5000ms',
+        );
+
+        vi.advanceTimersByTime(DEFAULT_TIMEOUT);
+
+        await assertion;
+      });
+
+      it('should abort the request when it times out', async () => {
+        const assertion = expect(requestWithHangingConnect()).rejects.toThrowError(
+          HomeWizardEnergyApiTimeoutError,
+        );
+
+        vi.advanceTimersByTime(DEFAULT_TIMEOUT);
+
+        await assertion;
+        expect(signal?.aborted).toBe(true);
+      });
+    });
+
     it('should rethrow other request errors as is', async () => {
       mockApiPool
         .intercept({ path: '/api/v1/data', method: 'GET' })
