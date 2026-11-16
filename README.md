@@ -217,6 +217,32 @@ const data = await kwhMeter3Phase.getData();
 
 A simple polling interface for the kWh Meter 3-phase is exposed via `api.polling.getData`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
 
+## Error handling
+
+A request that gets a non-2xx response throws a `HomeWizardEnergyApiResponseError`, which has the `url`, the `statusCode` and the raw `response` body. When the API answers with its JSON error object, the parsed `{ id, description }` is available as `apiError`, and `id` is typed as `ErrorCodes`. See the [official docs](https://api-documentation.homewizard.com/docs/v1/error-handling) for the error codes.
+
+```typescript
+import {
+  EnergySocketApi,
+  ErrorCodes,
+  HomeWizardEnergyApiResponseError,
+} from 'homewizard-energy-api';
+
+const energySocket = new EnergySocketApi('http://192.168.1.10');
+
+try {
+  await energySocket.updateState({ power_on: false });
+} catch (error) {
+  if (
+    error instanceof HomeWizardEnergyApiResponseError &&
+    error.apiError?.id === ErrorCodes.PARAMETER_IS_NOT_MODIFIABLE
+  ) {
+    // e.g. "power_on cannot be turned off when switch_lock is on"
+    console.log(error.apiError.description);
+  }
+}
+```
+
 ## Discover HomeWizard devices in your network
 
 This library exposes a discovery method to discover HomeWizard Energy devices in your local network. Each HomeWizard device broadcasts itself on your local network using Multicast DNS. This allows you to use all the devices in your network without knowing the actual IP address of the device. You can find more details about this in the [official docs](https://api-documentation.homewizard.com/docs/discovery).

@@ -3,12 +3,28 @@ import { Dispatcher, request as undiciRequest } from 'undici';
 import {
   BasicInformationResponse,
   BaseDataResponse,
+  ErrorResponse,
   IdentifyResponse,
   SystemPutParams,
   SystemResponse,
 } from './types';
 
 export type RequestParameters = Parameters<typeof undiciRequest>;
+
+function parseApiError(response: string): ErrorResponse['error'] | undefined {
+  try {
+    const parsed = JSON.parse(response) as Partial<ErrorResponse> | null;
+    const error = parsed?.error;
+
+    if (typeof error?.id === 'number' && typeof error.description === 'string') {
+      return error;
+    }
+  } catch {
+    // Not a JSON error body
+  }
+
+  return undefined;
+}
 
 export class HomeWizardEnergyApiError extends Error {
   constructor(message: string) {
@@ -19,7 +35,16 @@ export class HomeWizardEnergyApiError extends Error {
 export class HomeWizardEnergyApiResponseError extends HomeWizardEnergyApiError {
   url: string;
   statusCode: number;
+  /** The raw response body. */
   response: string;
+  /**
+   * The parsed error when the response body is the API's JSON error object, for example
+   * `{ id: ErrorCodes.INVALID_VALUE_FOR_PARAMETER, description: 'brightness value limited to 0-255' }`.
+   * It is `undefined` for plain-text bodies, such as errors from `/api/v1/telegram`.
+   *
+   * @link https://api-documentation.homewizard.com/docs/v1/error-handling
+   */
+  apiError?: ErrorResponse['error'];
 
   constructor(message: string, url: string, statusCode: number, response: string) {
     super(message);
@@ -27,6 +52,7 @@ export class HomeWizardEnergyApiResponseError extends HomeWizardEnergyApiError {
     this.url = url;
     this.statusCode = statusCode;
     this.response = response;
+    this.apiError = parseApiError(response);
   }
 }
 

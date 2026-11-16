@@ -5,6 +5,7 @@ import { apiMocks, mockApiUrl } from '@/mocks/api';
 import { mockEnergySocketDataResponse } from '@/mocks/data/data';
 import { mockSystemResponse } from '@/mocks/data/system';
 import { EnergySocketApi } from '@/energy-socket-api';
+import { mockErrorSwitchLockEnabled } from '@/mocks/errors';
 
 let energySocketApi: EnergySocketApi;
 
@@ -121,6 +122,18 @@ describe('EnergySocketApi', () => {
       expect(responseFn()).rejects.toThrowError(
         'Api PUT call at http://localhost/api/v1/state failed with status 500 and response data: Server error!',
       );
+    });
+
+    it('should expose the parsed API error when PUT on the "state" endpoint returns an error object', async () => {
+      apiMocks.updateState({
+        response: mockErrorSwitchLockEnabled,
+        statusCode: 400,
+      });
+
+      await expect(energySocketApi.updateState({ power_on: false })).rejects.toMatchObject({
+        statusCode: 400,
+        apiError: mockErrorSwitchLockEnabled.error,
+      });
     });
   });
 

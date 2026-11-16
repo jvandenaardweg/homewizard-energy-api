@@ -11,6 +11,8 @@ import {
 import { Dispatcher } from 'undici';
 import { mockP1MeterDataResponse } from './mocks/data/data';
 import EventEmitter from 'events';
+import { mockErrorInvalidValue } from './mocks/errors';
+import { ErrorCodes } from './types';
 
 let baseApi: BaseApi;
 
@@ -139,8 +141,32 @@ describe('BaseApi', () => {
       expect(error.url).toBe('http://localhost/api/v1/data');
       expect(error.statusCode).toBe(500);
       expect(error.response).toBe('Test response data');
+      expect(error.apiError).toBeUndefined();
 
       expect(error.toString()).toBe('HomeWizardEnergyApiResponseError: Test error');
+    });
+
+    it('should parse the API error object from a JSON response body', () => {
+      const error = new HomeWizardEnergyApiResponseError(
+        'Test error',
+        'http://localhost/api/v1/state',
+        400,
+        JSON.stringify(mockErrorInvalidValue),
+      );
+
+      expect(error.apiError).toStrictEqual(mockErrorInvalidValue.error);
+      expect(error.apiError?.id).toBe(ErrorCodes.INVALID_VALUE_FOR_PARAMETER);
+    });
+
+    it('should leave apiError undefined for JSON that is not an API error object', () => {
+      const error = new HomeWizardEnergyApiResponseError(
+        'Test error',
+        'http://localhost/api/v1/state',
+        400,
+        JSON.stringify({ error: 'nope' }),
+      );
+
+      expect(error.apiError).toBeUndefined();
     });
   });
 
