@@ -246,9 +246,17 @@ export interface BaseDataResponse {
    * @deprecated The gas meter reading in m3 for the first detected gas meter. Gas datapoints will be removed in favor of ‘external’ in a future software version, do not use this field in new implementations
    */
   total_gas_m3?: number;
-  /** The most recent gas update time stamp structured as YYMMDDhhmmss. Available for: `HWE-P1` */
+  /**
+   * The most recent gas update time stamp structured as YYMMDDhhmmss. Available for: `HWE-P1`
+   *
+   * @deprecated The time stamp for the first detected gas meter. Gas datapoints will be removed in favor of ‘external’ in a future software version, do not use this field in new implementations
+   */
   gas_timestamp?: number;
-  /** The unique identifier for the gas meter, can be used to migrate to the ‘external’ datapoint. Available for: `HWE-P1`  */
+  /**
+   * The unique identifier for the gas meter, can be used to migrate to the ‘external’ datapoint. Available for: `HWE-P1`
+   *
+   * @deprecated The identifier of the first detected gas meter. Gas datapoints will be removed in favor of ‘external’ in a future software version; match it against `external[].unique_id` to migrate
+   */
   gas_unique_id?: string;
   /** A list of externally connected utility meters, see External datapoint for more information. Available for: `HWE-P1` */
   external?: ExternalData[];
