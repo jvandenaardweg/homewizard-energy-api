@@ -6,6 +6,14 @@
 export const API_MAJOR_VERSION = '2';
 
 /**
+ * The newest API version whose docs these types follow. A device on a newer 2.x version still works, but can send
+ * fields the types don't have yet.
+ *
+ * @link https://api-documentation.homewizard.com/docs/changelog
+ */
+export const DOCUMENTED_API_VERSION = '2.3.0';
+
+/**
  * Devices with the API v2 announce `_homewizard._tcp` over mDNS. Devices with the API v1 announce `_hwenergy._tcp`,
  * and a device that has both announces both.
  *
@@ -453,7 +461,7 @@ export interface System {
  *
  * @link https://api-documentation.homewizard.com/docs/v2/system
  */
-export type P1MeterSystem = System;
+export type P1MeterSystem = System & Required<Pick<System, 'status_led_brightness_pct'>>;
 /**
  * The writable system settings of the P1 Meter.
  *
@@ -481,7 +489,8 @@ export type KwhMeterSystemUpdate = Partial<Pick<System, 'cloud_enabled' | 'api_v
  *
  * @link https://api-documentation.homewizard.com/docs/v2/system
  */
-export type PlugInBatterySystem = Omit<System, 'api_v1_enabled'>;
+export type PlugInBatterySystem = Omit<System, 'api_v1_enabled'> &
+  Required<Pick<System, 'status_led_brightness_pct'>>;
 /**
  * The writable system settings of the Plug-In Battery. `cloud_enabled` is read-only on this device.
  *

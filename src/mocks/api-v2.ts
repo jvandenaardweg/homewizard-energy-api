@@ -21,6 +21,8 @@ export interface MockV2Options {
   response?: unknown;
   /** Receives each intercepted request, to check its headers and body. */
   onRequest?: (request: MockV2Request) => void;
+  /** Extra response headers, such as `x-api-version`. */
+  headers?: Record<string, string>;
 }
 
 function toHeaderRecord(headers: unknown): Record<string, string> {
@@ -35,7 +37,7 @@ function toHeaderRecord(headers: unknown): Record<string, string> {
 
 /** Intercepts one request to `path`. */
 export function mockV2(path: string, method: string, options: MockV2Options = {}): void {
-  const { statusCode = 200, response, onRequest } = options;
+  const { statusCode = 200, response, onRequest, headers = {} } = options;
 
   mockV2Pool.intercept({ path, method }).reply(request => {
     onRequest?.({
@@ -44,21 +46,21 @@ export function mockV2(path: string, method: string, options: MockV2Options = {}
     });
 
     if (response === undefined) {
-      return { statusCode, data: '' };
+      return { statusCode, data: '', responseOptions: { headers } };
     }
 
     if (typeof response === 'string') {
       return {
         statusCode,
         data: response,
-        responseOptions: { headers: { 'content-type': 'text/plain' } },
+        responseOptions: { headers: { 'content-type': 'text/plain', ...headers } },
       };
     }
 
     return {
       statusCode,
       data: JSON.stringify(response),
-      responseOptions: { headers: { 'content-type': 'application/json' } },
+      responseOptions: { headers: { 'content-type': 'application/json', ...headers } },
     };
   });
 }
