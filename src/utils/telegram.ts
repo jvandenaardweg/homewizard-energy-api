@@ -402,19 +402,19 @@ export function parseTelegram(telegram: string): ParsedTelegram {
 
       // Instantaneous current L1 in A resolution.
       case '1-0:31.7.0':
-        parsedTelegram.power.instantaneous.current.l1.value = parseInt(parsedLine.value);
+        parsedTelegram.power.instantaneous.current.l1.value = parseFloat(parsedLine.value);
         parsedTelegram.power.instantaneous.current.l1.unit = parsedLine.unit;
         break;
 
       // Instantaneous current L2 in A resolution.
       case '1-0:51.7.0':
-        parsedTelegram.power.instantaneous.current.l2.value = parseInt(parsedLine.value);
+        parsedTelegram.power.instantaneous.current.l2.value = parseFloat(parsedLine.value);
         parsedTelegram.power.instantaneous.current.l2.unit = parsedLine.unit;
         break;
 
       // Instantaneous current L3 in A resolution
       case '1-0:71.7.0':
-        parsedTelegram.power.instantaneous.current.l3.value = parseInt(parsedLine.value);
+        parsedTelegram.power.instantaneous.current.l3.value = parseFloat(parsedLine.value);
         parsedTelegram.power.instantaneous.current.l3.unit = parsedLine.unit;
         break;
 
@@ -525,19 +525,19 @@ export function parseTelegram(telegram: string): ParsedTelegram {
 
       // Instantaneous voltage L1 in V resolution
       case '1-0:32.7.0':
-        parsedTelegram.power.instantaneous.voltage.l1.value = parseInt(parsedLine.value);
+        parsedTelegram.power.instantaneous.voltage.l1.value = parseFloat(parsedLine.value);
         parsedTelegram.power.instantaneous.voltage.l1.unit = parsedLine.unit;
         break;
 
       // Instantaneous voltage L2 in V resolution
       case '1-0:52.7.0':
-        parsedTelegram.power.instantaneous.voltage.l2.value = parseInt(parsedLine.value);
+        parsedTelegram.power.instantaneous.voltage.l2.value = parseFloat(parsedLine.value);
         parsedTelegram.power.instantaneous.voltage.l2.unit = parsedLine.unit;
         break;
 
       // Instantaneous voltage L3 in V resolution
       case '1-0:72.7.0':
-        parsedTelegram.power.instantaneous.voltage.l3.value = parseInt(parsedLine.value);
+        parsedTelegram.power.instantaneous.voltage.l3.value = parseFloat(parsedLine.value);
         parsedTelegram.power.instantaneous.voltage.l3.unit = parsedLine.unit;
         break;
 

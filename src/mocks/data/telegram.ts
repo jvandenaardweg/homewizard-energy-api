@@ -315,7 +315,7 @@ export const mockParsedTelegramResponse = {
             unit: 'V',
           },
           l3: {
-            value: 225,
+            value: 225.2,
             unit: 'V',
           },
         },

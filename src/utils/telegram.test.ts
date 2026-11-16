@@ -271,6 +271,14 @@ describe('utils/telegram', () => {
       expect(parsedTelegram.gas.unit).toBe('m3');
       expect(parsedTelegram.gas.timestamp).toBe(parseTimestamp('210320214626W'));
     });
+
+    it('should keep the decimals of voltages and currents', () => {
+      const parsedTelegram = parseTelegram(mockTelegramResponse['v50be']);
+      const { voltage, current } = parsedTelegram.power.instantaneous;
+
+      expect(voltage.l1.value).toBe(240.9);
+      expect(current.l1.value).toBe(2.22);
+    });
   });
 
   describe('parseTelegram() edge cases', () => {
