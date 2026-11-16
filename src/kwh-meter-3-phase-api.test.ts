@@ -10,7 +10,7 @@ let kwhMeter3PhaseApi: KwhMeter3PhaseApi;
 
 const mockBasicResponse = mockBasicInformationResponse['SDM630-wifi'];
 
-describe('WaterMeterApi', () => {
+describe('KwhMeter3PhaseApi', () => {
   beforeEach(() => {
     kwhMeter3PhaseApi = new KwhMeter3PhaseApi(mockApiUrl);
   });
@@ -22,7 +22,7 @@ describe('WaterMeterApi', () => {
   it('should trigger the logger when doing requests', async () => {
     const loggerSpy = vi.fn();
 
-    const kwhMeter1PhaseApiWithLogger = new KwhMeter3PhaseApi(mockApiUrl, {
+    const kwhMeter3PhaseApiWithLogger = new KwhMeter3PhaseApi(mockApiUrl, {
       logger: {
         method: loggerSpy,
       },
@@ -32,9 +32,9 @@ describe('WaterMeterApi', () => {
       response: mockBasicResponse,
     });
 
-    await kwhMeter1PhaseApiWithLogger.getBasicInformation();
+    await kwhMeter3PhaseApiWithLogger.getBasicInformation();
 
-    expect(kwhMeter1PhaseApiWithLogger).toBeTruthy();
+    expect(kwhMeter3PhaseApiWithLogger).toBeTruthy();
     expect(loggerSpy).toHaveBeenCalled();
   });
 

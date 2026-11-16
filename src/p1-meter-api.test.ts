@@ -11,7 +11,7 @@ let p1MeterApi: P1MeterApi;
 
 const mockBasicResponse = mockBasicInformationResponse['HWE-P1'];
 
-describe('HomeWizardEnergyApi', () => {
+describe('P1MeterApi', () => {
   beforeEach(() => {
     p1MeterApi = new P1MeterApi(mockApiUrl, {
       polling: {
@@ -45,8 +45,8 @@ describe('HomeWizardEnergyApi', () => {
     });
   });
 
-  describe('getBasic()', () => {
-    it('should return the basic information response from /api/v1/basic', async () => {
+  describe('getBasicInformation()', () => {
+    it('should return the basic information response from /api', async () => {
       apiMocks.getBasicInformation({
         response: mockBasicResponse,
       });
@@ -69,7 +69,7 @@ describe('HomeWizardEnergyApi', () => {
   });
 
   describe('getData()', () => {
-    it('should return the data response from /api/v1/date', async () => {
+    it('should return the data response from /api/v1/data', async () => {
       apiMocks.getData({
         response: mockP1MeterDataResponse,
       });
