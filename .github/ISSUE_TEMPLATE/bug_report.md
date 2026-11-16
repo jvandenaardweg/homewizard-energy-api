@@ -1,38 +1,38 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Report something that doesn't work as expected
 title: ''
 labels: ''
 assignees: ''
-
 ---
 
 **Describe the bug**
 A clear and concise description of what the bug is.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**To reproduce**
+The code you ran, as small as possible:
+
+```ts
+import { P1MeterApi } from 'homewizard-energy-api';
+
+const p1Meter = new P1MeterApi('http://192.168.1.x');
+
+const data = await p1Meter.getData();
+```
 
 **Expected behavior**
-A clear and concise description of what you expected to happen.
+What you expected to happen.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Actual behavior**
+What happened instead. Include the full error message and stack trace, or the response you got back. Remove anything private, such as serial numbers, Wi-Fi names or IP addresses you don't want to share.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+**Environment**
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+- Device and product type: [e.g. P1 meter, `HWE-P1`]
+- Device firmware version: [the `firmware_version` from `getBasicInformation()`, e.g. `4.19`]
+- `homewizard-energy-api` version: [e.g. 1.6.1]
+- Node.js version: [output of `node --version`]
+- OS: [e.g. macOS 15, Raspberry Pi OS, Docker on Linux]
 
 **Additional context**
-Add any other context about the problem here.
+Anything else that might help, such as whether the problem started after a firmware or library update.

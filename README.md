@@ -274,6 +274,10 @@ discovery.on('response', response => {
 });
 ```
 
+## Contributing
+
+Bug reports, fixes and support for new endpoints or devices are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, testing and commit conventions.
+
 ## About this library
 
 Hi there! I created this library to provide type-safety when using the HomeWizard Energy API's in my own projects. I made it open source so that you can easily control your HomeWizard devices and have the same level of type-safety while developing your projects.
