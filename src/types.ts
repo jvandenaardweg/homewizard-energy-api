@@ -57,14 +57,19 @@ export interface MdnsTxtRecord {
  * @link: https://api-documentation.homewizard.com/docs/v1/state
  */
 export interface StateResponse {
-  /** The state of the switch. Returns true when the relay is in the ‘on’ state */
+  /** The state of the switch. Returns true when the relay is in the ‘on’ state. Available for: `HWE-SKT` */
   power_on: boolean;
-  /** When set to true, the socket cannot be turned off. */
+  /** When set to true, the socket cannot be turned off. Available for: `HWE-SKT` */
   switch_lock: boolean;
-  /** Brightness of LED ring when socket is ‘on’. Value from 0 (0%) to 255 (100%) */
+  /** Brightness of LED ring when socket is ‘on’. Value from 0 (0%) to 255 (100%). Available for: `HWE-SKT` */
   brightness: number;
 }
 
+/**
+ * The parameters to update with a PUT on the /api/v1/state endpoint. Only send the fields you want to change.
+ *
+ * @link: https://api-documentation.homewizard.com/docs/v1/state
+ */
 export type StatePutParams<Keys extends keyof StateResponse> = Pick<StateResponse, Keys>;
 
 /**
@@ -97,15 +102,15 @@ export interface BasicInformationResponse {
  * @link: https://api-documentation.homewizard.com/docs/v1/measurement
  */
 export interface ExternalData {
-  /** The unique identifier from the smart meter.` */
+  /** The unique identifier from the smart meter. Available for: `HWE-P1` */
   unique_id?: string;
-  /** The type of the device, can be `"gas_meter"`, `"heat_meter"`, `"warm_water_meter"`, `"water_meter"` or `"inlet_heat_meter"`. */
+  /** The type of the device, can be `"gas_meter"`, `"heat_meter"`, `"warm_water_meter"`, `"water_meter"` or `"inlet_heat_meter"`. Available for: `HWE-P1` */
   type?: 'gas_meter' | 'heat_meter' | 'warm_water_meter' | 'water_meter' | 'inlet_heat_meter';
-  /** The most recent value update time stamp structured as YYMMDDhhmmss. */
+  /** The most recent value update time stamp structured as YYMMDDhhmmss. Available for: `HWE-P1` */
   timestamp?: number;
-  /** The raw value */
+  /** The raw value. Available for: `HWE-P1` */
   value?: number;
-  /** The unit of the value, for example: `“m3”` or `“GJ”` */
+  /** The unit of the value, for example: `“m3”` or `“GJ”`. Available for: `HWE-P1` */
   unit?: string;
 }
 
@@ -420,6 +425,11 @@ export interface IdentifyResponse {
   identify: 'ok';
 }
 
+/**
+ * The JSON error object the API responds with when a request fails on an endpoint that returns JSON.
+ *
+ * @link: https://api-documentation.homewizard.com/docs/v1/error-handling
+ */
 export interface ErrorResponse {
   error: {
     id: ErrorCodes;
@@ -434,10 +444,17 @@ export interface ErrorResponse {
  * @link: https://api-documentation.homewizard.com/docs/v1/system
  */
 export interface SystemResponse {
+  /** Whether all cloud communication is turned on. Available for: `HWE-P1`, `HWE-SKT`, `HWE-WTR`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
   cloud_enabled: boolean;
 }
 
+/**
+ * The parameters to update with a PUT on the /api/v1/system endpoint.
+ *
+ * @link: https://api-documentation.homewizard.com/docs/v1/system
+ */
 export interface SystemPutParams {
+  /** Turns all cloud communication on or off. Available for: `HWE-P1`, `HWE-SKT`, `HWE-WTR`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
   cloud_enabled: boolean;
 }
 
