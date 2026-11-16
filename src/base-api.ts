@@ -211,7 +211,7 @@ export class BaseApi {
 
   protected on<T>(event: 'response', listener: (response: T) => void): void;
   protected on(event: 'error', listener: (error: Error) => void): void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line typescript/no-explicit-any
   protected on(event: string, listener: (...args: any[]) => void) {
     return this.eventEmitter.on(event, listener);
   }
@@ -220,7 +220,7 @@ export class BaseApi {
    * Returns the `on` method for `polling.<method>`, so its listeners only receive events from polling that method.
    */
   protected pollingOn<T>(method: string): PollMethod<T>['on'] {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // oxlint-disable-next-line typescript/no-explicit-any
     return (event: 'response' | 'error', listener: (...args: any[]) => void) => {
       this.eventEmitter.on(`${method}:${event}`, listener);
     };

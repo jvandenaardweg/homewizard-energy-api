@@ -498,7 +498,7 @@ export function parseTelegram(
       case '0-3:24.2.1':
       case '0-4:24.2.1':
       case '0-1:24.2.3':
-        // eslint-disable-next-line no-case-declarations
+        // oxlint-disable-next-line no-case-declarations
         const hourlyReading = parseHourlyReading(parsedLine.value);
 
         parsedTelegram.gas.timestamp = parseTimestamp(hourlyReading?.timestamp);
@@ -519,7 +519,7 @@ export function parseTelegram(
        */
 
       case '0-1:24.3.0':
-        // eslint-disable-next-line no-case-declarations
+        // oxlint-disable-next-line no-case-declarations
         const split = parsedLine.value.split(')(');
         parsedTelegram.gas.timestamp = parseTimestamp(split[0]);
         parsedTelegram.gas.unit = split[5] as TelegramUnit;

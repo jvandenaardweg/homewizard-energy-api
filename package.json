@@ -36,7 +36,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "lint": "eslint 'src/**/*.ts' --max-warnings=0",
+    "lint": "oxlint --deny-warnings --report-unused-disable-directives src && prettier --check .",
     "build": "rimraf ./dist && tsc --project tsconfig.build.json && resolve-tspaths",
     "prepublishOnly": "npm run test && npm run build",
     "pretest": "npm run lint && npm run type-check",
@@ -45,7 +45,7 @@
     "test:watch": "TZ=Europe/Amsterdam vitest",
     "release": "dotenv npx release-it",
     "type-check": "tsc --noEmit",
-    "prepare": "is-ci || husky install",
+    "prepare": "is-ci || husky",
     "lint-staged": "lint-staged",
     "watch": "nodemon ./src/examples/**",
     "watch:polling": "nodemon ./src/examples/polling-p1-meter-telegram.ts"
@@ -65,18 +65,15 @@
     "@release-it/conventional-changelog": "7.0.1",
     "@types/multicast-dns": "^7.2.1",
     "@types/node": "^20.5.7",
-    "@typescript-eslint/eslint-plugin": "^5.61.0",
-    "@typescript-eslint/parser": "^5.60.1",
     "@vitest/coverage-istanbul": "^0.28.5",
     "conventional-changelog-conventionalcommits": "7.0.2",
     "dotenv-cli": "^7.2.1",
-    "eslint": "^8.41.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "husky": "^8.0.3",
+    "husky": "^9.1.7",
     "is-ci": "^3.0.1",
-    "lint-staged": "^13.2.3",
+    "lint-staged": "^17.6.1",
     "nodemon": "^3.0.1",
-    "prettier": "^2.8.8",
+    "oxlint": "^1.94.0",
+    "prettier": "^3.10.1",
     "release-it": "^16.1.5",
     "resolve-tspaths": "^0.8.8",
     "rimraf": "^5.0.1",
@@ -91,13 +88,7 @@
     "undici": "^5.22.1"
   },
   "lint-staged": {
-    "*.ts": [
-      "prettier --write"
-    ],
-    "*.js": [
-      "prettier --write"
-    ],
-    "*.json": [
+    "*.{ts,js,mjs,cjs,json,md,yml,yaml}": [
       "prettier --write"
     ]
   }

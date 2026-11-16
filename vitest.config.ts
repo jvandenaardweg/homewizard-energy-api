@@ -6,8 +6,9 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['./vitest.setup.ts'],
-    // Agent worktrees under .claude/ hold other checkouts of this repo
-    exclude: [...configDefaults.exclude, '**/.claude/**'],
+    // Agent worktrees under .claude/ hold other checkouts of this repo.
+    // Relative to the project root, so tests still run when this checkout is itself under .claude/.
+    exclude: [...configDefaults.exclude, '.claude/**'],
     coverage: {
       provider: 'istanbul',
       all: true,

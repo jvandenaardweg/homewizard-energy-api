@@ -103,7 +103,6 @@ describe('HomeWizardEnergyDiscovery', () => {
 
   describe('handleMdnsResponse()', () => {
     it('should return a function', () => {
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       expect(discoveryService['handleMdnsResponse'](() => {})).toBeInstanceOf(Function);
     });
 
@@ -164,7 +163,6 @@ describe('HomeWizardEnergyDiscovery', () => {
 
   describe('handleMdnsError()', () => {
     it('should return a function', () => {
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       expect(discoveryService['handleMdnsError'](() => {})).toBeInstanceOf(Function);
     });
 
@@ -182,7 +180,6 @@ describe('HomeWizardEnergyDiscovery', () => {
 
   describe('handleMdnsWarning()', () => {
     it('should return a function', () => {
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       expect(discoveryService['handleMdnsWarning'](() => {})).toBeInstanceOf(Function);
     });
 

@@ -73,7 +73,7 @@ export class HomeWizardEnergyDiscovery {
   on(event: 'warning', callback: (error: Error) => void): void;
   on(
     event: 'response' | 'error' | 'warning' | 'down',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // oxlint-disable-next-line typescript/no-explicit-any
     callback: (d: any) => void,
   ): void {
     if (!this.mdns) {
