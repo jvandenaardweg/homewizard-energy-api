@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 The maintainer invoking this skill is the go-ahead to release. Run the steps in order; each ends on its **done** line. Stop and ask the maintainer only on an **escalation**: a case below that says so, or a step whose done line you can't reach.
 
-The pipeline: release-it (configured under `release-it` in `package.json`) bumps the version from the Conventional Commits since the last tag, writes `CHANGELOG.md`, commits `chore(release): vX.Y.Z`, tags `X.Y.Z` (no `v`), pushes, and creates the GitHub release. That release triggers `.github/workflows/publish-npm-package.yml`, which publishes to npm through trusted publishing (OIDC). No npm token is involved.
+The pipeline: release-it (configured in `.release-it.cjs`) bumps the version from the Conventional Commits since the last tag, writes `CHANGELOG.md`, commits `chore(release): vX.Y.Z`, tags `X.Y.Z` (no `v`), pushes, and creates the GitHub release. That release triggers `.github/workflows/publish-npm-package.yml`, which publishes to npm through trusted publishing (OIDC). No npm token is involved.
 
 ## 1. Preflight
 
