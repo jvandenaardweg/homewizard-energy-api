@@ -1,5 +1,51 @@
 # Changelog
 
+## [1.7.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.6.1...1.7.0) (2026-11-16)
+
+
+### Features
+
+* add a request timeout that also covers connecting ([7a5215f](https://github.com/jvandenaardweg/homewizard-energy-api/commit/7a5215f5da1eae912743a89a6efcd100081ac917))
+* add active_current_a to the P1 meter data response ([692801d](https://github.com/jvandenaardweg/homewizard-energy-api/commit/692801dc05f497e423581b41ea75db4439af7e0b))
+
+
+### Bug Fixes
+
+* ignore a trailing slash in the base URL ([a7f1e9f](https://github.com/jvandenaardweg/homewizard-energy-api/commit/a7f1e9f9d296c064881af9244307573b6a3064f4))
+* keep the decimals of telegram voltages and currents ([e30afc9](https://github.com/jvandenaardweg/homewizard-energy-api/commit/e30afc957535c5a16aaf68e9c69098d7c3a859ac))
+* log polling errors that can't be converted to JSON ([256789a](https://github.com/jvandenaardweg/homewizard-energy-api/commit/256789a4ab00abdfbef999e001b77be1d34cd6ad))
+* log unparsable telegram lines with the configured logger ([7f641b9](https://github.com/jvandenaardweg/homewizard-energy-api/commit/7f641b9792acb01b2908f924acd9a8320e9432ad))
+* parse telegram timestamps as the meter's local time ([0d4dbf2](https://github.com/jvandenaardweg/homewizard-energy-api/commit/0d4dbf2304f0b23675c5ac1950050d310a43cdf1))
+* prevent duplicate polling loops and crashes from error listeners ([3dde534](https://github.com/jvandenaardweg/homewizard-energy-api/commit/3dde534efffdf2e1152e7ee89f7ab8e0d8079ba6))
+* return nothing from polling start(), as its type says ([35c8ee6](https://github.com/jvandenaardweg/homewizard-energy-api/commit/35c8ee646ee3a13c92738af517e74c6c371a575c))
+* return null for the meter model when the telegram header has none ([6514e1f](https://github.com/jvandenaardweg/homewizard-energy-api/commit/6514e1f1687662c88ba5a9929d8fe16c8e62d7e2))
+* reuse the mDNS instance when discovery start() is called twice ([ca04d46](https://github.com/jvandenaardweg/homewizard-energy-api/commit/ca04d46b8bcf9f0a73f09f35b46786118f2108ff))
+* throw a response error when a response body is not valid JSON ([d599c58](https://github.com/jvandenaardweg/homewizard-energy-api/commit/d599c58b05bdd9383dfd6d75d0c8582b9f11ca65))
+
+
+### Documentation
+
+* add a contributing guide ([679ecdb](https://github.com/jvandenaardweg/homewizard-energy-api/commit/679ecdbf9bc2ca85782dda8cbea11cc596f3dcd5))
+* add a release skill for agents ([5c32eef](https://github.com/jvandenaardweg/homewizard-energy-api/commit/5c32eefb207489f51348152168460d06ed1f1cf1))
+* clarify supported devices, timeouts and network errors in the README ([fe855fb](https://github.com/jvandenaardweg/homewizard-energy-api/commit/fe855fb5b9ec1af14e75fbf23bdc631474f94278))
+* clarify what the timeout covers and link the API v1 sources in the README ([9df70c4](https://github.com/jvandenaardweg/homewizard-energy-api/commit/9df70c42a8df10a55548b645754492cbbf83b542))
+* credit @Zandor300 in the 1.6.0 changelog ([474251a](https://github.com/jvandenaardweg/homewizard-energy-api/commit/474251a2d8150d179ba09797d22174f9503e80cb))
+* fix outdated and unclear JSDoc in the types ([1b1f9a6](https://github.com/jvandenaardweg/homewizard-energy-api/commit/1b1f9a697c15dda73e7164be94f7bf94b429dbe9))
+* show the corrected telegram timestamps in the parsed telegram example ([f0256c3](https://github.com/jvandenaardweg/homewizard-energy-api/commit/f0256c3fd8d4843a492091ad5daf244662e7aaf8))
+
+
+### Other Changes
+
+* build request error messages with one helper ([6bb4573](https://github.com/jvandenaardweg/homewizard-energy-api/commit/6bb457378cc8e350244e1d104ffc55e535482de7))
+* build the API mocks from one endpoint factory ([210ce86](https://github.com/jvandenaardweg/homewizard-energy-api/commit/210ce8600467b227b4bf8d2760efaeb3d7552164))
+* cover a P1 data response with the Belgian capacity tariff fields ([c00461b](https://github.com/jvandenaardweg/homewizard-energy-api/commit/c00461b2ff0546dde91eb34f6821d8611d431384))
+* credit contributors in the release notes ([ec9a872](https://github.com/jvandenaardweg/homewizard-energy-api/commit/ec9a87214c4f8630d285d4f7e0fe0c76557e9e72))
+* end every fixture telegram line with CRLF, like the devices do ([fbde0ff](https://github.com/jvandenaardweg/homewizard-energy-api/commit/fbde0ff393469d7ed2e0c36fa192b7fb37931be7))
+* make the fixtures match what real devices send ([a8fc6f9](https://github.com/jvandenaardweg/homewizard-energy-api/commit/a8fc6f94200dd99b4be36f928077f048a7a772e2))
+* name the DST markers and the European offset rule in parseTimestamp ([d16e552](https://github.com/jvandenaardweg/homewizard-energy-api/commit/d16e5521fa1f2f667ee6431a60e02fd5cff87f21))
+* replace real device IDs in fixtures, tests and examples ([96141c7](https://github.com/jvandenaardweg/homewizard-energy-api/commit/96141c71251006419bdee6472d53ce05502e79b3))
+* track polling with one active run per method ([73bef67](https://github.com/jvandenaardweg/homewizard-energy-api/commit/73bef676d196f995dcfb9621a3dd77f5164aa638))
+
 ## [1.6.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.6.0...1.6.1) (2026-11-16)
 
 
