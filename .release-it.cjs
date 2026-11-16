@@ -1,20 +1,16 @@
 'use strict';
 
-const fs = require('fs');
 const { author } = require('./package.json');
 
-// The preset's main template, with a Contributors section appended after the commit groups.
-const mainTemplate = `${fs.readFileSync(
-  require.resolve('conventional-changelog-conventionalcommits/templates/template.hbs'),
-  'utf-8',
-)}{{#if contributors}}
-### Contributors
-
-{{#each contributors}}
-* {{{this}}}
-{{/each}}
-
-{{/if}}`;
+// Rendered after the commit groups by the preset's main template, which calls `footerPartial` last.
+// The preset renders with plain functions since v10, so this replaces the old Handlebars mainTemplate.
+const footerPartial = context =>
+  context.contributors && context.contributors.length > 0
+    ? [
+        '### Contributors',
+        context.contributors.map(contributor => `* ${contributor}`).join('\n'),
+      ].join('\n\n')
+    : '';
 
 const maintainerName = author.name.toLowerCase();
 const maintainerLogin = author.url.split('/').pop().toLowerCase();
@@ -160,7 +156,7 @@ module.exports = {
         ].join('%n'),
       },
       writerOpts: {
-        mainTemplate,
+        footerPartial,
         // Replaces conventional-changelog-core's finalizeContext. release-it always passes
         // currentTag and previousTag, so linkCompare is the only part of it that applies here.
         finalizeContext: async context => {
