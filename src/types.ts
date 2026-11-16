@@ -23,6 +23,10 @@ export const SupportedDevicesList = [
   'HWE-WTR',
   'SDM230-wifi',
   'SDM630-wifi',
+  'HWE-KWH1',
+  'HWE-KWH3',
+  'HWE-BAT',
+  'HWE-DSP',
 ] as const;
 
 export type SupportedDevices = (typeof SupportedDevicesList)[number];

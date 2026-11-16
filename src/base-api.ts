@@ -51,10 +51,10 @@ export interface LoggerOptions {
   prefix?: string;
 }
 
-export type ApiVersion = 'v1' | undefined;
+export type ApiVersion = 'v1' | 'v2' | undefined;
 
 export interface ApiOptions {
-  /** The API version to be used. Defaults to `v1`. */
+  /** The API version to be used. Defaults to `v1`. Use the `...ApiV2` classes for the API v2. */
   version?: ApiVersion;
 }
 
@@ -65,7 +65,7 @@ export interface PollMethod<T> {
   on(event: 'error', listener: (error: Error) => void): void;
 }
 
-export interface BasePolling<TDataResponse extends BaseDataResponse> {
+export interface BasePolling<TDataResponse extends object> {
   getData: PollMethod<TDataResponse>;
 }
 
@@ -86,7 +86,10 @@ export const DEFAULT_HEADERS_TIMEOUT = 2000;
 
 export const DEFAULT_API_VERSION = 'v1';
 
-export class BaseApi {
+/**
+ * `TBaseDataResponse` is the response type of the data endpoint, it differs between the API v1 (`/api/v1/data`) and the API v2 (`/api/measurement`).
+ */
+export class BaseApi<TBaseDataResponse extends object = BaseDataResponse> {
   protected readonly baseUrl: string;
   protected readonly apiOptions: BaseApiOptions['api'];
   protected readonly apiVersion: ApiVersion;
@@ -205,7 +208,7 @@ export class BaseApi {
    *
    * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data
    */
-  protected async getData<T extends BaseDataResponse>(): Promise<T> {
+  protected async getData<T extends TBaseDataResponse>(): Promise<T> {
     const url = this.endpoints.data;
 
     this.log(`Fetching the data at ${url}`);
@@ -243,7 +246,7 @@ export class BaseApi {
   /**
    * Start polling for a specific method.
    */
-  get polling(): BasePolling<BaseDataResponse> {
+  get polling(): BasePolling<TBaseDataResponse> {
     const getData = 'getData';
 
     return {
