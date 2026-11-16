@@ -3,8 +3,10 @@
     // Node 22, the lowest supported version, runs all of ES2024 but not all of ES2025
     "target": "ES2024",
     "lib": ["ES2024"],
-    // CommonJS output with Node's own module resolution, as package.json has no "type": "module"
-    "module": "Node20",
+    // ESM output ("type": "module"). Imports stay without an extension in the source, and tsc-alias adds ".js"
+    // in dist (see "tsc-alias" below), so Node can load them.
+    "module": "ES2022",
+    "moduleResolution": "bundler",
     "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
@@ -29,5 +31,9 @@
     },
     "types": ["vitest/globals"]
   },
-  "include": ["src/"]
+  "include": ["src/"],
+  "tsc-alias": {
+    "resolveFullPaths": true,
+    "resolveFullExtension": ".js"
+  }
 }
