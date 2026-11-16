@@ -257,11 +257,35 @@ const v50l3_3 = crlf(`/ISK5\\2M550T-1012
 !6946
 `);
 
+// Belgian (Fluvius) telegram with the capacity tariff lines, from https://github.com/jvandenaardweg/homewizard-energy-api/issues/100
+const v50beDemand = crlf(`/FLU5\\253770234_A
+
+0-0:96.1.4(50217)
+0-0:96.1.1(3153414731313030303736363136)
+0-0:1.0.0(230906184103S)
+1-0:1.8.1(002340.885*kWh)
+1-0:1.8.2(002608.465*kWh)
+1-0:2.8.1(000000.000*kWh)
+1-0:2.8.2(000000.021*kWh)
+0-0:96.14.0(0001)
+1-0:1.4.0(00.255*kW)
+1-0:1.6.0(230903114500S)(02.762*kW)
+0-0:98.1.0(8)(1-0:1.6.0)(1-0:1.6.0)(230201000000W)(230110174500W)(04.769*kW)(230301000000W)(230207221500W)(05.092*kW)(230401000000S)(230312144500W)(04.575*kW)(230501000000S)(230428174500S)(04.886*kW)(230601000000S)(230523220000S)(04.639*kW)(230701000000S)(230604140000S)(02.791*kW)(230801000000S)(230723164500S)(03.525*kW)(230901000000S)(230812111500S)(02.727*kW)
+1-0:1.7.0(00.370*kW)
+1-0:2.7.0(00.000*kW)
+0-0:96.3.10(1)
+0-0:17.0.0(999.9*kW)
+1-0:31.4.0(999*A)
+0-0:96.13.0()
+!85AF
+`);
+
 export const mockTelegramResponse = {
   v50l3_1,
   v50l3_2,
   v50l3_3,
   v50be,
+  v50beDemand,
   v22,
   v42,
   v42l3,
@@ -309,6 +333,11 @@ export const mockParsedTelegramResponse = {
           value: 0,
           unit: 'kW',
         },
+      },
+      demand: {
+        average: { value: null, unit: null },
+        monthlyPeak: { timestamp: null, value: null, unit: null },
+        monthlyPeakHistory: { count: null, log: [] },
       },
       tariffIndicator: 1,
       threshold: {

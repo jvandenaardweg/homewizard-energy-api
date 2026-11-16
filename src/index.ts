@@ -9,6 +9,9 @@ export * from './water-meter-api';
 export type {
   ParsedTelegram,
   TelegramPowerFailureLog,
+  TelegramPeakDemand,
+  TelegramPeakDemandHistory,
+  TelegramPeakDemandHistoryItem,
   TelegramPowerFailureLogItem,
   TelegramUnit,
   TelegramValueItem,
