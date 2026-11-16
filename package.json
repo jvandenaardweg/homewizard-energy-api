@@ -29,8 +29,34 @@
   "engines": {
     "node": ">=22.19.0"
   },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./v1": {
+      "types": "./dist/v1/index.d.ts",
+      "default": "./dist/v1/index.js"
+    },
+    "./telegram": {
+      "types": "./dist/telegram/index.d.ts",
+      "default": "./dist/telegram/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "v1": [
+        "./dist/v1/index.d.ts"
+      ],
+      "telegram": [
+        "./dist/telegram/index.d.ts"
+      ]
+    }
+  },
   "files": [
     "dist",
     "CHANGELOG.md"
