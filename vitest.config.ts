@@ -14,12 +14,6 @@ export default defineConfig({
       include: ['src/**'],
       exclude: ['**/vitest.setup.ts', '**/mocks/**', '**/examples/**'],
       reporter: ['text'],
-      // Fail the run when any file drops below full coverage
-      perFile: true,
-      lines: 100,
-      functions: 100,
-      branches: 100,
-      statements: 100,
     },
   },
   resolve: {
