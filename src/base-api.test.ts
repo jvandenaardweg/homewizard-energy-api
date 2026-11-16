@@ -158,6 +158,12 @@ describe('BaseApi', () => {
       expect(error.apiError?.id).toBe(ErrorCodes.INVALID_VALUE_FOR_PARAMETER);
     });
 
+    it('should keep REQUEST_TO_LONG as an alias of REQUEST_TOO_LARGE', () => {
+      expect(ErrorCodes.REQUEST_TOO_LARGE).toBe(201);
+      expect(ErrorCodes.REQUEST_TO_LONG).toBe(ErrorCodes.REQUEST_TOO_LARGE);
+      expect(ErrorCodes[201]).toBe('REQUEST_TO_LONG');
+    });
+
     it('should leave apiError undefined for JSON that is not an API error object', () => {
       const error = new HomeWizardEnergyApiResponseError(
         'Test error',
