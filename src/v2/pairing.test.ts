@@ -1,7 +1,7 @@
 import { HomeWizardEnergyApiError, HomeWizardEnergyApiTimeoutError } from '@/shared/errors';
 import { mockApiAgent } from '@/mocks/api';
 import { mockV2, mockV2Host, mockV2Pool } from '@/mocks/api-v2';
-import { mockV2UserCreated } from '@/mocks/data/v2';
+import { mockV2DeviceInformation, mockV2UserCreated } from '@/mocks/data/v2';
 import {
   mockTlsCa,
   mockTlsIdentifier,
@@ -42,7 +42,8 @@ describe('v2/pair', () => {
     const pairing = pair(mockV2Host, 'new_user', { ...options, pairTimeout: 5000 }).catch(
       error => error,
     );
-    await vi.advanceTimersByTimeAsync(6000);
+    // Attempts at 0, 2000 and 4000ms, then only 1000ms of waiting is left
+    await vi.advanceTimersByTimeAsync(5000);
 
     const error = await pairing;
     expect(error).toBeInstanceOf(HomeWizardApiV2PairingError);
@@ -107,6 +108,45 @@ describe('v2/pair', () => {
     await expect(pair(mockV2Host, 'new_user', { dispatcher: mockApiAgent })).rejects.toThrow(
       /could not be read from its certificate/,
     );
+  });
+
+  it('should build the identifier from the device information when insecure', async () => {
+    mockV2('/api/user', 'POST', { response: mockV2UserCreated });
+    const onRequest = vi.fn();
+    mockV2('/api', 'GET', { response: mockV2DeviceInformation['HWE-KWH3'], onRequest });
+
+    const result = await pair(mockV2Host, 'new_user', {
+      dispatcher: mockApiAgent,
+      insecure: true,
+    });
+
+    expect(result.identifier).toBe('appliance/energymeter/5c2fafaabbce');
+    expect(onRequest.mock.calls[0][0].headers.authorization).toBe(
+      `Bearer ${mockV2UserCreated.token}`,
+    );
+  });
+
+  it('should throw when insecure and the product type is unknown', async () => {
+    mockV2('/api/user', 'POST', { response: mockV2UserCreated });
+    mockV2('/api', 'GET', {
+      response: { ...mockV2DeviceInformation['HWE-P1'], product_type: 'HWE-NEW' },
+    });
+
+    await expect(
+      pair(mockV2Host, 'new_user', { dispatcher: mockApiAgent, insecure: true }),
+    ).rejects.toThrow('The identifier of a "HWE-NEW" is not known');
+  });
+
+  it('should never log the token', async () => {
+    const method = vi.fn();
+    mockV2('/api/user', 'POST', { response: mockV2UserCreated });
+
+    await pair(mockV2Host, 'new_user', { ...options, logger: { method } });
+
+    const logged = JSON.stringify(method.mock.calls);
+    expect(logged).toContain('Paired as local/new_user');
+    expect(logged).toContain('[redacted]');
+    expect(logged).not.toContain(mockV2UserCreated.token);
   });
 
   describe('isRetryable', () => {

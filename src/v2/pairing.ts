@@ -1,8 +1,9 @@
 import { HomeWizardEnergyApiError, HomeWizardEnergyApiTimeoutError } from '@/shared/errors';
 import { Client, DeviceOptions } from './client';
-import { createUser } from './endpoints';
+import { createUser, getDevice } from './endpoints';
 import { HomeWizardApiV2Error, HomeWizardApiV2PairingError } from './errors';
-import { isCertificateError } from './tls';
+import { getCertificateIdentifier, isCertificateError } from './tls';
+import { UserCreated } from './types';
 
 export const DEFAULT_PAIR_TIMEOUT = 120000;
 export const DEFAULT_PAIR_INTERVAL = 2000;
@@ -103,10 +104,10 @@ export async function pair(
 
       onAttempt?.(remainingMs);
 
-      try {
-        const user = await createUser(client, name);
+      let user: UserCreated;
 
-        return { ...user, identifier: getIdentifier(options.identifier, seenIdentifiers) };
+      try {
+        user = await createUser(client, name);
       } catch (error) {
         const isWaitingForButton =
           error instanceof HomeWizardApiV2Error && error.code === 'user:creation-not-enabled';
@@ -118,13 +119,48 @@ export async function pair(
             ? 'The button is not pressed yet, trying again'
             : `Pairing attempt failed, trying again: ${String(error)}`,
         );
+
+        // Don't wait past the pair timeout
+        const timeLeft = pairTimeout - (Date.now() - startedAt);
+        await wait(Math.max(0, Math.min(interval, timeLeft)), signal);
+        continue;
       }
 
-      await wait(interval, signal);
+      client.log(`Paired as ${user.name}`);
+
+      return { ...user, identifier: await learnIdentifier(client, user, options, seenIdentifiers) };
     }
   } finally {
     await client.close();
   }
+}
+
+/**
+ * Returns the identifier: the given one, or the one in the certificate. With `insecure`, the certificate isn't
+ * checked, so it's built from the product type and serial in `GET /api` instead.
+ */
+async function learnIdentifier(
+  client: Client,
+  user: UserCreated,
+  options: PairOptions,
+  seen: Set<string>,
+): Promise<string> {
+  if (options.identifier || !options.insecure) {
+    return getIdentifier(options.identifier, seen);
+  }
+
+  client.token = user.token;
+
+  const device = await getDevice(client);
+  const identifier = getCertificateIdentifier(device.product_type, device.serial);
+
+  if (!identifier) {
+    throw new HomeWizardEnergyApiError(
+      `The identifier of a "${device.product_type}" is not known. Pass the "identifier" option, for example the "id" txt record from discovery.`,
+    );
+  }
+
+  return identifier;
 }
 
 /**

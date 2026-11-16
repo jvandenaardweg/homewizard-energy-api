@@ -60,6 +60,11 @@ export interface ClientOptions extends DeviceOptions {
 
 export type HttpMethod = 'GET' | 'PUT' | 'POST' | 'DELETE';
 
+/** Formats a value for a log line, with every `token` field replaced, so a token never ends up in a log. */
+export function redact(value: unknown): string {
+  return JSON.stringify(value, (key, field) => (key === 'token' ? '[redacted]' : field));
+}
+
 /**
  * Normalises a host to its HTTPS origin: `192.168.1.35`, `https://192.168.1.35` and `https://192.168.1.35/`
  * all become `https://192.168.1.35`.
@@ -147,7 +152,7 @@ export class Client {
     if (hasBody) headers['Content-Type'] = 'application/json';
     if (this.token) headers.Authorization = `Bearer ${this.token}`;
 
-    this.log(`${method} ${url}${hasBody ? ` ${JSON.stringify(options.body)}` : ''}`);
+    this.log(`${method} ${url}${hasBody ? ` ${redact(options.body)}` : ''}`);
 
     const response = await requestWithTimeout(
       url,
@@ -180,7 +185,7 @@ export class Client {
     const { url, response } = await this.send(method, path, { body });
     const data = await parseJsonResponse<T>(url, method, response);
 
-    this.log(`Received ${JSON.stringify(data)} from ${url}`);
+    this.log(`Received ${redact(data)} from ${url}`);
 
     return data;
   }
