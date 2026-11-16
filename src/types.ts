@@ -331,6 +331,8 @@ export type P1MeterDataResponse = Pick<
   | 'gas_unique_id'
   | 'external'
   | 'active_tariff'
+  // HWE-P1 never sends this field. It stays in the type because 1.5.0 exposed it, and removing it is breaking.
+  | 'total_liter_offset_m3'
 >;
 
 /**
