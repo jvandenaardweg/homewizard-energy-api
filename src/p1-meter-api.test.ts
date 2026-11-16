@@ -80,6 +80,19 @@ describe('HomeWizardEnergyApi', () => {
       expect(data).toStrictEqual(mockTelegramResponse['v50l3_2']);
     });
 
+    // https://github.com/jvandenaardweg/homewizard-energy-api/issues/100
+    it('should return the demand of a Belgian telegram from /api/v1/telegram', async () => {
+      apiMocks.getTelegram({
+        response: mockTelegramResponse['v50beDemand'],
+      });
+
+      const data = await p1MeterApi.getParsedTelegram();
+
+      expect(data.power.demand.average.value).toBe(0.255);
+      expect(data.power.demand.monthlyPeak.value).toBe(2.762);
+      expect(data.power.demand.monthlyPeakHistory.log).toHaveLength(3);
+    });
+
     it('should throw an error when /api/v1/telegram returns an error response', async () => {
       apiMocks.getTelegram({
         response: 'Server error!',

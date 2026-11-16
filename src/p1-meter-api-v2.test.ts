@@ -140,6 +140,17 @@ describe('P1MeterApiV2', () => {
       expect(await api.getTelegram()).toBe(mockTelegramResponseV50);
     });
 
+    // https://github.com/jvandenaardweg/homewizard-energy-api/issues/100
+    it('should return the demand of a Belgian telegram', async () => {
+      apiV2Mocks.getTelegram({ response: mockTelegramResponse['v50beDemand'] });
+
+      const parsedTelegram = await api.getParsedTelegram();
+
+      expect(parsedTelegram.power.demand.average.value).toBe(0.255);
+      expect(parsedTelegram.power.demand.monthlyPeak.value).toBe(2.762);
+      expect(parsedTelegram.power.demand.monthlyPeakHistory.log).toHaveLength(3);
+    });
+
     it('should return the parsed telegram', async () => {
       apiV2Mocks.getTelegram({ response: mockTelegramResponseV50 });
 
