@@ -48,7 +48,7 @@ export class KwhMeter1PhaseApi extends BaseApi {
    * This feature is currently available for `HWE-P1` running firmware version 4.00 or later.
    * And `HWE-SKT`, `SDM230-wifi` and `SDM630-wifi` running firmware version 3.00 or later.
    *
-   * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system
+   * @link https://api-documentation.homewizard.com/docs/v1/system
    */
   async getSystem(): Promise<SystemResponse> {
     const url = this.endpoints.system;
@@ -80,7 +80,7 @@ export class KwhMeter1PhaseApi extends BaseApi {
    * This feature is currently available for `HWE-P1` running firmware version 4.00 or later.
    * And `HWE-SKT`, `SDM230-wifi` and `SDM630-wifi` running firmware version 3.00 or later.
    *
-   * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system
+   * @link https://api-documentation.homewizard.com/docs/v1/system
    */
   async updateSystem(params: SystemPutParams): Promise<SystemResponse> {
     const url = this.endpoints.system;

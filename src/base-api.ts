@@ -31,7 +31,7 @@ export interface PollingOptions {
    * There is no limit to the time between each request on the local API, however,
    * HomeWizard advises not to retrieve data more often than every `500`ms.
    *
-   * @link: https://homewizard-energy-api.readthedocs.io/getting-started.html#data-update-frequency
+   * @link: https://api-documentation.homewizard.com/docs/getting-started
    * */
   interval?: number;
   /**
@@ -173,7 +173,7 @@ export class BaseApi {
    * You can validate your support based on the combination of product_type and api_version.
    * Datapoints in this endpoint that are currently available won’t change, but make sure your application can accept new datapoints for future updates.
    *
-   * @link https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api
+   * @link https://api-documentation.homewizard.com/docs/v1/api
    */
   protected async getBasicInformation<T extends BasicInformationResponse>(): Promise<T> {
     const url = this.endpoints.basic;
@@ -203,7 +203,7 @@ export class BaseApi {
    *
    * All datapoints are “optional”; The API does not send datapoints that are null. Make sure your application can handle this.
    *
-   * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data
+   * @link: https://api-documentation.homewizard.com/docs/v1/measurement
    */
   protected async getData<T extends BaseDataResponse>(): Promise<T> {
     const url = this.endpoints.data;

@@ -3,7 +3,7 @@
  *
  * The Bonjour service we use in our plugin only needs `hwenergy` and use the option `protocol: 'tcp'`.
  *
- * @link: https://homewizard-energy-api.readthedocs.io/discovery.html#discovery
+ * @link: https://api-documentation.homewizard.com/docs/discovery
  */
 export const MDNS_DISCOVERY_TYPE = 'hwenergy';
 export const MDNS_DISCOVERY_PROTOCOL = 'tcp';
@@ -15,7 +15,7 @@ export const MDNS_DISCOVERY_QUERY_TYPE = 'PTR';
  *
  * The supported devices are listed below. The device type is used as identifier within the API.
  *
- * @link https://homewizard-energy-api.readthedocs.io/getting-started.html#supported-devices
+ * @link https://api-documentation.homewizard.com/docs/introduction#devices
  */
 export const SupportedDevicesList = [
   'HWE-P1',
@@ -32,7 +32,7 @@ export type SupportedDevices = (typeof SupportedDevicesList)[number];
  *
  * A discovery response contains some extra data that can be used to improve the setup in your application.
  *
- * @link: https://homewizard-energy-api.readthedocs.io/discovery.html#txt-records
+ * @link: https://api-documentation.homewizard.com/docs/discovery
  */
 export interface MdnsTxtRecord {
   /** Indicates if the "Local API" is enabled. `"1"` = enabled, `"0"` = disabled */
@@ -52,7 +52,7 @@ export interface MdnsTxtRecord {
  *
  * This response tells that the socket is ‘on’, switch-lock is ‘off’ and the brightness of the LED ring is set to maximum.
  *
- * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#state-api-v1-state
+ * @link: https://api-documentation.homewizard.com/docs/v1/state
  */
 export interface StateResponse {
   /** The state of the switch. Returns true when the relay is in the ‘on’ state */
@@ -68,11 +68,11 @@ export type StatePutParams<Keys extends keyof StateResponse> = Pick<StateRespons
 /**
  * The /api endpoint allows you to get basic information from the device.
  *
- * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#basic-information-api
- * @link: https://homewizard-energy-api.readthedocs.io/getting-started.html#supported-devices
+ * @link: https://api-documentation.homewizard.com/docs/v1/api
+ * @link: https://api-documentation.homewizard.com/docs/introduction#devices
  */
 export interface BasicInformationResponse {
-  /** The product type, see Supported devices. Make sure your application can handle other values for future products. Supported devices: https://homewizard-energy-api.readthedocs.io/getting-started.html#supported-devices */
+  /** The product type, see Supported devices. Make sure your application can handle other values for future products. Supported devices: https://api-documentation.homewizard.com/docs/introduction#devices */
   product_type: SupportedDevices;
   /** A fixed, user-friendly name. This name is not the same that is set by the user in the app. */
   product_name: string;
@@ -90,9 +90,9 @@ export interface BasicInformationResponse {
  * Each entry is supplied with a set of data.
  *
  * See Example: HWE-P1 (3-phase, with gas, running 4.00 firmware)
- * for an example: https://homewizard-energy-api.readthedocs.io/endpoints.html#example-hwe-p1-3-phase-with-gas-running-4-00-firmware
+ * for an example: https://api-documentation.homewizard.com/docs/v1/measurement
  *
- * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#external-datapoint
+ * @link: https://api-documentation.homewizard.com/docs/v1/measurement
  */
 export interface ExternalData {
   /** The unique identifier from the smart meter.` */
@@ -114,7 +114,7 @@ export interface ExternalData {
  *
  * All datapoints are “optional”; The API does not send datapoints that are null. Make sure your application can handle this.
  *
- * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#recent-measurement-api-v1-data
+ * @link: https://api-documentation.homewizard.com/docs/v1/measurement
  */
 export interface BaseDataResponse {
   /** The unique identifier from the smart meter. Available for: `HWE-P1` */
@@ -219,7 +219,7 @@ export interface BaseDataResponse {
 /**
  * API /data response for `HWE-SKT`
  *
- * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#datapoints-for-hwe-skt
+ * @link: https://api-documentation.homewizard.com/docs/v1/measurement
  */
 export type EnergySocketDataResponse = Pick<
   BaseDataResponse,
@@ -249,7 +249,7 @@ export type P1MeterDataResponse = Omit<
 /**
  * API /data response for `HWE-WTR`
  *
- * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#datapoints-for-hwe-wtr
+ * @link: https://api-documentation.homewizard.com/docs/v1/measurement
  */
 export type WaterMeterDataResponse = Pick<
   BaseDataResponse,
@@ -259,7 +259,7 @@ export type WaterMeterDataResponse = Pick<
 /**
  * API /data response for `SDM230-wifi`
  *
- * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#datapoints-for-sdm230-wifi-and-sdm630-wifi
+ * @link: https://api-documentation.homewizard.com/docs/v1/measurement
  */
 export type KwhMeter1PhaseDataResponse = Pick<
   BaseDataResponse,
@@ -277,7 +277,7 @@ export type KwhMeter1PhaseDataResponse = Pick<
 /**
  * API /data response for `SDM630-wifi`
  *
- * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#datapoints-for-sdm230-wifi-and-sdm630-wifi
+ * @link: https://api-documentation.homewizard.com/docs/v1/measurement
  */
 export type KwhMeter3PhaseDataResponse = Pick<
   BaseDataResponse,
@@ -304,7 +304,7 @@ export type KwhMeter3PhaseDataResponse = Pick<
  *
  * This feature is currently only available for HWE-SKT running firmware version 3.00 or later.
  *
- * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#identify-api-v1-identify
+ * @link: https://api-documentation.homewizard.com/docs/v1/identify
  */
 export interface IdentifyResponse {
   identify: 'ok';
@@ -321,7 +321,7 @@ export interface ErrorResponse {
  * The /api/v1/system endpoint can be used to configure system settings.
  * Currently the only available option it to turn on and off all cloud communication.
  *
- * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#system-api-v1-system
+ * @link: https://api-documentation.homewizard.com/docs/v1/system
  */
 export interface SystemResponse {
   cloud_enabled: boolean;
@@ -339,7 +339,7 @@ export interface SystemPutParams {
  *
  * Note that this endpoint returns plain text instead of formatted JSON, even when an error occours (see Error handling)
  *
- * @link: https://homewizard-energy-api.readthedocs.io/endpoints.html#p1-telegram-api-v1-telegram
+ * @link: https://api-documentation.homewizard.com/docs/v1/telegram
  */
 export type TelegramResponse = string;
 
@@ -348,7 +348,7 @@ export type TelegramResponse = string;
  * You have to check if the HTTP status code returns 200 OK before parsing the result.
  * If you use an endpoint that returns JSON, you also will receive an object with some error information.
  *
- * @link: https://homewizard-energy-api.readthedocs.io/error-handling.html
+ * @link: https://api-documentation.homewizard.com/docs/v1/error-handling
  */
 export enum ErrorCodes {
   BODY_CONTAINS_INVALID_JSON = 2,
