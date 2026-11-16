@@ -342,7 +342,11 @@ export type WaterMeterDataResponse = Pick<
   'wifi_ssid' | 'wifi_strength' | 'total_liter_m3' | 'active_liter_lpm' | 'total_liter_offset_m3'
 >;
 
-/** Keys sent by every kWh meter, both 1-phase (`HWE-KWH1`, `SDM230-wifi`) and 3-phase (`HWE-KWH3`, `SDM630-wifi`). */
+/**
+ * Keys sent by every kWh meter, both 1-phase (`HWE-KWH1`, `SDM230-wifi`) and 3-phase (`HWE-KWH3`, `SDM630-wifi`).
+ *
+ * @link: https://api-documentation.homewizard.com/docs/v1/measurement
+ */
 type KwhMeterCommonDataKeys =
   | 'wifi_ssid'
   | 'wifi_strength'
