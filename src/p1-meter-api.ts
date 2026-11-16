@@ -129,7 +129,7 @@ export class P1MeterApi extends BaseApi {
   async getParsedTelegram<T extends ParsedTelegram>(): Promise<T> {
     const telegram = await this.getTelegram();
 
-    const parsedTelegram = parseTelegram(telegram) as T;
+    const parsedTelegram = parseTelegram(telegram, message => this.log(message)) as T;
 
     this.log(`Parsed telegram ${JSON.stringify(parsedTelegram)} from ${this.endpoints.telegram}`);
 

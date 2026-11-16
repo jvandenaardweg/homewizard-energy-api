@@ -148,6 +148,22 @@ describe('P1MeterApi', () => {
   });
 
   describe('getParsedTelegram()', () => {
+    it('should log telegram lines it cannot parse with the logger', async () => {
+      const loggerSpy = vi.fn();
+      const api = new P1MeterApi(mockApiUrl, { logger: { method: loggerSpy } });
+
+      apiMocks.getTelegram({
+        response: '/ISK5\\2M550T-1012\n\n1-3:0.2.8(50)\nnot a telegram line\n!',
+      });
+
+      await api.getParsedTelegram();
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        '[HomeWizard Energy API]:',
+        'Unable to parse line: not a telegram line',
+      );
+    });
+
     it('should return a parsed telegram response from /api/v1/telegram', async () => {
       apiMocks.getTelegram({
         response: mockTelegramResponse['v50l3_2'],

@@ -110,7 +110,13 @@ export interface ParsedTelegram {
   };
 }
 
-export function parseTelegram(telegram: string): ParsedTelegram {
+/**
+ * Parses a P1 telegram. Lines it doesn't recognise are passed to `log`, which does nothing by default.
+ */
+export function parseTelegram(
+  telegram: string,
+  log: (message: string) => void = () => undefined,
+): ParsedTelegram {
   const allLines = telegram
     .trim()
     .split(/\r\n|\n|\r/)
@@ -560,7 +566,7 @@ export function parseTelegram(telegram: string): ParsedTelegram {
         if (line.match(/\([0-9]{5}\.[0-9]{3}\)/)) {
           parsedTelegram.gas.value = parseFloat(line.substring(1, 10));
         } else {
-          console.error('Unable to parse line: ' + line);
+          log(`Unable to parse line: ${line}`);
         }
         break;
     }

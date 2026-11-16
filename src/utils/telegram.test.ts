@@ -372,12 +372,20 @@ describe('utils/telegram', () => {
       expect(parsedTelegram.gas.value).toBe(12007.76);
     });
 
-    it('should log lines it cannot parse', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    it('should pass lines it cannot parse to the log function', () => {
+      const log = vi.fn();
+
+      parseTelegram('/ISK5\\2M550T-1012\n\n1-0:1.8.1(000001.000*kWh)\nnot a telegram line\n!', log);
+
+      expect(log).toHaveBeenCalledWith('Unable to parse line: not a telegram line');
+    });
+
+    it('should not log lines it cannot parse without a log function', () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error');
 
       parseTelegram('/ISK5\\2M550T-1012\n\n1-0:1.8.1(000001.000*kWh)\nnot a telegram line\n!');
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Unable to parse line: not a telegram line');
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
 
       consoleErrorSpy.mockRestore();
     });
