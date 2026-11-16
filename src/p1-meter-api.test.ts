@@ -3,7 +3,10 @@ import { mockBasicInformationResponse } from '@/mocks/data/basic';
 import { apiMocks, HTML_HEADERS, mockApiUrl } from '@/mocks/api';
 import { mockErrorNotFound } from '@/mocks/errors';
 import { HomeWizardEnergyApiResponseError } from '@/base-api';
-import { mockP1MeterDataResponse } from '@/mocks/data/data';
+import {
+  mockP1MeterDataResponse,
+  mockP1MeterDataResponseWithExternalPower,
+} from '@/mocks/data/data';
 import { mockParsedTelegramResponse, mockTelegramResponse } from '@/mocks/data/telegram';
 import { P1MeterApi } from '@/p1-meter-api';
 import { mockSystemResponse } from './mocks/data/system';
@@ -79,6 +82,18 @@ describe('P1MeterApi', () => {
       const data = await p1MeterApi.getData();
 
       expect(data).toStrictEqual(mockP1MeterDataResponse);
+    });
+
+    it('should return the data response with the Belgian capacity tariff fields', async () => {
+      apiMocks.getData({
+        response: mockP1MeterDataResponseWithExternalPower,
+      });
+
+      const data = await p1MeterApi.getData();
+
+      expect(data).toStrictEqual(mockP1MeterDataResponseWithExternalPower);
+      expect(data.active_power_average_w).toBe(123);
+      expect(data.montly_power_peak_w).toBe(1111);
     });
 
     it('should throw an error when GET the "data" endpoint returns a server error', async () => {
