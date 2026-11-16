@@ -6,6 +6,7 @@ import {
   P1MeterSystem,
   P1MeterSystemUpdate,
 } from '../types';
+import { BatteriesTopic, CommonTopics } from '../websocket';
 import { Device } from './device';
 
 /**
@@ -22,7 +23,12 @@ import { Device } from './device';
  *
  * @link https://api-documentation.homewizard.com/docs/category/api-v2
  */
-export class P1Meter extends Device<P1MeterMeasurement, P1MeterSystem, P1MeterSystemUpdate> {
+export class P1Meter extends Device<
+  P1MeterMeasurement,
+  P1MeterSystem,
+  P1MeterSystemUpdate,
+  CommonTopics<P1MeterMeasurement, P1MeterSystem> & BatteriesTopic
+> {
   /**
    * Blinks the status LED for a few seconds, so the user can find the device.
    *

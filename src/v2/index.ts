@@ -18,3 +18,5 @@ export { poll } from './poll';
 export type { Poller, PollOptions } from './poll';
 export { CERTIFICATE_PRODUCT_TYPES, getCertificateIdentifier, HOMEWIZARD_CA_CERT } from './tls';
 export * from './types';
+export { DeviceSocket } from './websocket';
+export type { BatteriesTopic, CommonTopics, WebSocketOptions } from './websocket';
