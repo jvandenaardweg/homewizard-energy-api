@@ -40,4 +40,4 @@ The change is done when every applicable item is covered:
 
 - Commit messages follow Conventional Commits (`feat:`, `fix:`, `chore:`), because the changelog and the version bump are built from them. `@release-it/conventional-changelog` groups the release notes by type, in this order: breaking changes, `feat`, `fix`, `perf`, `revert`, `docs`, then `refactor`, `test`, `chore`, `ci`, `build` and `style` under "Other Changes". A commit without a recognised type is left out. Use `docs:` for JSDoc changes in `src/types.ts`, since they ship to users as editor docs.
 - `CHANGELOG.md` is written by that plugin during `npm run release`, so edits belong in commit messages, not in that file.
-- Only the maintainer releases. `npm run release` (release-it) bumps the version, tags it and creates a GitHub release, and the publish workflow then pushes to npm.
+- Release only when the maintainer asks for it. The steps, checks and failure fixes are in the `release` skill (`.claude/skills/release/SKILL.md`).
