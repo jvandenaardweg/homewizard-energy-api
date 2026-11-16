@@ -7,6 +7,8 @@
  */
 export type { DeviceOptions } from './client';
 export * from './devices';
+export { Discovery, fromDiscovery } from './discovery';
+export type { DiscoveredDevice, DiscoveryOptions, DiscoveryResponse } from './discovery';
 export {
   HomeWizardApiV2Error,
   HomeWizardApiV2PairingError,
