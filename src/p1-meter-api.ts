@@ -43,7 +43,7 @@ export class P1MeterApi extends BaseApi {
   ): Promise<void>;
   protected startPolling(
     method: 'getParsedTelegram',
-    apiMethod: <T extends TelegramResponse>() => Promise<T>,
+    apiMethod: <T extends ParsedTelegram>() => Promise<T>,
   ): Promise<void>;
   protected startPolling(method: string, apiMethod: () => Promise<unknown>): Promise<void> {
     return super.startPolling(method, apiMethod);
