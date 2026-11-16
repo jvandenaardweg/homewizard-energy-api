@@ -27,7 +27,7 @@ Full type-safe implementation of the HomeWizard Energy API in Node. Use the Loca
 
 ## Installation
 
-This library requires Node 14 or higher. Typescript is only required for type-safety, the library will also work without Typescript.
+This library requires Node 22 or higher. Typescript is only required for type-safety, the library will also work without Typescript.
 
 ```
 npm install homewizard-energy-api
