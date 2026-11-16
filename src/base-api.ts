@@ -1,110 +1,30 @@
 import { EventEmitter } from 'events';
-import { Dispatcher, request as undiciRequest } from 'undici';
+import { Dispatcher } from 'undici';
+import { HomeWizardEnergyApiResponseError } from './shared/errors';
+import { log, LoggerOptions } from './shared/logger';
+import { runPollLoop } from './shared/poller';
+import {
+  describeCall,
+  isResponseOk,
+  parseJsonResponse,
+  RequestParameters,
+  requestWithTimeout,
+} from './shared/request';
 import {
   BasicInformationResponse,
   BaseDataResponse,
-  ErrorResponse,
   IdentifyResponse,
   SystemPutParams,
   SystemResponse,
 } from './types';
 
-export type RequestParameters = Parameters<typeof undiciRequest>;
-
-function parseApiError(response: string): ErrorResponse['error'] | undefined {
-  try {
-    const parsed = JSON.parse(response) as Partial<ErrorResponse> | null;
-    const error = parsed?.error;
-
-    if (typeof error?.id === 'number' && typeof error.description === 'string') {
-      return error;
-    }
-  } catch {
-    // Not a JSON error body
-  }
-
-  return undefined;
-}
-
-/** Describes a request for error messages, for example `Api GET call at http://192.168.1.35/api/v1/data`. */
-function describeCall(method: string, url: RequestParameters[0]): string {
-  return `Api ${method} call at ${url}`;
-}
-
-/**
- * Aborts `controller` after `ms` milliseconds, then rejects `promise` with the error from `createError`.
- * `cancel()` stops the timer, after which `promise` never settles.
- */
-function abortAfter(ms: number, controller: AbortController, createError: () => Error) {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-
-  const promise = new Promise<never>((_resolve, reject) => {
-    timer = setTimeout(() => {
-      controller.abort();
-      reject(createError());
-    }, ms);
-  });
-
-  return { promise, cancel: () => clearTimeout(timer) };
-}
-
-function formatError(error: unknown): string {
-  if (error instanceof Error) return `${error.name}: ${error.message}`;
-
-  try {
-    return JSON.stringify(error);
-  } catch {
-    // For example a circular object, which JSON can't represent
-    return String(error);
-  }
-}
-
-export class HomeWizardEnergyApiError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'HomeWizardEnergyApiError';
-  }
-}
-export class HomeWizardEnergyApiResponseError extends HomeWizardEnergyApiError {
-  url: string;
-  statusCode: number;
-  /** The raw response body. */
-  response: string;
-  /**
-   * The parsed error when the response body is the API's JSON error object, for example
-   * `{ id: ErrorCodes.INVALID_VALUE_FOR_PARAMETER, description: 'brightness value limited to 0-255' }`.
-   * It is `undefined` for plain-text bodies, such as errors from `/api/v1/telegram`, and for the `text/html` 404 and 405
-   * responses the device sends for a path it doesn't know or a method an endpoint doesn't accept.
-   *
-   * @link https://api-documentation.homewizard.com/docs/v1/error-handling
-   */
-  apiError?: ErrorResponse['error'];
-
-  constructor(message: string, url: string, statusCode: number, response: string) {
-    super(message);
-    this.name = 'HomeWizardEnergyApiResponseError';
-    this.url = url;
-    this.statusCode = statusCode;
-    this.response = response;
-    this.apiError = parseApiError(response);
-  }
-}
-
-/**
- * Thrown when a request takes longer than the `timeout` option, for example when the device is unreachable.
- */
-export class HomeWizardEnergyApiTimeoutError extends HomeWizardEnergyApiError {
-  url: string;
-  /** The timeout in milliseconds that was exceeded. */
-  timeout: number;
-
-  constructor(message: string, url: string, timeout: number) {
-    super(message);
-    this.name = 'HomeWizardEnergyApiTimeoutError';
-    this.url = url;
-    this.timeout = timeout;
-  }
-}
+export {
+  HomeWizardEnergyApiError,
+  HomeWizardEnergyApiResponseError,
+  HomeWizardEnergyApiTimeoutError,
+} from './shared/errors';
+export type { LoggerOptions } from './shared/logger';
+export type { RequestParameters } from './shared/request';
 
 export interface PollingOptions {
   /**
@@ -124,13 +44,6 @@ export interface PollingOptions {
    * @example
    * api.polling.getMethod.on('error', (error) => console.log(error)) */
   stopOnError?: boolean;
-}
-
-export interface LoggerOptions {
-  /** The log method to use. */
-  method?: (...args: unknown[]) => void;
-  /** The prefix that will show before the log. Defaults to `[HomeWizard Energy API]:` */
-  prefix?: string;
 }
 
 export type ApiVersion = 'v1' | undefined;
@@ -271,61 +184,15 @@ export class BaseApi {
     url: RequestParameters[0],
     options: RequestParameters[1],
   ): Promise<Dispatcher.ResponseData<unknown>> {
-    const requestOptions = {
-      ...this.requestOptions,
-      ...options,
-    };
-
-    const { timeout } = this;
-
-    // A signal from the user takes precedence over the timeout
-    if (!timeout || requestOptions.signal) {
-      return undiciRequest(url, requestOptions);
-    }
-
-    const controller = new AbortController();
-
-    // Since undici 7, aborting doesn't interrupt a pending connect, which undici allows 10 seconds for.
-    // So the timeout settles the call itself, and the abort only cleans up the request.
-    const timeoutError = abortAfter(
-      timeout,
-      controller,
-      () =>
-        new HomeWizardEnergyApiTimeoutError(
-          `${describeCall(requestOptions.method || 'GET', url)} timed out after ${timeout}ms`,
-          String(url),
-          timeout,
-        ),
-    );
-
-    try {
-      // The race also handles the request rejecting after the timeout, so that isn't unhandled
-      return await Promise.race([
-        undiciRequest(url, { ...requestOptions, signal: controller.signal }),
-        timeoutError.promise,
-      ]);
-    } catch (error) {
-      if (controller.signal.aborted) {
-        // The abort can reject the request just before the timeout error
-        return timeoutError.promise;
-      }
-
-      throw error;
-    } finally {
-      timeoutError.cancel();
-    }
+    return requestWithTimeout(url, { ...this.requestOptions, ...options }, this.timeout);
   }
 
   protected log(...args: unknown[]): void {
-    if (!this.loggerOptions?.method) return;
-
-    const loggerPrefix = this.loggerOptions.prefix || '[HomeWizard Energy API]:';
-
-    return this.loggerOptions.method(loggerPrefix, ...args);
+    return log(this.loggerOptions, ...args);
   }
 
   protected isResponseOk(response: Dispatcher.ResponseData<unknown>): boolean {
-    return response.statusCode >= 200 && response.statusCode < 300;
+    return isResponseOk(response);
   }
 
   protected async throwResponseError(
@@ -353,18 +220,7 @@ export class BaseApi {
     method: string,
     response: Dispatcher.ResponseData<unknown>,
   ): Promise<T> {
-    const text = await response.body.text();
-
-    try {
-      return JSON.parse(text) as T;
-    } catch {
-      throw new HomeWizardEnergyApiResponseError(
-        `${describeCall(method, url)} returned a response that is not valid JSON: ${text}`,
-        url,
-        response.statusCode,
-        text,
-      );
-    }
+    return parseJsonResponse<T>(url, method, response);
   }
 
   /**
@@ -567,46 +423,15 @@ export class BaseApi {
     const run = {};
     this.activePollingRuns[method] = run;
 
-    const isCurrentRun = () => this.activePollingRuns[method] === run;
-
-    while (isCurrentRun()) {
-      try {
-        const response = await apiMethod();
-
-        // Polling may have been stopped while the request was in flight
-        if (!isCurrentRun()) return;
-
-        this.log(
-          `Received response while polling "${method}". Emitting "response": ${JSON.stringify(
-            response,
-          )}`,
-        );
-
-        this.emitPollingEvent(method, 'response', response);
-      } catch (error) {
-        if (!isCurrentRun()) return;
-
-        this.log(`Received error while polling "${method}": ${formatError(error)}`);
-
-        // If the user wants to stop polling on error, we stop polling
-        if (stopOnError) {
-          this.stopPolling(method);
-        }
-
-        try {
-          this.emitPollingEvent(method, 'error', error);
-        } catch (listenerError) {
-          // A throwing "error" listener would otherwise reject this promise, which nothing awaits, and crash the process
-          this.log(
-            `An "error" listener for polling "${method}" threw: ${formatError(listenerError)}`,
-          );
-        }
-      }
-
-      if (!isCurrentRun()) return;
-
-      this.log(`Waiting for next polling interval for "${method}"...`);
-      await new Promise(resolve => setTimeout(resolve, interval));
-    }
+    return runPollLoop({
+      name: method,
+      interval,
+      stopOnError,
+      call: apiMethod,
+      isActive: () => this.activePollingRuns[method] === run,
+      stop: () => this.stopPolling(method),
+      emit: (event, payload) => this.emitPollingEvent(method, event, payload),
+      log: (...args) => this.log(...args),
+    });
   }
 }
