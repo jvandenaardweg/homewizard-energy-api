@@ -1,8 +1,6 @@
-### Changelog
+# Changelog
 
-All notable changes to this project will be documented in this file. Dates are displayed in UTC.
-
-#### [1.6.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.5.0...1.6.0)
+## [1.6.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.5.0...1.6.0)
 
 - chore(deps-dev): bump release-it from 15.10.2 to 16.1.5 [`ca8088b`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/ca8088ba157b43adc8e916a69bc813d32f5aa7bc)
 - feat: add identify() to all devices and getSystem()/updateSystem() to the water meter [`0aa7176`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/0aa7176855462e56e9dcf79fe551405d39e283d8)
@@ -48,7 +46,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - docs: fix 'Abailable' typo in active_power_l1_w JSDoc [`4e7d9f9`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/4e7d9f9eeb82e48f9f4d1ad099d9ef364363f9ba)
 - docs: use 'Available for:' wording on total_power_export_t1_kwh [`98a1723`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/98a1723671eb4dbde9e33c3034f2205e7ade7254)
 
-#### [1.5.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.4.2...1.5.0)
+## [1.5.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.4.2...1.5.0)
 
 > 2 September 2023
 
@@ -89,7 +87,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - feat: added total_liter_offset_m3 to water meter data API response types [`81da7f0`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/81da7f020f1fe1cad175b015751d78f219588760)
 - feat: added total_liter_offset_m3 to water meter data API response types [`2f9c809`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/2f9c809326fd0d6f2632c4669af068b2840a0d77)
 
-#### [1.4.2](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.4.1...1.4.2)
+## [1.4.2](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.4.1...1.4.2)
 
 > 1 March 2023
 
@@ -108,7 +106,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: run dependabot monthly [`df9a51d`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/df9a51dadb2e4cb3c89cd5b216b331e354d47980)
 - chore: only run test coverage report in console [`4252bf6`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/4252bf660d6b2925e6a1c08f9f535614e90e15f4)
 
-#### [1.4.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.4.0...1.4.1)
+## [1.4.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.4.0...1.4.1)
 
 > 7 February 2023
 
@@ -116,7 +114,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - docs: fix typo on firmware version [`792156f`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/792156fe19f70e64e0971d2deeb3c06e09aca602)
 - chore: release v1.4.1 [`a5295ee`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/a5295eead36178a14528b6c5fe6e10c404500c12)
 
-#### [1.4.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.3.1...1.4.0)
+## [1.4.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.3.1...1.4.0)
 
 > 7 February 2023
 
@@ -138,7 +136,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore(deps): bump undici from 5.15.0 to 5.16.0 [`ea78744`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/ea7874464a42943dc589e4bcf2d072792a111447)
 - chore(deps): bump http-cache-semantics from 4.1.0 to 4.1.1 [`0373321`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/03733216d8350b78e77d2e7db42f585ca8771fec)
 
-#### [1.3.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.3.0...1.3.1)
+## [1.3.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.3.0...1.3.1)
 
 > 18 January 2023
 
@@ -151,7 +149,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - refactor: remove unique_gas_idtype , prefer gas_unique_id [`e2c717d`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/e2c717d76a9fda285af2eea746f6f4ebe19564be)
 - docs: update docs on external data type [`e870827`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/e870827c0d730e5387f4119ae3c5e55ac4a047f1)
 
-#### [1.3.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.2.2...1.3.0)
+## [1.3.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.2.2...1.3.0)
 
 > 13 January 2023
 
@@ -184,7 +182,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: include all coverage [`98ad082`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/98ad08232c991ac41b024fcb1808f42cfcdafb2d)
 - chore: update dependabot.yml [`c7dc1cc`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/c7dc1cced85ac7b4abe0e46b63318618b20ed835)
 
-#### [1.2.2](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.2.1...1.2.2)
+## [1.2.2](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.2.1...1.2.2)
 
 > 21 December 2022
 
@@ -205,7 +203,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: remove credits from changelog [`b41d401`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b41d401d85b88b40164a7c1b5e8483b504f4a048)
 - chore: remove console log [`94de1fa`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/94de1fab43e46b1d5c0c06d2040b84336432b7b1)
 
-#### [1.2.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.2.0...1.2.1)
+## [1.2.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.2.0...1.2.1)
 
 > 19 December 2022
 
@@ -223,7 +221,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: fix timezone error in ci [`15ee889`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/15ee8891ce0b51697c69d9969229e187c6661b08)
 - docs: update docs about polling getParsedTelegram [`640a8f2`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/640a8f2656da03825a199bd96aa475634146d298)
 
-#### [1.2.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.1.1...1.2.0)
+## [1.2.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.1.1...1.2.0)
 
 > 18 December 2022
 
@@ -242,7 +240,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - docs: update docs about getParsedTelegram [`ae2848d`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/ae2848dddf3d1c40e4b64807f2e493928f01b980)
 - docs: update docs about getParsedTelegram [`1df1548`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/1df15486db3d73eb30e3746ba40eefc6c62398b8)
 
-#### [1.1.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.1.0...1.1.1)
+## [1.1.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.1.0...1.1.1)
 
 > 18 December 2022
 
@@ -251,7 +249,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - docs: fix typo in readme [`13e7838`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/13e783878a180409d3c8adf6436c15e6eb2add21)
 - feat: expose more types [`b2435cb`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b2435cba322eb4e9a4c566aac7661cf90fd7efbe)
 
-#### [1.1.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.0.2...1.1.0)
+## [1.1.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.0.2...1.1.0)
 
 > 18 December 2022
 
@@ -272,7 +270,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: update readme about polling [`46bf3e8`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/46bf3e84f64898fe960cb81827ccaab72e4d0068)
 - chore: update readme on defaults [`66b2392`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/66b2392f5233d32ea504e26a89d365bd5bd37631)
 
-#### [1.0.2](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.0.1...1.0.2)
+## [1.0.2](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.0.1...1.0.2)
 
 > 17 December 2022
 
@@ -280,7 +278,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: update readme [`79c8de5`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/79c8de597d57c481d103167e98a7966b5cb95eed)
 - chore: update readme [`c9a7392`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/c9a739231ccc9fe3d237c5a292e128f1dee89cfb)
 
-#### [1.0.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.0.0...1.0.1)
+## [1.0.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.0.0...1.0.1)
 
 > 16 December 2022
 
@@ -296,7 +294,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: add github actions badge to readme [`ddc74ba`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/ddc74ba65d303ac5524534e2a4dfa337cd498653)
 - chore: add badges to readme [`1814e8e`](https://github.com/jvandenaardweg/homewizard-energy-api/commit/1814e8ef31e8689ade101c325f20682bd2c48ade)
 
-#### 1.0.0
+## 1.0.0
 
 > 16 December 2022
 

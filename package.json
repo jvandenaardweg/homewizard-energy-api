@@ -62,12 +62,13 @@
     "homewizard energy api"
   ],
   "devDependencies": {
+    "@release-it/conventional-changelog": "7.0.1",
     "@types/multicast-dns": "^7.2.1",
     "@types/node": "^20.5.7",
     "@typescript-eslint/eslint-plugin": "^5.61.0",
     "@typescript-eslint/parser": "^5.60.1",
     "@vitest/coverage-istanbul": "^0.28.5",
-    "auto-changelog": "2.4.0",
+    "conventional-changelog-conventionalcommits": "7.0.2",
     "dotenv-cli": "^7.2.1",
     "eslint": "^8.41.0",
     "eslint-plugin-prettier": "^4.2.1",
@@ -89,19 +90,73 @@
     "multicast-dns": "^7.2.5",
     "undici": "^5.22.1"
   },
-  "auto-changelog": {
-    "commitUrl": "https://github.com/jvandenaardweg/homewizard-energy-api/commit/{id}",
-    "compareUrl": "https://github.com/jvandenaardweg/homewizard-energy-api/compare/{from}...{to}",
-    "issueUrl": "https://github.com/jvandenaardweg/homewizard-energy-api/issues/{id}",
-    "mergeUrl": "https://github.com/jvandenaardweg/homewizard-energy-api/pull/{id}"
-  },
   "release-it": {
     "git": {
-      "commitMessage": "chore: release v${version}",
-      "changelog": "npx --no-install auto-changelog --stdout --commit-limit false --hide-credit --unreleased --template https://raw.githubusercontent.com/release-it/release-it/16.1.5/templates/changelog-compact.hbs"
+      "commitMessage": "chore(release): v${version}"
     },
-    "hooks": {
-      "after:bump": "npx --no-install auto-changelog -p --commit-limit false --hide-credit"
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "infile": "CHANGELOG.md",
+        "header": "# Changelog",
+        "preset": {
+          "name": "conventionalcommits",
+          "types": [
+            {
+              "type": "feat",
+              "section": "Features"
+            },
+            {
+              "type": "feature",
+              "section": "Features"
+            },
+            {
+              "type": "fix",
+              "section": "Bug Fixes"
+            },
+            {
+              "type": "perf",
+              "section": "Performance Improvements"
+            },
+            {
+              "type": "revert",
+              "section": "Reverts"
+            },
+            {
+              "type": "docs",
+              "section": "Documentation"
+            },
+            {
+              "type": "chore",
+              "scope": "release",
+              "hidden": true
+            },
+            {
+              "type": "refactor",
+              "section": "Other Changes"
+            },
+            {
+              "type": "test",
+              "section": "Other Changes"
+            },
+            {
+              "type": "chore",
+              "section": "Other Changes"
+            },
+            {
+              "type": "ci",
+              "section": "Other Changes"
+            },
+            {
+              "type": "build",
+              "section": "Other Changes"
+            },
+            {
+              "type": "style",
+              "section": "Other Changes"
+            }
+          ]
+        }
+      }
     },
     "npm": {
       "publish": false

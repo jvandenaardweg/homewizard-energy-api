@@ -10,3 +10,9 @@ updates:
     schedule:
       interval: "monthly"
     versioning-strategy: increase
+    commit-message:
+      # Runtime dependency bumps ship to users, so they land under Bug Fixes in the changelog.
+      # Dev dependency bumps go under Other Changes.
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
