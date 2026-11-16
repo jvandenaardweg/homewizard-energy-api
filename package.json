@@ -63,6 +63,7 @@
     "@typescript-eslint/eslint-plugin": "^5.61.0",
     "@typescript-eslint/parser": "^5.60.1",
     "@vitest/coverage-istanbul": "^0.28.5",
+    "auto-changelog": "2.4.0",
     "dotenv-cli": "^7.2.1",
     "eslint": "^8.41.0",
     "eslint-plugin-prettier": "^4.2.1",
@@ -87,10 +88,10 @@
   "release-it": {
     "git": {
       "commitMessage": "chore: release v${version}",
-      "changelog": "npx auto-changelog --stdout --commit-limit false --hide-credit --unreleased --template https://raw.githubusercontent.com/release-it/release-it/master/templates/changelog-compact.hbs"
+      "changelog": "npx --no-install auto-changelog --stdout --commit-limit false --hide-credit --unreleased --template https://raw.githubusercontent.com/release-it/release-it/16.1.5/templates/changelog-compact.hbs"
     },
     "hooks": {
-      "after:bump": "npx auto-changelog -p --commit-limit false --hide-credit"
+      "after:bump": "npx --no-install auto-changelog -p --commit-limit false --hide-credit"
     },
     "npm": {
       "publish": false
