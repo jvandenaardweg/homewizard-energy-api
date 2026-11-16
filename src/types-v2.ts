@@ -41,7 +41,7 @@ export interface MdnsTxtRecordV2 {
  *
  * @link https://api-documentation.homewizard.com/docs/v2/authorization#https
  */
-export const CertificateProductTypes: Record<SupportedDevices, string> = {
+export const CertificateProductTypes: Partial<Record<SupportedDevices, string>> = {
   'HWE-P1': 'p1dongle',
   'HWE-SKT': 'energysocket',
   'HWE-WTR': 'watermeter',
@@ -51,6 +51,7 @@ export const CertificateProductTypes: Record<SupportedDevices, string> = {
   'SDM230-wifi': 'energymeter',
   'SDM630-wifi': 'energymeter',
   'HWE-BAT': 'battery',
+  // TODO: 'HWE-TMP', not known yet. Use the `id` txt record of the mDNS discovery response for this device.
 };
 
 /**

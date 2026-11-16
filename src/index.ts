@@ -12,6 +12,7 @@ export * from './kwh-meter-3-phase-api-v2';
 export * from './p1-meter-api';
 export * from './p1-meter-api-v2';
 export * from './plug-in-battery-api-v2';
+export * from './temperature-humidity-meter-api-v2';
 export * from './types';
 export * from './types-v2';
 export * from './water-meter-api';
