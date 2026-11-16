@@ -26,6 +26,11 @@ function parseApiError(response: string): ErrorResponse['error'] | undefined {
   return undefined;
 }
 
+/** Describes a request for error messages, for example `Api GET call at http://192.168.1.35/api/v1/data`. */
+function describeCall(method: string, url: RequestParameters[0]): string {
+  return `Api ${method} call at ${url}`;
+}
+
 function formatError(error: unknown): string {
   if (error instanceof Error) return `${error.name}: ${error.message}`;
 
@@ -263,7 +268,7 @@ export class BaseApi {
     } catch (error) {
       if (isTimedOut) {
         throw new HomeWizardEnergyApiTimeoutError(
-          `Api ${requestOptions.method || 'GET'} call at ${url} timed out after ${timeout}ms`,
+          `${describeCall(requestOptions.method || 'GET', url)} timed out after ${timeout}ms`,
           String(url),
           timeout,
         );
@@ -296,7 +301,7 @@ export class BaseApi {
     const text = await body.text();
 
     throw new HomeWizardEnergyApiResponseError(
-      `Api ${method} call at ${url} failed with status ${statusCode} and response data: ${text}`,
+      `${describeCall(method, url)} failed with status ${statusCode} and response data: ${text}`,
       url,
       statusCode,
       text,
@@ -318,7 +323,7 @@ export class BaseApi {
       return JSON.parse(text) as T;
     } catch {
       throw new HomeWizardEnergyApiResponseError(
-        `Api ${method} call at ${url} returned a response that is not valid JSON: ${text}`,
+        `${describeCall(method, url)} returned a response that is not valid JSON: ${text}`,
         url,
         response.statusCode,
         text,
