@@ -63,7 +63,6 @@
   ],
   "devDependencies": {
     "@release-it/conventional-changelog": "^12.0.2",
-    "@types/multicast-dns": "^7.2.4",
     "@types/node": "^22.20.5",
     "@vitest/coverage-istanbul": "^5.1.0",
     "conventional-changelog-conventionalcommits": "^10.4.1",
@@ -83,6 +82,7 @@
     "vitest": "^5.1.0"
   },
   "dependencies": {
+    "@types/multicast-dns": "^7.2.4",
     "date-fns": "^4.4.0",
     "multicast-dns": "^7.2.5",
     "undici": "^8.12.4"
