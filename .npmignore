@@ -8,6 +8,7 @@ tsconfig.build.json
 vitest.config.ts
 vitest.setup.ts
 docs
+AGENTS.md
 
 # ------------- Defaults ------------- #
 
