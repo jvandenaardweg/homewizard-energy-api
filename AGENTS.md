@@ -10,7 +10,8 @@ This is a typed Node client for the HomeWizard Energy local HTTP API (P1 meter, 
 
 ## Compatibility
 
-- The supported runtime is Node >=14.18 (CI tests 14–19, and the target is ES2020). Use only APIs that Node 14 offers. HTTP goes through `undici` and dates go through `date-fns`.
+- The supported runtime is Node >=22.19 (`engines.node`), the lowest version undici 8 supports. CI tests Node 22, 24 and 26, and the TypeScript target and lib are ES2024. Use only APIs that Node 22.19 offers. HTTP goes through `undici` and dates go through `date-fns`.
+- The dev tooling needs a newer Node than the library: release-it supports `^22.22.2 || ^24.15.0 || >=26`, and vitest doesn't list Node 25. Develop on the version in `.nvmrc`.
 - The toolchain doesn't load the TypeScript compiler API, so `typescript` can be TypeScript 7, which has none: Oxlint lints, tsx runs `src/examples/`, and tsc-alias rewrites the `@/` paths. Keep it that way, or a tool will need TypeScript 6 again.
 - The public API is everything re-exported from `src/index.ts`. This is a semver library, so renaming or removing an export or a response field is a breaking change.
 

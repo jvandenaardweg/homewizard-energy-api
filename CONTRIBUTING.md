@@ -54,7 +54,7 @@ This is optional. Pull requests are verified by the test suite.
 
 ## Compatibility
 
-- **Node.js:** the library supports Node `>=14.18.1`, and CI tests on Node 14, 16, 18 and 19. Only use APIs that Node 14 has. HTTP requests go through `undici` and date handling through `date-fns`. Please discuss new runtime dependencies in an issue first.
+- **Node.js:** the library supports Node `>=22.19.0`, and CI tests on Node 22, 24 and 26. Only use APIs that Node 22.19 has. HTTP requests go through `undici` and date handling through `date-fns`. Please discuss new runtime dependencies in an issue first.
 - **Public API:** everything exported from `src/index.ts` is public, and the package follows semver. Renaming or removing an export, a method or a response field is a breaking change.
 
 ## How the code is organised
