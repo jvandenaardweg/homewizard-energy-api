@@ -79,6 +79,10 @@
 * set auto-changelog link templates explicitly ([f7dbcf9](https://github.com/jvandenaardweg/homewizard-energy-api/commit/f7dbcf95ff88617d1c569ca1678e744d5745fcef))
 * stop enforcing a coverage threshold ([e390e32](https://github.com/jvandenaardweg/homewizard-energy-api/commit/e390e3242c81d9b1b199a417a49b49d5bcb1cf79))
 
+### Contributors
+
+* [@Zandor300](https://github.com/Zandor300)
+
 
 ## [1.5.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.4.2...1.5.0) (2023-09-02)
 
