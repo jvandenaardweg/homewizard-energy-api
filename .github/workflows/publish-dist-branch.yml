@@ -1,0 +1,53 @@
+name: Publish dist branch
+
+# Builds the library and force-pushes the result to the "dist" branch, so it can be installed
+# straight from GitHub without building it (and without its devDependencies):
+#   npm install homewizard-energy-api@github:NebzHB/homewizard-energy-api#dist
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  dist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Prepare the package
+        run: |
+          mkdir out
+          cp -r dist README.md LICENSE out/
+          node -e "
+            const pkg = require('./package.json');
+            const keep = ['displayName', 'name', 'version', 'description', 'license', 'author', 'homepage', 'repository', 'bugs', 'engines', 'main', 'types', 'keywords', 'dependencies'];
+            const out = {};
+            // no scripts (prepare) and no devDependencies: npm must not try to build it
+            for (const key of keep) if (pkg[key] !== undefined) out[key] = pkg[key];
+            require('fs').writeFileSync('out/package.json', JSON.stringify(out, null, 2) + '\n');
+          "
+
+      - name: Push to the dist branch
+        working-directory: out
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git init -q -b dist
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "build: dist of ${GITHUB_SHA}"
+          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" dist

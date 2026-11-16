@@ -212,6 +212,14 @@ const data = await kwhMeter3Phase.getData();
 
 A simple polling interface for the kWh Meter 3-phase is exposed via `api.polling.getData`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
 
+## Installing this fork
+
+This fork is not published on npm. The `dist` branch contains the built library (updated on each push to `main`), install it from GitHub:
+
+```bash
+npm install homewizard-energy-api@github:NebzHB/homewizard-energy-api#dist
+```
+
 ## API v2
 
 HomeWizard is moving its devices to the [API v2](https://api-documentation.homewizard.com/docs/category/api-v2): HTTPS, a token per application (the user has to press the button on the device once) and new names for the datapoints. Each device has a `...ApiV2` class next to its API v1 class, they work the same way (same methods, same polling interface).
