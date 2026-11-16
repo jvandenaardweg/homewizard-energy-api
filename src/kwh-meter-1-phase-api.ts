@@ -9,6 +9,14 @@ import {
 
 export type KwhMeter1PhasePolling = BasePolling<KwhMeter1PhaseDataResponse>;
 
+/**
+ * The 1-phase kWh meter (`HWE-KWH1`, `SDM230-wifi`) over the API v1.
+ *
+ * @deprecated Use `v2.KwhMeter1Phase`, over the API v2. HomeWizard no longer develops the API v1 and plans to remove it.
+ * This class keeps working while the device has the API v1 enabled.
+ *
+ * @link https://api-documentation.homewizard.com/docs/changelog
+ */
 export class KwhMeter1PhaseApi extends BaseApi {
   getBasicInformation<T extends BasicInformationResponse>(): Promise<T> {
     return super.getBasicInformation();
