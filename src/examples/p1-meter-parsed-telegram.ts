@@ -14,7 +14,7 @@ const p1Meter = new P1MeterApi('http://192.168.1.35');
     //   },
     //   version: '50',
     //   timestamp: '2022-12-18T22:48:20.000Z',
-    //   equipmentId: '4530303434303037303138303138313137',
+    //   equipmentId: '4530303132333435363738393031323334',
     //   textMessage: {
     //     codes: null,
     //     message: '',
@@ -144,7 +144,7 @@ const p1Meter = new P1MeterApi('http://192.168.1.35');
     //   },
     //   gas: {
     //     deviceType: '003',
-    //     equipmentId: '4730303332353635353330393732333137',
+    //     equipmentId: '4730303132333435363738393031323334',
     //     timestamp: '2022-12-18T22:45:01.000Z',
     //     value: 6798.545,
     //     unit: 'm3',

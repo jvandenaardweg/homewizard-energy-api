@@ -9,7 +9,7 @@ describe('utils/buffer', () => {
         path: '/api/v1',
         product_name: 'Energy Socket',
         product_type: 'HWE-SKT',
-        serial: '3c39e727ff1e',
+        serial: '3c39e7aabb01',
       };
       const actual = bufferArrayToJSON(mockMdnsTxtData);
       expect(actual).toEqual(expected);

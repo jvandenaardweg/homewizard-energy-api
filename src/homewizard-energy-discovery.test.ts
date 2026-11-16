@@ -227,7 +227,7 @@ describe('HomeWizardEnergyDiscovery', () => {
         path: '/api/v1',
         product_name: 'Energy Socket',
         product_type: 'HWE-SKT',
-        serial: '3c39e727ff1e',
+        serial: '3c39e7aabb01',
       });
     });
 
@@ -288,7 +288,7 @@ describe('HomeWizardEnergyDiscovery', () => {
       if (!additional) throw new Error('No additional found!');
 
       const expected = {
-        hostname: 'energysocket-27FF1E.local',
+        hostname: 'energysocket-AABB01.local',
         ip: '192.168.1.34',
       };
 
@@ -299,7 +299,7 @@ describe('HomeWizardEnergyDiscovery', () => {
   describe('getHostDetailsFromResponse()', () => {
     it('should return the host details as an object from a mdns response', () => {
       const expected = {
-        hostname: 'energysocket-27FF1E.local',
+        hostname: 'energysocket-AABB01.local',
         ip: '192.168.1.34',
       };
 
@@ -309,7 +309,7 @@ describe('HomeWizardEnergyDiscovery', () => {
     });
     it('should return the host details as an object from a mdns response', () => {
       const expected = {
-        hostname: 'energysocket-27FF1E.local',
+        hostname: 'energysocket-AABB01.local',
         ip: '192.168.1.34',
       };
 
@@ -321,7 +321,7 @@ describe('HomeWizardEnergyDiscovery', () => {
 
   describe('getFqdnFromResponse()', () => {
     it('should return the fqdn from a mdns response', () => {
-      const expected = 'energysocket-27FF1E._hwenergy._tcp.local';
+      const expected = 'energysocket-AABB01._hwenergy._tcp.local';
       expect(discoveryService['getFqdnFromResponse'](mockMdnsResponse)).toBe(expected);
     });
 
@@ -349,7 +349,7 @@ describe('HomeWizardEnergyDiscovery', () => {
             ttl: 4500,
             class: 'IN',
             flush: false,
-            // data: 'energysocket-27FF1E._hwenergy._tcp.local',
+            // data: 'energysocket-AABB01._hwenergy._tcp.local',
           },
         ],
       } as multicastDns.ResponsePacket;
@@ -381,7 +381,7 @@ describe('HomeWizardEnergyDiscovery', () => {
     it('should return the cached response by fqdn', () => {
       discoveryService['cachedDiscoveryResponses'] = [mockDiscoveryResponse];
 
-      const mockFqdn = 'energysocket-27FF1E._hwenergy._tcp.local';
+      const mockFqdn = 'energysocket-AABB01._hwenergy._tcp.local';
 
       expect(discoveryService['getCachedResponseByFqdn'](mockFqdn)).toBe(mockDiscoveryResponse);
     });
@@ -389,7 +389,7 @@ describe('HomeWizardEnergyDiscovery', () => {
     it('should return undefined if no cached response is found', () => {
       discoveryService['cachedDiscoveryResponses'] = [];
 
-      const mockFqdn = 'energysocket-27FF1E._hwenergy._tcp.local';
+      const mockFqdn = 'energysocket-AABB01._hwenergy._tcp.local';
 
       expect(discoveryService['getCachedResponseByFqdn'](mockFqdn)).toBeUndefined();
     });
@@ -586,7 +586,7 @@ describe('HomeWizardEnergyDiscovery', () => {
           answers: [...mockMdnsResponse.answers, aRecord],
           additionals: [],
         }),
-      ).toStrictEqual({ ip: '192.168.1.34', hostname: 'energysocket-27FF1E.local' });
+      ).toStrictEqual({ ip: '192.168.1.34', hostname: 'energysocket-AABB01.local' });
     });
 
     it('should prefer the additionals when both sections have an A record', () => {
@@ -595,7 +595,7 @@ describe('HomeWizardEnergyDiscovery', () => {
           ...mockMdnsResponse,
           answers: [...mockMdnsResponse.answers, { ...aRecord, data: '10.0.0.1' } as Answer],
         }),
-      ).toStrictEqual({ ip: '192.168.1.34', hostname: 'energysocket-27FF1E.local' });
+      ).toStrictEqual({ ip: '192.168.1.34', hostname: 'energysocket-AABB01.local' });
     });
   });
 });

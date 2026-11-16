@@ -4,7 +4,7 @@ export const mockBasicInformationResponse: Record<SupportedDevices, BasicInforma
   'HWE-SKT': {
     product_type: 'HWE-SKT',
     product_name: 'Energy Socket',
-    serial: '1c23e7280952',
+    serial: '3c39e7aabb02',
     firmware_version: '4.08',
     api_version: 'v1',
   },
@@ -19,7 +19,7 @@ export const mockBasicInformationResponse: Record<SupportedDevices, BasicInforma
   'HWE-WTR': {
     product_type: 'HWE-WTR',
     product_name: 'Water Meter',
-    serial: '1c23e7280952',
+    serial: '3c39e7aabb02',
     firmware_version: '3.02',
     api_version: 'v1',
   },
@@ -27,7 +27,7 @@ export const mockBasicInformationResponse: Record<SupportedDevices, BasicInforma
   'HWE-KWH1': {
     product_type: 'HWE-KWH1',
     product_name: 'kWh meter 1-phase',
-    serial: '1c23e7280952',
+    serial: '3c39e7aabb02',
     firmware_version: '4.19',
     api_version: 'v1',
   },
@@ -35,7 +35,7 @@ export const mockBasicInformationResponse: Record<SupportedDevices, BasicInforma
   'HWE-KWH3': {
     product_type: 'HWE-KWH3',
     product_name: 'kWh meter 3-phase',
-    serial: '1c23e7280952',
+    serial: '3c39e7aabb02',
     firmware_version: '4.19',
     api_version: 'v1',
   },
@@ -43,7 +43,7 @@ export const mockBasicInformationResponse: Record<SupportedDevices, BasicInforma
   'SDM230-wifi': {
     product_type: 'SDM230-wifi',
     product_name: 'kWh meter 1-phase',
-    serial: '1c23e7280952',
+    serial: '3c39e7aabb02',
     firmware_version: '3.02',
     api_version: 'v1',
   },
@@ -51,7 +51,7 @@ export const mockBasicInformationResponse: Record<SupportedDevices, BasicInforma
   'SDM630-wifi': {
     product_type: 'SDM630-wifi',
     product_name: 'kWh meter 3-phase',
-    serial: '1c23e7280952',
+    serial: '3c39e7aabb02',
     firmware_version: '3.02',
     api_version: 'v1',
   },

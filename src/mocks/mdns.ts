@@ -2,18 +2,11 @@ import * as multicastDns from 'multicast-dns';
 import { DiscoveryResponse } from '..';
 
 export const mockMdnsTxtData = [
-  Buffer.from([97, 112, 105, 95, 101, 110, 97, 98, 108, 101, 100, 61, 49]),
-  Buffer.from([112, 97, 116, 104, 61, 47, 97, 112, 105, 47, 118, 49]),
-  Buffer.from([
-    115, 101, 114, 105, 97, 108, 61, 51, 99, 51, 57, 101, 55, 50, 55, 102, 102, 49, 101,
-  ]),
-  Buffer.from([
-    112, 114, 111, 100, 117, 99, 116, 95, 110, 97, 109, 101, 61, 69, 110, 101, 114, 103, 121, 32,
-    83, 111, 99, 107, 101, 116,
-  ]),
-  Buffer.from([
-    112, 114, 111, 100, 117, 99, 116, 95, 116, 121, 112, 101, 61, 72, 87, 69, 45, 83, 75, 84,
-  ]),
+  Buffer.from('api_enabled=1'),
+  Buffer.from('path=/api/v1'),
+  Buffer.from('serial=3c39e7aabb01'),
+  Buffer.from('product_name=Energy Socket'),
+  Buffer.from('product_type=HWE-SKT'),
 ];
 
 // up response
@@ -39,18 +32,18 @@ export const mockMdnsResponse: multicastDns.ResponsePacket = {
       ttl: 4500,
       class: 'IN',
       flush: false,
-      data: 'energysocket-27FF1E._hwenergy._tcp.local',
+      data: 'energysocket-AABB01._hwenergy._tcp.local',
     },
     {
-      name: 'energysocket-27FF1E._hwenergy._tcp.local',
+      name: 'energysocket-AABB01._hwenergy._tcp.local',
       type: 'SRV',
       ttl: 120,
       class: 'IN',
       flush: true,
-      data: { priority: 0, weight: 0, port: 80, target: 'energysocket-27FF1E.local' },
+      data: { priority: 0, weight: 0, port: 80, target: 'energysocket-AABB01.local' },
     },
     {
-      name: 'energysocket-27FF1E._hwenergy._tcp.local',
+      name: 'energysocket-AABB01._hwenergy._tcp.local',
       type: 'TXT',
       ttl: 4500,
       class: 'IN',
@@ -61,7 +54,7 @@ export const mockMdnsResponse: multicastDns.ResponsePacket = {
   authorities: [],
   additionals: [
     {
-      name: 'energysocket-27FF1E.local',
+      name: 'energysocket-AABB01.local',
       type: 'A',
       ttl: 120,
       class: 'IN',
@@ -72,15 +65,15 @@ export const mockMdnsResponse: multicastDns.ResponsePacket = {
 };
 
 export const mockDiscoveryResponse: DiscoveryResponse = {
-  fqdn: 'energysocket-27FF1E._hwenergy._tcp.local',
-  hostname: 'energysocket-27FF1E.local',
+  fqdn: 'energysocket-AABB01._hwenergy._tcp.local',
+  hostname: 'energysocket-AABB01.local',
   ip: '192.168.1.34',
   txt: {
     api_enabled: '1',
     path: '/api/v1',
     product_name: 'Energy Socket',
     product_type: 'HWE-SKT',
-    serial: '3c39e727ff1e',
+    serial: '3c39e7aabb01',
   },
 };
 
@@ -106,7 +99,7 @@ export const mockMdnsGoodbyeResponse: multicastDns.ResponsePacket = {
       ttl: 0, // goodbye
       class: 'IN',
       flush: false,
-      data: 'energysocket-27FF1E._hwenergy._tcp.local',
+      data: 'energysocket-AABB01._hwenergy._tcp.local',
     },
   ],
   authorities: [],
