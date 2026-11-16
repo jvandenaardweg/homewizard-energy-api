@@ -97,19 +97,15 @@ describe('BaseApiV2', () => {
   });
 
   describe('HOMEWIZARD_CA_CERT', () => {
-    // X509Certificate does not exist in Node 14
-    it.runIf(typeof X509Certificate === 'function')(
-      'should be the valid HomeWizard CA certificate',
-      () => {
-        const certificate = new X509Certificate(HOMEWIZARD_CA_CERT);
+    it('should be the valid HomeWizard CA certificate', () => {
+      const certificate = new X509Certificate(HOMEWIZARD_CA_CERT);
 
-        expect(certificate.subject).toContain('O=HomeWizard');
-        expect(certificate.subject).toContain('CN=Appliance Access CA');
-        expect(certificate.fingerprint256).toBe(
-          '4E:C2:77:E6:20:33:FA:E8:BC:37:3E:3F:2A:97:66:76:D3:F6:65:68:38:73:F1:EA:8E:3B:DF:78:AC:68:00:03',
-        );
-      },
-    );
+      expect(certificate.subject).toContain('O=HomeWizard');
+      expect(certificate.subject).toContain('CN=Appliance Access CA');
+      expect(certificate.fingerprint256).toBe(
+        '4E:C2:77:E6:20:33:FA:E8:BC:37:3E:3F:2A:97:66:76:D3:F6:65:68:38:73:F1:EA:8E:3B:DF:78:AC:68:00:03',
+      );
+    });
   });
 
   describe('createCheckServerIdentity()', () => {
@@ -291,34 +287,30 @@ describe('BaseApiV2', () => {
       expect(api.isAuthorized).toBe(false);
     });
 
-    // AbortController is not a global in Node 14
-    it.runIf(typeof AbortController !== 'undefined')(
-      'should stop when the signal is aborted',
-      async () => {
-        const api = new BaseApiV2(mockApiUrl);
-        const controller = new AbortController();
+    it('should stop when the signal is aborted', async () => {
+      const api = new BaseApiV2(mockApiUrl);
+      const controller = new AbortController();
 
-        apiV2Mocks.createUser({
-          response: { error: 'user:creation-not-enabled' },
-          statusCode: 403,
-        });
+      apiV2Mocks.createUser({
+        response: { error: 'user:creation-not-enabled' },
+        statusCode: 403,
+      });
 
-        const startedAt = Date.now();
-        // a long interval: the abort must not wait for the next try
-        const promise = api
-          .pair('my-app', { interval: 5000, signal: controller.signal })
-          .catch(e => e);
+      const startedAt = Date.now();
+      // a long interval: the abort must not wait for the next try
+      const promise = api
+        .pair('my-app', { interval: 5000, signal: controller.signal })
+        .catch(e => e);
 
-        setTimeout(() => controller.abort(), 30);
+      setTimeout(() => controller.abort(), 30);
 
-        const error = await promise;
+      const error = await promise;
 
-        expect(Date.now() - startedAt).toBeLessThan(1000);
+      expect(Date.now() - startedAt).toBeLessThan(1000);
 
-        expect(error).toBeInstanceOf(HomeWizardEnergyApiV2PairError);
-        expect(error.reason).toBe('aborted');
-      },
-    );
+      expect(error).toBeInstanceOf(HomeWizardEnergyApiV2PairError);
+      expect(error.reason).toBe('aborted');
+    });
 
     it('should not keep trying on other errors of the API', async () => {
       const api = new BaseApiV2(mockApiUrl);
