@@ -99,6 +99,28 @@ const v50be = `FLU5\\253770234_A
 0-1:24.2.3(210320214626W)(02559.077*m3)
 !85AF`;
 
+// Belgian (Fluvius) telegram with the demand of the capacity tariff
+const v50beDemand = `/FLU5\\253770234_A
+
+0-0:96.1.4(50217)
+0-0:96.1.1(3153414731313030303736363136)
+0-0:1.0.0(230903115012S)
+1-0:1.8.1(002340.885*kWh)
+1-0:1.8.2(002608.465*kWh)
+1-0:2.8.1(000000.000*kWh)
+1-0:2.8.2(000000.021*kWh)
+0-0:96.14.0(0001)
+1-0:1.4.0(00.255*kW)
+1-0:1.6.0(230903114500S)(02.762*kW)
+0-0:98.1.0(3)(1-0:1.6.0)(1-0:1.6.0)(230201000000W)(230110174500W)(04.769*kW)(230301000000W)(230212181500W)(05.012*kW)(230401000000S)(230305120000W)(03.500*kW)
+1-0:1.7.0(00.370*kW)
+1-0:2.7.0(00.000*kW)
+0-0:96.3.10(1)
+0-0:17.0.0(999.9*kW)
+1-0:31.4.0(999*A)
+0-0:96.13.0()
+!85AF`;
+
 const v22 = `XMX5XMXABCE000063181
 
 0-0:96.1.1(31333634303033302020202020202020)
@@ -209,6 +231,7 @@ export const mockTelegramResponse = {
   v50l3_1,
   v50l3_2,
   v50be,
+  v50beDemand,
   v22,
   v42,
   v42l3,
@@ -255,6 +278,21 @@ export const mockParsedTelegramResponse = {
         active: {
           value: 0,
           unit: 'kW',
+        },
+      },
+      demand: {
+        average: {
+          value: null,
+          unit: null,
+        },
+        monthlyPeak: {
+          timestamp: null,
+          value: null,
+          unit: null,
+        },
+        monthlyPeakHistory: {
+          count: null,
+          log: [],
         },
       },
       tariffIndicator: 1,

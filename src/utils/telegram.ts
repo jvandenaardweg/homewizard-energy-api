@@ -22,6 +22,23 @@ export interface TelegramPowerFailureLogItem {
   unit: TelegramUnit | null;
 }
 
+export interface TelegramPeakDemand {
+  /** The timestamp the peak was registered. */
+  timestamp: string | null;
+  value: number | null;
+  unit: TelegramUnit | null;
+}
+
+export interface TelegramPeakDemandHistoryItem extends TelegramPeakDemand {
+  /** The end of the month (billing period) of this peak. */
+  endOfPeriod: string | null;
+}
+
+export interface TelegramPeakDemandHistory {
+  count: number | null;
+  log: TelegramPeakDemandHistoryItem[];
+}
+
 export interface TelegramPowerFailureLog {
   count: number | null;
   log: TelegramPowerFailureLogItem[];
@@ -55,6 +72,17 @@ export interface ParsedTelegram {
       t1: TelegramValueItem;
       t2: TelegramValueItem;
       active: TelegramValueItem;
+    };
+    /**
+     * The demand (capacity tariff), only available on meters that register it, like the Belgian meters (Fluvius).
+     */
+    demand: {
+      /** The average demand of the current quarter-hour (`active_power_average_w` / `average_power_15m_w` in the API). */
+      average: TelegramValueItem;
+      /** The peak demand of the running month (`montly_power_peak_w` / `monthly_power_peak_w` in the API). */
+      monthlyPeak: TelegramPeakDemand;
+      /** The peak demand of the last (maximum 13) months. */
+      monthlyPeakHistory: TelegramPeakDemandHistory;
     };
     /** Tariff indicator electricity. The tariff indicator can also be used to switch tariff dependent loads e.g boilers. This is the responsibility of the P1 user */
     tariffIndicator: number | null;
@@ -163,6 +191,21 @@ export function parseTelegram(telegram: string): ParsedTelegram {
         active: {
           value: null,
           unit: null,
+        },
+      },
+      demand: {
+        average: {
+          value: null,
+          unit: null,
+        },
+        monthlyPeak: {
+          timestamp: null,
+          value: null,
+          unit: null,
+        },
+        monthlyPeakHistory: {
+          count: null,
+          log: [],
         },
       },
       tariffIndicator: null,
@@ -339,6 +382,22 @@ export function parseTelegram(telegram: string): ParsedTelegram {
         parsedTelegram.power.export.active.unit = parsedLine.unit;
         break;
 
+      // Positive active demand of the current quarter-hour (average, capacity tariff, BE)
+      case '1-0:1.4.0':
+        parsedTelegram.power.demand.average.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.demand.average.unit = parsedLine.unit;
+        break;
+
+      // Positive active maximum demand of the running month, with the timestamp of the peak (capacity tariff, BE)
+      case '1-0:1.6.0':
+        parsedTelegram.power.demand.monthlyPeak = parsePeakDemand(parsedLine.value);
+        break;
+
+      // Positive active maximum demand of the last 13 months (capacity tariff, BE)
+      case '0-0:98.1.0':
+        parsedTelegram.power.demand.monthlyPeakHistory = parsePeakDemandHistory(parsedLine.value);
+        break;
+
       // The actual threshold Electricity in kW
       // probably not available anymore?
       // page 25: https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_40f025334f.pdf
@@ -498,16 +557,17 @@ export function parseTelegram(telegram: string): ParsedTelegram {
         parsedTelegram.gas.unit = hourlyReading?.unit || null;
         break;
 
-      // Gas, probably BE
+      // Gas (BE), same format as the hourly reading: (timestamp)(value*unit)
       case '0-1:24.2.3':
+      case '0-2:24.2.3':
+      case '0-3:24.2.3':
+      case '0-4:24.2.3':
         // eslint-disable-next-line no-case-declarations
-        const instantValue = parsedLine.value.substring(15, 9);
+        const instantReading = parseHourlyReading(parsedLine.value);
 
-        // eslint-disable-next-line no-case-declarations
-        const instantUnit = parsedLine.value.substring(25, 2) as TelegramUnit;
-
-        parsedTelegram.gas.value = parseFloat(instantValue);
-        parsedTelegram.gas.unit = instantUnit;
+        parsedTelegram.gas.timestamp = parseTimestamp(instantReading?.timestamp);
+        parsedTelegram.gas.value = parseFloat(instantReading?.value || '0');
+        parsedTelegram.gas.unit = instantReading?.unit || null;
         break;
 
       // Valve position (Gas) (BE)
@@ -674,6 +734,50 @@ export function parsePowerFailureEventLog(value: string): TelegramPowerFailureLo
         output.log.push(logEntry);
       }
     }
+  }
+
+  return output;
+}
+
+/**
+ * Parse a peak demand of format: timestamp)(value*unit, example: 230903114500S)(02.762*kW
+ */
+export function parsePeakDemand(value: string): TelegramPeakDemand {
+  const reading = parseHourlyReading(value);
+
+  return {
+    timestamp: parseTimestamp(reading?.timestamp),
+    value: reading?.value ? parseFloat(reading.value) : null,
+    unit: reading?.unit || null,
+  };
+}
+
+/**
+ * Parse the peak demand history of format: count)(1-0:1.6.0)(1-0:1.6.0)(timestamp end of period)(timestamp peak)(value*unit)(timestamp end of period...
+ *
+ * Example: 2)(1-0:1.6.0)(1-0:1.6.0)(230201000000W)(230110174500W)(04.769*kW)(230301000000W)(230212181500W)(05.012*kW
+ */
+export function parsePeakDemandHistory(value: string): TelegramPeakDemandHistory {
+  const parts = value.split(')(');
+
+  const output: TelegramPeakDemandHistory = {
+    count: parseInt(parts[0]) || 0,
+    log: [],
+  };
+
+  // Everything after the count that is not a reference to an OBIS code (1-0:1.6.0) is part of the log
+  const log = parts.slice(1).filter(part => !part.includes(':'));
+
+  // Loop the log structure: end of period)(timestamp)(value*unit)(end of period)(timestamp)(value*unit...
+  for (let i = 0; i + 2 < log.length; i = i + 3) {
+    const [peakValue, peakUnit] = log[i + 2].split('*');
+
+    output.log.push({
+      endOfPeriod: parseTimestamp(log[i]),
+      timestamp: parseTimestamp(log[i + 1]),
+      value: parseFloat(peakValue),
+      unit: (peakUnit as TelegramUnit) || null,
+    });
   }
 
   return output;
