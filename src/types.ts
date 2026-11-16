@@ -151,7 +151,7 @@ export interface BaseDataResponse {
   total_power_export_t4_kwh?: number;
   /** The total active usage in Watts: Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   active_power_w?: number;
-  /** The active usage for fase 1 in Watts. Abailable for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  /** The active usage for fase 1 in Watts. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   active_power_l1_w?: number;
   /** The active usage for fase 2 in Watts. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
   active_power_l2_w?: number;
