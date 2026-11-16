@@ -399,7 +399,17 @@ export class BaseApiV2 extends BaseApi<BaseMeasurementResponse> {
         );
       }
 
-      await new Promise(resolve => setTimeout(resolve, interval));
+      // Wait for the next try, an abort ends the waiting immediately
+      await new Promise<void>(resolve => {
+        const done = () => {
+          clearTimeout(timer);
+          options?.signal?.removeEventListener('abort', done);
+          resolve();
+        };
+        const timer = setTimeout(done, interval);
+
+        options?.signal?.addEventListener('abort', done, { once: true });
+      });
     }
   }
 

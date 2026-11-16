@@ -293,11 +293,17 @@ describe('BaseApiV2', () => {
 
       apiV2Mocks.createUser({ response: { error: 'user:creation-not-enabled' }, statusCode: 403 });
 
-      const promise = api.pair('my-app', { interval: 5, signal: controller.signal }).catch(e => e);
+      const startedAt = Date.now();
+      // a long interval: the abort must not wait for the next try
+      const promise = api
+        .pair('my-app', { interval: 5000, signal: controller.signal })
+        .catch(e => e);
 
-      controller.abort();
+      setTimeout(() => controller.abort(), 30);
 
       const error = await promise;
+
+      expect(Date.now() - startedAt).toBeLessThan(1000);
 
       expect(error).toBeInstanceOf(HomeWizardEnergyApiV2PairError);
       expect(error.reason).toBe('aborted');
