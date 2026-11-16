@@ -30,14 +30,8 @@ Full type-safe implementation of the HomeWizard Energy local API in Node. Read a
 
 This library requires Node 22.19 or higher. Version 1.x supports Node 14.18 and higher. TypeScript is only required for type-safety, the library also works without it.
 
-```
+```bash
 npm install homewizard-energy-api
-```
-
-or
-
-```
-yarn add homewizard-energy-api
 ```
 
 ## Supported devices
