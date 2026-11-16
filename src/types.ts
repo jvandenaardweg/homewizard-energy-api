@@ -495,6 +495,7 @@ export enum ErrorCodes {
   NO_DATA_IN_BODY = 5, // undocumented but received it
   INVALID_VALUE_FOR_PARAMETER = 7,
   PARAMETER_IS_NOT_MODIFIABLE = 8,
+  // oxlint-disable-next-line typescript/no-duplicate-enum-values -- REQUEST_TO_LONG below is its deprecated alias
   REQUEST_TOO_LARGE = 201,
   /**
    * @deprecated Use `ErrorCodes.REQUEST_TOO_LARGE`, the upstream name. Declared last so `ErrorCodes[201]` still returns `'REQUEST_TO_LONG'`.

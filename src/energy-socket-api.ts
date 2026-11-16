@@ -9,8 +9,9 @@ import {
   SystemResponse,
 } from '@/types';
 
-export interface EnergySocketPolling<TStateResponse extends StateResponse>
-  extends BasePolling<EnergySocketDataResponse> {
+export interface EnergySocketPolling<
+  TStateResponse extends StateResponse,
+> extends BasePolling<EnergySocketDataResponse> {
   getState: PollMethod<TStateResponse>;
 }
 

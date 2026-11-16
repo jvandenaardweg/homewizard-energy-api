@@ -15,8 +15,8 @@ AGENTS.md
 # gitHub actions
 .github
 
-# eslint
-.eslintrc
+# oxlint
+.oxlintrc.json
 
 # typescript
 tsconfig.json

@@ -20,7 +20,7 @@ If the HomeWizard API itself changed or added a field, link the relevant page on
 
 ## Verifying changes
 
-`npm test` is the full check that CI runs: ESLint (including Prettier formatting), the TypeScript type-check, then the vitest suite with coverage.
+`npm test` is the full check that CI runs: Oxlint and a Prettier formatting check, the TypeScript type-check, then the vitest suite with coverage.
 
 ```bash
 npm test

@@ -1,1 +1,6 @@
 dist
+coverage
+# Written by release-it's changelog plugin
+CHANGELOG.md
+# Agent worktrees hold other checkouts of this repo
+.claude/worktrees
