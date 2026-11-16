@@ -85,6 +85,12 @@
     "multicast-dns": "^7.2.5",
     "undici": "^5.22.1"
   },
+  "auto-changelog": {
+    "commitUrl": "https://github.com/jvandenaardweg/homewizard-energy-api/commit/{id}",
+    "compareUrl": "https://github.com/jvandenaardweg/homewizard-energy-api/compare/{from}...{to}",
+    "issueUrl": "https://github.com/jvandenaardweg/homewizard-energy-api/issues/{id}",
+    "mergeUrl": "https://github.com/jvandenaardweg/homewizard-energy-api/pull/{id}"
+  },
   "release-it": {
     "git": {
       "commitMessage": "chore: release v${version}",
