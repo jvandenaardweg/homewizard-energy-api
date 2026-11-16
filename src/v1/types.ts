@@ -1,0 +1,505 @@
+/**
+ * We can discover devices on the local network using the `_hwenergy._tcp` domain, which devices advertise for API v1.
+ *
+ * Devices that support API v2 also advertise `_homewizard._tcp`, which `v2.Discovery` finds.
+ *
+ * @link https://api-documentation.homewizard.com/docs/discovery
+ */
+export const MDNS_DISCOVERY_TYPE = 'hwenergy';
+export const MDNS_DISCOVERY_PROTOCOL = 'tcp';
+export const MDNS_DISCOVERY_DOMAIN = `_${MDNS_DISCOVERY_TYPE}._${MDNS_DISCOVERY_PROTOCOL}.local`; // _hwenergy._tcp.local
+export const MDNS_DISCOVERY_QUERY_TYPE = 'PTR';
+
+/**
+ * A list of device types that HomeWizard supports.
+ *
+ * The supported devices are listed below. The device type is used as identifier within the API.
+ *
+ * @link https://api-documentation.homewizard.com/docs/introduction#devices
+ */
+export const SupportedDevicesList = [
+  'HWE-P1',
+  'HWE-SKT',
+  'HWE-WTR',
+  'HWE-KWH1',
+  'HWE-KWH3',
+  'SDM230-wifi',
+  'SDM630-wifi',
+] as const;
+
+export type SupportedDevices = (typeof SupportedDevicesList)[number];
+
+/**
+ * The txt record of the mDNS discovery response.
+ *
+ * A discovery response contains some extra data that can be used to improve the setup in your application.
+ *
+ * @link https://api-documentation.homewizard.com/docs/discovery
+ */
+export interface MdnsTxtRecord {
+  /** Indicates if the "Local API" is enabled. `"1"` = enabled, `"0"` = disabled */
+  api_enabled: string;
+  /** The path to the API. Can be used to validate that your application supports this device and API version. Example: `"/api/v1"` */
+  path: string;
+  /** The serial number of the device. Consists of 12 hexadecimal values. This is also a the Mac address of the device. Example: `"3c12e7659852"` */
+  serial: string;
+  /** The product name of this device. It may change at any time, so use `product_type` to identify the product. Example: `"Energy Socket"` */
+  product_name: string;
+  /** The product type, see Supported devices. Make sure your application can handle other values for future products. Example: `"HWE-SKT"` */
+  product_type: SupportedDevices;
+}
+
+/**
+ * The /api/v1/state endpoint returns the actual state of the Energy Socket. This endpoint is only available for the HWE-SKT.
+ *
+ * For example, `{ "power_on": true, "switch_lock": false, "brightness": 255 }` tells that the socket is ‘on’,
+ * switch-lock is ‘off’ and the brightness of the LED ring is set to maximum.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/state
+ */
+export interface StateResponse {
+  /** The state of the switch. Returns true when the relay is in the ‘on’ state. Available for: `HWE-SKT` */
+  power_on: boolean;
+  /** When set to true, the socket cannot be turned off. Available for: `HWE-SKT` */
+  switch_lock: boolean;
+  /** Brightness of LED ring when socket is ‘on’. Value from 0 (0%) to 255 (100%). Available for: `HWE-SKT` */
+  brightness: number;
+}
+
+/**
+ * The parameters to update with a PUT on the /api/v1/state endpoint. Only send the fields you want to change.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/state
+ */
+export type StatePutParams<Keys extends keyof StateResponse> = Pick<StateResponse, Keys>;
+
+/**
+ * The /api endpoint allows you to get basic information from the device.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/api
+ * @link https://api-documentation.homewizard.com/docs/introduction#devices
+ */
+export interface BasicInformationResponse {
+  /** The product type, see Supported devices. Make sure your application can handle other values for future products. Supported devices: https://api-documentation.homewizard.com/docs/introduction#devices */
+  product_type: SupportedDevices;
+  /** A fixed, user-friendly name. This name is not the same that is set by the user in the app. */
+  product_name: string;
+  /** Serial, also the MAC address. Consists of 12 hexadecimal values. */
+  serial: string;
+  /** The current firmware version. Make sure your application can handle other version formats. See Versioning and updates */
+  firmware_version: string;
+  /** The current api version, currently ‘v1’ */
+  api_version: string;
+}
+
+/**
+ * Some smart meters have more than one external device connected to it. This can be, for example, a gas and a water meter.
+ * The external datapoint adds support for these devices.
+ * Each entry is supplied with a set of data.
+ *
+ * See Example: HWE-P1 (3-phase, with gas and water meter)
+ * for an example: https://api-documentation.homewizard.com/docs/v1/measurement
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/measurement
+ */
+export interface ExternalData {
+  /** The unique identifier from the smart meter. Available for: `HWE-P1` */
+  unique_id?: string;
+  /** The type of the device, can be `"gas_meter"`, `"heat_meter"`, `"warm_water_meter"`, `"water_meter"` or `"inlet_heat_meter"`. Available for: `HWE-P1` */
+  type?: 'gas_meter' | 'heat_meter' | 'warm_water_meter' | 'water_meter' | 'inlet_heat_meter';
+  /** The most recent value update time stamp structured as YYMMDDhhmmss. Available for: `HWE-P1` */
+  timestamp?: number;
+  /** The raw value. Available for: `HWE-P1` */
+  value?: number;
+  /** The unit of the value, for example: `“m3”` or `“GJ”`. Available for: `HWE-P1` */
+  unit?: string;
+}
+
+/**
+ * The /api/v1/data endpoint allows you to get the most recent measurement from the device.
+ *
+ * All datapoints are “optional”; The API does not send datapoints that are null. Make sure your application can handle this.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/measurement
+ */
+export interface BaseDataResponse {
+  /** The unique identifier from the smart meter. Available for: `HWE-P1` */
+  unique_id?: string;
+  /** The DSMR version of the smart meter. Available for: `HWE-P1` */
+  smr_version?: number;
+  /** The brand identification of the smart meter. Available for: `HWE-P1` */
+  meter_model?: string;
+  /** The Wi-Fi network that the meter is connected to. Available for: `HWE-P1`, `HWE-SKT`, `HWE-WTR`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  wifi_ssid?: string;
+  /** The strength of the Wi-Fi signal in %. Available for: `HWE-P1`, `HWE-SKT`, `HWE-WTR`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  wifi_strength?: number;
+  /** The power usage meter reading in kWh. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  total_power_import_kwh?: number;
+  /** The power usage meter reading for tariff 1 in kWh. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  total_power_import_t1_kwh?: number;
+  /** The power usage meter reading for tariff 2 in kWh. Available for: `HWE-P1` */
+  total_power_import_t2_kwh?: number;
+  /** The power usage meter reading for tariff 3 in kWh. Available for: `HWE-P1` */
+  total_power_import_t3_kwh?: number;
+  /** The power usage meter reading for tariff 4 in kWh. Available for: `HWE-P1` */
+  total_power_import_t4_kwh?: number;
+  /** The power feed-in meter reading in kWh. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  total_power_export_kwh?: number;
+  /** The power feed-in meter reading for tariff 1 in kWh. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  total_power_export_t1_kwh?: number;
+  /** The power feed-in meter reading for tariff 2 in kWh. Available for: `HWE-P1` */
+  total_power_export_t2_kwh?: number;
+  /** The power feed-in meter reading for tariff 3 in kWh. Available for: `HWE-P1` */
+  total_power_export_t3_kwh?: number;
+  /** The power feed-in meter reading for tariff 4 in kWh. Available for: `HWE-P1` */
+  total_power_export_t4_kwh?: number;
+  /** The total active usage in Watts: Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  active_power_w?: number;
+  /** The active usage for fase 1 in Watts. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  active_power_l1_w?: number;
+  /** The active usage for fase 2 in Watts. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
+  active_power_l2_w?: number;
+  /** The active usage for fase 3 in Watts. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi`  */
+  active_power_l3_w?: number;
+  /** The active voltage in volts. Available for: `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi` */
+  active_voltage_v?: number;
+  /** The active voltage for phase 1 in volt. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
+  active_voltage_l1_v?: number;
+  /** The active voltage for phase 2 in volt. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
+  active_voltage_l2_v?: number;
+  /** The active voltage for phase 3 in volt. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
+  active_voltage_l3_v?: number;
+  /** The active current in amperes. Sum of all phases for 3-phase meter. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  active_current_a?: number;
+  /** The active current for phase 1 in ampere. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
+  active_current_l1_a?: number;
+  /** The active current for phase 2 in ampere. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
+  active_current_l2_a?: number;
+  /** The active current for phase 3 in ampere. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
+  active_current_l3_a?: number;
+  /** The apparent current in amperes. Sum of all phases for 3-phase meter. Available for: `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_current_a?: number;
+  /** The apparent current for phase 1 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_current_l1_a?: number;
+  /** The apparent current for phase 2 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_current_l2_a?: number;
+  /** The apparent current for phase 3 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_current_l3_a?: number;
+  /** The reactive current in amperes. Sum of all phases for 3-phase meter. Available for: `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_current_a?: number;
+  /** The reactive current for phase 1 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_current_l1_a?: number;
+  /** The reactive current for phase 2 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_current_l2_a?: number;
+  /** The reactive current for phase 3 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_current_l3_a?: number;
+  /** The apparent power in volt-amperes. Sum of all phases for 3-phase meter. Available for: `HWE-SKT` (HWE-SKT-21 only), `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_power_va?: number;
+  /** The apparent power for phase 1 in volt-amperes. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_power_l1_va?: number;
+  /** The apparent power for phase 2 in volt-amperes. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_power_l2_va?: number;
+  /** The apparent power for phase 3 in volt-amperes. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_power_l3_va?: number;
+  /** The reactive power in volt-amperes reactive. Sum of all phases for 3-phase meter. Available for: `HWE-SKT` (HWE-SKT-21 only), `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_power_var?: number;
+  /** The reactive power for phase 1 in volt-amperes reactive. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_power_l1_var?: number;
+  /** The reactive power for phase 2 in volt-amperes reactive. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_power_l2_var?: number;
+  /** The reactive power for phase 3 in volt-amperes reactive. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_power_l3_var?: number;
+  /** The power factor, unitless. Available for: `HWE-SKT` (HWE-SKT-21 only), `HWE-KWH1`, `SDM230-wifi` */
+  active_power_factor?: number;
+  /** The power factor for phase 1, unitless. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_power_factor_l1?: number;
+  /** The power factor for phase 2, unitless. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_power_factor_l2?: number;
+  /** The power factor for phase 3, unitless. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_power_factor_l3?: number;
+  /** Line frequency in hertz. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  active_frequency_hz?: number;
+  /** Number of voltage sags detected by meter for phase 1. Available for: `HWE-P1` */
+  voltage_sag_l1_count?: number;
+  /** Number of voltage sags detected by meter for phase 2. Available for: `HWE-P1` */
+  voltage_sag_l2_count?: number;
+  /** Number of voltage sags detected by meter for phase 3. Available for: `HWE-P1` */
+  voltage_sag_l3_count?: number;
+  /** Number of voltage swells detected by meter for phase 1. Available for: `HWE-P1` */
+  voltage_swell_l1_count?: number;
+  /** Number of voltage swells detected by meter for phase 2. Available for: `HWE-P1` */
+  voltage_swell_l2_count?: number;
+  /** Number of voltage swells detected by meter for phase 3. Available for: `HWE-P1` */
+  voltage_swell_l3_count?: number;
+  /** Number of power failures detected by meter. Available for: `HWE-P1` */
+  any_power_fail_count?: number;
+  /** Number of ‘long’ power failes detected by meter. Available for: `HWE-P1` */
+  long_power_fail_count?: number;
+  /** The active average demand. Available for: `HWE-P1` */
+  active_power_average_w?: number;
+  /** The peak average demand of this month. Available for: `HWE-P1` */
+  montly_power_peak_w?: number;
+  /** Timetamp when peak demand was registered, formatted as YYMMDDhhmmss. Available for: `HWE-P1` */
+  montly_power_peak_timestamp?: number;
+  /**
+   * The gas meter reading in m3. Available for: `HWE-P1`
+   *
+   * @deprecated The gas meter reading in m3 for the first detected gas meter. Gas datapoints will be removed in favor of ‘external’ in a future software version, do not use this field in new implementations
+   */
+  total_gas_m3?: number;
+  /**
+   * The most recent gas update time stamp structured as YYMMDDhhmmss. Available for: `HWE-P1`
+   *
+   * @deprecated The time stamp for the first detected gas meter. Gas datapoints will be removed in favor of ‘external’ in a future software version, do not use this field in new implementations
+   */
+  gas_timestamp?: number;
+  /**
+   * The unique identifier for the gas meter, can be used to migrate to the ‘external’ datapoint. Available for: `HWE-P1`
+   *
+   * @deprecated The identifier of the first detected gas meter. Gas datapoints will be removed in favor of ‘external’ in a future software version; match it against `external[].unique_id` to migrate
+   */
+  gas_unique_id?: string;
+  /** A list of externally connected utility meters, see External datapoint for more information. Available for: `HWE-P1` */
+  external?: ExternalData[];
+  /** Active water usage in liters per minute. Available for: `HWE-WTR` */
+  active_liter_lpm?: number;
+  /** Total water usage in cubic meters since installation. Available for: `HWE-WTR` */
+  total_liter_m3?: number;
+  /** The usage of this value is in development and should not be used. Available for: `HWE-WTR` */
+  total_liter_offset_m3?: number;
+  /** The active tariff, matching one of the `total_power_import_t{n}_kwh` / `total_power_export_t{n}_kwh` readings. Only shown in the upstream v1 example response, not in its parameter table. Available for: `HWE-P1` */
+  active_tariff?: number;
+}
+
+/**
+ * API /data response for `HWE-SKT`
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/measurement
+ */
+export type EnergySocketDataResponse = Pick<
+  BaseDataResponse,
+  | 'wifi_ssid'
+  | 'wifi_strength'
+  | 'total_power_import_kwh'
+  | 'total_power_import_t1_kwh'
+  | 'total_power_export_kwh'
+  | 'total_power_export_t1_kwh'
+  | 'active_power_w'
+  | 'active_power_l1_w'
+  | 'active_voltage_v'
+  | 'active_current_a'
+  | 'active_frequency_hz'
+  | 'active_reactive_power_var'
+  | 'active_apparent_power_va'
+  | 'active_power_factor'
+>;
+
+/**
+ * API /data response for `HWE-P1`
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/measurement
+ */
+export type P1MeterDataResponse = Pick<
+  BaseDataResponse,
+  | 'unique_id'
+  | 'smr_version'
+  | 'meter_model'
+  | 'wifi_ssid'
+  | 'wifi_strength'
+  | 'total_power_import_kwh'
+  | 'total_power_import_t1_kwh'
+  | 'total_power_import_t2_kwh'
+  | 'total_power_import_t3_kwh'
+  | 'total_power_import_t4_kwh'
+  | 'total_power_export_kwh'
+  | 'total_power_export_t1_kwh'
+  | 'total_power_export_t2_kwh'
+  | 'total_power_export_t3_kwh'
+  | 'total_power_export_t4_kwh'
+  | 'active_power_w'
+  | 'active_power_l1_w'
+  | 'active_power_l2_w'
+  | 'active_power_l3_w'
+  | 'active_voltage_l1_v'
+  | 'active_voltage_l2_v'
+  | 'active_voltage_l3_v'
+  | 'active_current_a'
+  | 'active_current_l1_a'
+  | 'active_current_l2_a'
+  | 'active_current_l3_a'
+  | 'active_frequency_hz'
+  | 'voltage_sag_l1_count'
+  | 'voltage_sag_l2_count'
+  | 'voltage_sag_l3_count'
+  | 'voltage_swell_l1_count'
+  | 'voltage_swell_l2_count'
+  | 'voltage_swell_l3_count'
+  | 'any_power_fail_count'
+  | 'long_power_fail_count'
+  | 'active_power_average_w'
+  | 'montly_power_peak_w'
+  | 'montly_power_peak_timestamp'
+  | 'total_gas_m3'
+  | 'gas_timestamp'
+  | 'gas_unique_id'
+  | 'external'
+  | 'active_tariff'
+  // HWE-P1 never sends this field. It stays in the type because 1.5.0 exposed it, and removing it is breaking.
+  | 'total_liter_offset_m3'
+>;
+
+/**
+ * API /data response for `HWE-WTR`
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/measurement
+ */
+export type WaterMeterDataResponse = Pick<
+  BaseDataResponse,
+  'wifi_ssid' | 'wifi_strength' | 'total_liter_m3' | 'active_liter_lpm' | 'total_liter_offset_m3'
+>;
+
+/**
+ * Keys sent by every kWh meter, both 1-phase (`HWE-KWH1`, `SDM230-wifi`) and 3-phase (`HWE-KWH3`, `SDM630-wifi`).
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/measurement
+ */
+type KwhMeterCommonDataKeys =
+  | 'wifi_ssid'
+  | 'wifi_strength'
+  | 'total_power_import_kwh'
+  | 'total_power_import_t1_kwh'
+  | 'total_power_export_kwh'
+  | 'total_power_export_t1_kwh'
+  | 'active_power_w'
+  | 'active_power_l1_w'
+  | 'active_current_a'
+  | 'active_apparent_current_a'
+  | 'active_reactive_current_a'
+  | 'active_apparent_power_va'
+  | 'active_reactive_power_var'
+  | 'active_frequency_hz';
+
+/**
+ * API /data response for `HWE-KWH1` and `SDM230-wifi`
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/measurement
+ */
+export type KwhMeter1PhaseDataResponse = Pick<
+  BaseDataResponse,
+  KwhMeterCommonDataKeys | 'active_voltage_v' | 'active_power_factor'
+>;
+
+/**
+ * API /data response for `HWE-KWH3` and `SDM630-wifi`
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/measurement
+ */
+export type KwhMeter3PhaseDataResponse = Pick<
+  BaseDataResponse,
+  | KwhMeterCommonDataKeys
+  | 'active_power_l2_w'
+  | 'active_power_l3_w'
+  | 'active_voltage_l1_v'
+  | 'active_voltage_l2_v'
+  | 'active_voltage_l3_v'
+  | 'active_current_l1_a'
+  | 'active_current_l2_a'
+  | 'active_current_l3_a'
+  | 'active_apparent_current_l1_a'
+  | 'active_apparent_current_l2_a'
+  | 'active_apparent_current_l3_a'
+  | 'active_reactive_current_l1_a'
+  | 'active_reactive_current_l2_a'
+  | 'active_reactive_current_l3_a'
+  | 'active_apparent_power_l1_va'
+  | 'active_apparent_power_l2_va'
+  | 'active_apparent_power_l3_va'
+  | 'active_reactive_power_l1_var'
+  | 'active_reactive_power_l2_var'
+  | 'active_reactive_power_l3_var'
+  | 'active_power_factor_l1'
+  | 'active_power_factor_l2'
+  | 'active_power_factor_l3'
+>;
+
+/**
+ * The /api/v1/identify endpoint can be used to let the user identify the device. The status light will blink for a few seconds after calling this endpoint.
+ *
+ * Available for: `HWE-P1`, `HWE-SKT`, `HWE-WTR`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/identify
+ */
+export interface IdentifyResponse {
+  identify: 'ok';
+}
+
+/**
+ * The JSON error object the API responds with when a request fails on an endpoint that returns JSON.
+ *
+ * A path the device doesn't know (like `/api/v1/state` on a `HWE-P1`) or a method an endpoint doesn't accept
+ * (like `GET` on `/api/v1/identify`) is answered by the device's router instead, with a `text/html` body
+ * such as `Nothing matches the given URI`.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/error-handling
+ */
+export interface ErrorResponse {
+  error: {
+    id: ErrorCodes;
+    description: string;
+  };
+}
+
+/**
+ * The /api/v1/system endpoint can be used to configure system settings.
+ * Currently the only available option it to turn on and off all cloud communication.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/system
+ */
+export interface SystemResponse {
+  /** Whether all cloud communication is turned on. Available for: `HWE-P1`, `HWE-SKT`, `HWE-WTR`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
+  cloud_enabled: boolean;
+}
+
+/**
+ * The parameters to update with a PUT on the /api/v1/system endpoint.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/system
+ */
+export interface SystemPutParams {
+  /** Turns all cloud communication on or off. Available for: `HWE-P1`, `HWE-SKT`, `HWE-WTR`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
+  cloud_enabled: boolean;
+}
+
+/**
+ * The /api/v1/telegram endpoint returns the most recent, valid telegram that was given by the P1 meter,
+ * therefore this endpoint is only available for the HWE-P1.
+ *
+ * The telegram validated with its CRC, but not parsed in any form.
+ *
+ * Note that this endpoint returns plain text instead of formatted JSON, even when an error occours (see Error handling)
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/telegram
+ */
+export type TelegramResponse = string;
+
+/**
+ * When you perform an invalid request or something went wrong, the API will respond with an error message.
+ * You have to check if the HTTP status code returns 200 OK before parsing the result.
+ * If you use an endpoint that returns JSON, you also will receive an object with some error information.
+ *
+ * @link https://api-documentation.homewizard.com/docs/v1/error-handling
+ */
+export enum ErrorCodes {
+  BODY_CONTAINS_INVALID_JSON = 2,
+  NO_DATA_IN_BODY = 5, // undocumented but received it
+  INVALID_VALUE_FOR_PARAMETER = 7,
+  PARAMETER_IS_NOT_MODIFIABLE = 8,
+  // oxlint-disable-next-line typescript/no-duplicate-enum-values -- REQUEST_TO_LONG below is its deprecated alias
+  REQUEST_TOO_LARGE = 201,
+  /**
+   * @deprecated Use `ErrorCodes.REQUEST_TOO_LARGE`, the upstream name. Declared last so `ErrorCodes[201]` still returns `'REQUEST_TO_LONG'`.
+   */
+  REQUEST_TO_LONG = 201,
+  API_DISABLED = 202,
+  INTERNAL_ERROR = 901,
+}

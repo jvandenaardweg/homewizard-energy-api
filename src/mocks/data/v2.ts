@@ -10,7 +10,7 @@ import {
   PlugInBatterySystem,
   User,
   UserCreated,
-} from '@/v2/types';
+} from '@/types';
 
 /*
  * Fixtures copied from the examples in the API v2 docs, https://api-documentation.homewizard.com/docs/category/api-v2

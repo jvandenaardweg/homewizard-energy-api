@@ -1,4 +1,4 @@
-import { MdnsTxtRecord } from '@/types';
+import { MdnsTxtRecord } from '@/v1/types';
 
 export const txtRecordMock = {
   api_enabled: '1',

@@ -1,29 +1,14 @@
-import { HomeWizardEnergyDiscovery } from '@/homewizard-energy-discovery';
+import { Discovery } from '..';
 
-const discovery = new HomeWizardEnergyDiscovery();
+// Lists the devices with the API v2 on the network for 10 seconds
+const discovery = new Discovery();
 
 discovery.start();
 
 discovery.on('response', response => {
-  console.log('response', response);
-  // {
-  //   ip: '192.168.1.34',
-  //   hostname: 'energysocket-25FF1A.local',
-  //   fqdn: 'energysocket-25FF1A._hwenergy._tcp.local',
-  //   txt: {
-  //     api_enabled: '1',
-  //     path: '/api/v1',
-  //     serial: '3c39e725ff1a',
-  //     product_name: 'Energy Socket',
-  //     product_type: 'HWE-SKT'
-  //   }
-  // }
+  console.log(
+    `${response.ip} ${response.txt.product_type} ${response.txt.id} (API ${response.txt.api_version})`,
+  );
 });
 
-discovery.on('error', error => {
-  console.log('error', error);
-});
-
-discovery.on('warning', error => {
-  console.log('warning', error);
-});
+setTimeout(() => discovery.stop(), 10000);
