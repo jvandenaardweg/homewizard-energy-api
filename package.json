@@ -91,5 +91,13 @@
     "*.{ts,js,mjs,cjs,json,md,yml,yaml}": [
       "prettier --write"
     ]
+  },
+  "overrides": {
+    "release-it": {
+      "proxy-agent": "^8.0.3"
+    },
+    "nodemon": {
+      "minimatch": "^11.0.8"
+    }
   }
 }
