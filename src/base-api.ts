@@ -31,6 +31,23 @@ function describeCall(method: string, url: RequestParameters[0]): string {
   return `Api ${method} call at ${url}`;
 }
 
+/**
+ * Aborts `controller` after `ms` milliseconds, then rejects `promise` with the error from `createError`.
+ * `cancel()` stops the timer, after which `promise` never settles.
+ */
+function abortAfter(ms: number, controller: AbortController, createError: () => Error) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  const promise = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(createError());
+    }, ms);
+  });
+
+  return { promise, cancel: () => clearTimeout(timer) };
+}
+
 function formatError(error: unknown): string {
   if (error instanceof Error) return `${error.name}: ${error.message}`;
 
@@ -145,6 +162,18 @@ export interface BaseApiOptions {
    *
    * When it's exceeded, the request throws a `HomeWizardEnergyApiTimeoutError`. It isn't used when
    * `requestOptions.signal` is set. Other network failures throw the error from `undici` as is.
+   *
+   * A connect that is still pending carries on in the background until undici's own connect timeout
+   * of 10 seconds, which can keep a short script running that long after the error. To stop the
+   * connect as well, pass a dispatcher with a matching connect timeout:
+   *
+   * @example
+   * import { Agent } from 'undici';
+   *
+   * new P1MeterApi('http://192.168.1.35', {
+   *   timeout: 3000,
+   *   requestOptions: { dispatcher: new Agent({ connect: { timeout: 3000 } }) },
+   * });
    */
   timeout?: number;
   /** Logging options */
@@ -241,7 +270,7 @@ export class BaseApi {
   protected async request(
     url: RequestParameters[0],
     options: RequestParameters[1],
-  ): Promise<Dispatcher.ResponseData> {
+  ): Promise<Dispatcher.ResponseData<unknown>> {
     const requestOptions = {
       ...this.requestOptions,
       ...options,
@@ -254,29 +283,36 @@ export class BaseApi {
       return undiciRequest(url, requestOptions);
     }
 
-    // undici accepts an EventEmitter as signal, which works on every supported Node version
-    const signal = new EventEmitter();
-    let isTimedOut = false;
+    const controller = new AbortController();
 
-    const timer = setTimeout(() => {
-      isTimedOut = true;
-      signal.emit('abort');
-    }, timeout);
-
-    try {
-      return await undiciRequest(url, { ...requestOptions, signal });
-    } catch (error) {
-      if (isTimedOut) {
-        throw new HomeWizardEnergyApiTimeoutError(
+    // Since undici 7, aborting doesn't interrupt a pending connect, which undici allows 10 seconds for.
+    // So the timeout settles the call itself, and the abort only cleans up the request.
+    const timeoutError = abortAfter(
+      timeout,
+      controller,
+      () =>
+        new HomeWizardEnergyApiTimeoutError(
           `${describeCall(requestOptions.method || 'GET', url)} timed out after ${timeout}ms`,
           String(url),
           timeout,
-        );
+        ),
+    );
+
+    try {
+      // The race also handles the request rejecting after the timeout, so that isn't unhandled
+      return await Promise.race([
+        undiciRequest(url, { ...requestOptions, signal: controller.signal }),
+        timeoutError.promise,
+      ]);
+    } catch (error) {
+      if (controller.signal.aborted) {
+        // The abort can reject the request just before the timeout error
+        return timeoutError.promise;
       }
 
       throw error;
     } finally {
-      clearTimeout(timer);
+      timeoutError.cancel();
     }
   }
 
@@ -288,14 +324,14 @@ export class BaseApi {
     return this.loggerOptions.method(loggerPrefix, ...args);
   }
 
-  protected isResponseOk(response: Dispatcher.ResponseData): boolean {
+  protected isResponseOk(response: Dispatcher.ResponseData<unknown>): boolean {
     return response.statusCode >= 200 && response.statusCode < 300;
   }
 
   protected async throwResponseError(
     url: string,
     method: string,
-    response: Dispatcher.ResponseData,
+    response: Dispatcher.ResponseData<unknown>,
   ): Promise<never> {
     const { statusCode, body } = response;
     const text = await body.text();
@@ -315,7 +351,7 @@ export class BaseApi {
   protected async parseJsonResponse<T>(
     url: string,
     method: string,
-    response: Dispatcher.ResponseData,
+    response: Dispatcher.ResponseData<unknown>,
   ): Promise<T> {
     const text = await response.body.text();
 

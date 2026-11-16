@@ -259,6 +259,19 @@ const p1Meter = new P1MeterApi('http://192.168.1.35', {
 });
 ```
 
+When the device is unreachable, the error arrives on time, but the connect attempt carries on in the background until undici's own 10 second connect timeout. In a long-running app that doesn't matter, but it can keep a short script running for those 10 seconds. To stop the connect as well, pass an undici 8 `Agent` with a matching connect timeout:
+
+```typescript
+import { Agent } from 'undici';
+
+const p1Meter = new P1MeterApi('http://192.168.1.35', {
+  timeout: 3000,
+  requestOptions: {
+    dispatcher: new Agent({ connect: { timeout: 3000 } }),
+  },
+});
+```
+
 Other network failures, like a refused connection, throw the error from [undici](https://github.com/nodejs/undici) as is. Its `code`, like `ECONNREFUSED`, tells you what went wrong.
 
 ## Discover HomeWizard devices in your network
