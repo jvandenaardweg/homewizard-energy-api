@@ -51,7 +51,7 @@ This library supports the HomeWizard devices that have the v1 Local API:
 
 Make sure to enable the `Local API` setting for each device you want to use with this library. You can do this in the HomeWizard app.
 
-The library doesn't support the v2 Local API yet. That leaves out devices that only have API v2, like the Plug-In Battery (`HWE-BAT`). HomeWizard no longer develops API v1 and plans to remove it in the future, but hasn't given a date. On devices that have both, such as the P1 meter and kWh meters, API v1 can be turned off, so keep it enabled to use this library.
+The library doesn't support the v2 Local API yet. That leaves out devices that only have API v2, like the Plug-In Battery (`HWE-BAT`). HomeWizard [no longer develops API v1](https://api-documentation.homewizard.com/docs/changelog) and plans to remove it in the future, but hasn't given a date. On devices that have both, such as the P1 meter and kWh meters, API v1 can be [turned off](https://api-documentation.homewizard.com/docs/v2/system), so keep it enabled to use this library.
 
 Each class assumes it talks to the device type it's named after and doesn't check this. For example, a `P1MeterApi` pointed at an Energy Socket returns the socket's data from `getData()`. Use `getBasicInformation()` and its `product_type`, or the discovery `txt.product_type`, to pick the right class.
 
@@ -251,7 +251,7 @@ A path the device doesn't know, or a method an endpoint doesn't accept, returns 
 
 ### Timeouts and network errors
 
-A request that takes longer than 5 seconds, including connecting to the device, throws a `HomeWizardEnergyApiTimeoutError`. Change it with the `timeout` option, or set it to `0` to turn it off. It isn't used when you pass your own `requestOptions.signal`.
+A request that doesn't get the response headers within 5 seconds, including the time to connect to the device, throws a `HomeWizardEnergyApiTimeoutError`. Reading the body is covered by the 2 second `requestOptions.bodyTimeout`. Change it with the `timeout` option, or set it to `0` to turn it off. It isn't used when you pass your own `requestOptions.signal`.
 
 ```typescript
 const p1Meter = new P1MeterApi('http://192.168.1.35', {
