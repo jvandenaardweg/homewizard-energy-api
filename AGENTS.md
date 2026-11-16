@@ -18,7 +18,7 @@ This is a typed Node client for the HomeWizard Energy local HTTP API (P1 meter, 
 - `BaseApi` (`src/base-api.ts`) holds the request, error, logging and polling logic as `protected` methods. Each device class extends it and re-exposes the methods that device supports as public overrides, narrowing the generic to its own response type. New device methods follow the same pattern.
 - Polling is exposed as `api.polling.<method>.start() / stop() / on('response' | 'error', …)`, backed by one EventEmitter per instance that emits method-scoped events (`getData:response`, `getData:error`). A device class adds polling methods by extending the `polling` getter, and sets each method's `on` to `this.pollingOn('<method>')` so its listeners receive only that method's events.
 - Response types in `src/types.ts` mirror the upstream API exactly. Field names stay snake_case, and data points are optional because devices omit null values. Each field's JSDoc names the devices that send it ("Available for: `HWE-P1`"), and each type has an `@link` to the upstream docs. Those links point at https://api-documentation.homewizard.com (the old `homewizard-energy-api.readthedocs.io` site is offline). These comments ship in `dist` as editor docs.
-- Both `@/` alias imports and relative imports appear in `src`. The `@/` alias works in `dist` only because the build rewrites it with `resolve-tspaths`, and vitest resolves it through its own alias in `vitest.config.ts`.
+- Both `@/` alias imports and relative imports appear in `src`. The `@/` alias works in `dist` only because the build rewrites it with `resolve-tspaths`, and vitest resolves it through its own alias in `vitest.config.mts`.
 
 ## Adding an endpoint or device
 

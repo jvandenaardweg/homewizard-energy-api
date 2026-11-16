@@ -1,5 +1,5 @@
+import { fileURLToPath } from 'node:url';
 import { configDefaults, defineConfig } from 'vitest/config';
-import path from 'path';
 
 export default defineConfig({
   test: {
@@ -11,9 +11,9 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, '.claude/**'],
     coverage: {
       provider: 'istanbul',
-      all: true,
+      // Since vitest 4, `include` alone decides which files the report counts, tested or not
       include: ['src/**'],
-      exclude: ['**/vitest.setup.ts', '**/mocks/**', '**/examples/**'],
+      exclude: ['**/mocks/**', '**/examples/**'],
       reporter: ['text'],
     },
   },
@@ -21,7 +21,7 @@ export default defineConfig({
     alias: [
       {
         find: '@',
-        replacement: path.resolve(__dirname, 'src'),
+        replacement: fileURLToPath(new URL('./src', import.meta.url)),
       },
     ],
   },
