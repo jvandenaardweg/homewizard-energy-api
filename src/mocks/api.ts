@@ -38,109 +38,45 @@ interface ApiMocks {
   [key: string]: ApiMockHandler;
 }
 
-export const apiMocks: ApiMocks = {
-  getBasicInformation: ({ statusCode, response, headers }) => {
-    mockApiPool
-      .intercept({
-        path: '/api',
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: response,
-        statusCode: statusCode || 200,
-        responseOptions: { headers: headers || JSON_HEADERS },
-      }));
-  },
-  getData: ({ statusCode, response, headers }) => {
-    mockApiPool
-      .intercept({
-        path: '/api/v1/data',
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: response,
-        statusCode: statusCode || 200,
-        responseOptions: { headers: headers || JSON_HEADERS },
-      }));
-  },
-  getSystem: ({ statusCode, response, headers }) => {
-    mockApiPool
-      .intercept({
-        path: '/api/v1/system',
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: response,
-        statusCode: statusCode || 200,
-        responseOptions: { headers: headers || JSON_HEADERS },
-      }));
-  },
-  getTelegram: ({ statusCode, response, headers }) => {
-    mockApiPool
-      .intercept({
-        path: '/api/v1/telegram',
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: response,
-        statusCode: statusCode || 200,
-        responseOptions: { headers: headers || TEXT_HEADERS },
-      }));
-  },
-  updateSystem: ({ statusCode, response, headers }) => {
-    mockApiPool
-      .intercept({
-        path: '/api/v1/system',
-        method: 'PUT',
-      })
-      .reply(() => ({
-        data: response,
-        statusCode: statusCode || 200,
-        responseOptions: { headers: headers || JSON_HEADERS },
-      }));
-  },
-  getState: ({ statusCode, response, headers }) => {
-    mockApiPool
-      .intercept({
-        path: '/api/v1/state',
-        method: 'GET',
-      })
-      .reply(() => ({
-        data: response,
-        statusCode: statusCode || 200,
-        responseOptions: { headers: headers || JSON_HEADERS },
-      }));
-  },
-  updateState: ({ statusCode, response, headers }) => {
-    mockApiPool
-      .intercept({
-        path: '/api/v1/state',
-        method: 'PUT',
-      })
-      .reply(({ body }) => {
-        if (!body) {
-          return {
-            statusCode: 400,
-          };
-        }
+interface MockEndpointOptions {
+  /** The content type the device sends for this endpoint. Defaults to JSON. */
+  defaultHeaders?: Record<string, string>;
+  /** Reply with a 400 when the request has no body, like the device does for a PUT without one. */
+  requireBody?: boolean;
+}
 
+/**
+ * Returns a mock handler for one endpoint. Each call intercepts a single request.
+ */
+function mockEndpoint(
+  path: string,
+  method: 'GET' | 'PUT',
+  { defaultHeaders = JSON_HEADERS, requireBody = false }: MockEndpointOptions = {},
+): ApiMockHandler {
+  return ({ statusCode, response, headers }) => {
+    mockApiPool.intercept({ path, method }).reply(({ body }) => {
+      if (requireBody && !body) {
         return {
-          data: response,
-          statusCode: statusCode || 200,
-          responseOptions: { headers: headers || JSON_HEADERS },
+          statusCode: 400,
         };
-      });
-  },
-  identify: ({ statusCode, response, headers }) => {
-    mockApiPool
-      .intercept({
-        path: '/api/v1/identify',
-        method: 'PUT',
-      })
-      .reply(() => ({
+      }
+
+      return {
         data: response,
         statusCode: statusCode || 200,
-        responseOptions: { headers: headers || JSON_HEADERS },
-      }));
-  },
+        responseOptions: { headers: headers || defaultHeaders },
+      };
+    });
+  };
+}
+
+export const apiMocks: ApiMocks = {
+  getBasicInformation: mockEndpoint('/api', 'GET'),
+  getData: mockEndpoint('/api/v1/data', 'GET'),
+  getSystem: mockEndpoint('/api/v1/system', 'GET'),
+  getTelegram: mockEndpoint('/api/v1/telegram', 'GET', { defaultHeaders: TEXT_HEADERS }),
+  updateSystem: mockEndpoint('/api/v1/system', 'PUT'),
+  getState: mockEndpoint('/api/v1/state', 'GET'),
+  updateState: mockEndpoint('/api/v1/state', 'PUT', { requireBody: true }),
+  identify: mockEndpoint('/api/v1/identify', 'PUT'),
 };
