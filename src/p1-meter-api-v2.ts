@@ -1,4 +1,5 @@
 import { BaseApiV2, BaseApiV2Options, BatteriesPolling } from '@/base-api-v2';
+import { HomeWizardEnergyWebSocket } from '@/websocket-v2';
 import { BasePolling, PollMethod } from '@/base-api';
 import { BasicInformationResponse, TelegramResponse } from '@/types';
 import {
@@ -56,6 +57,10 @@ export class P1MeterApiV2 extends BaseApiV2 {
 
   constructor(baseUrl: string, options?: BaseApiV2Options) {
     super(baseUrl, options);
+  }
+
+  get websocket(): HomeWizardEnergyWebSocket<P1MeterMeasurementResponse> {
+    return super.websocket as HomeWizardEnergyWebSocket<P1MeterMeasurementResponse>;
   }
 
   /**

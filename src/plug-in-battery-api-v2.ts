@@ -1,4 +1,5 @@
 import { BaseApiV2, BaseApiV2Options } from '@/base-api-v2';
+import { HomeWizardEnergyWebSocket } from '@/websocket-v2';
 import { BasePolling } from '@/base-api';
 import { BasicInformationResponse } from '@/types';
 import { PlugInBatteryMeasurementResponse, SystemV2PutParams, SystemV2Response } from '@/types-v2';
@@ -39,6 +40,10 @@ export class PlugInBatteryApiV2 extends BaseApiV2 {
 
   constructor(baseUrl: string, options?: BaseApiV2Options) {
     super(baseUrl, options);
+  }
+
+  get websocket(): HomeWizardEnergyWebSocket<PlugInBatteryMeasurementResponse> {
+    return super.websocket as HomeWizardEnergyWebSocket<PlugInBatteryMeasurementResponse>;
   }
 
   get polling(): PlugInBatteryPollingV2 {

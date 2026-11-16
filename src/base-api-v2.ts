@@ -22,6 +22,11 @@ import {
   UserResponse,
 } from '@/types-v2';
 import { TelegramResponse } from '@/types';
+import {
+  HomeWizardEnergyWebSocket,
+  WebSocketConnectionOptions,
+  WebSocketOptions,
+} from '@/websocket-v2';
 
 export class HomeWizardEnergyApiV2ResponseError extends HomeWizardEnergyApiResponseError {
   /**
@@ -75,6 +80,8 @@ export interface ApiV2Options {
 export interface BaseApiV2Options extends Omit<BaseApiOptions, 'api'> {
   /** Options specific to the HomeWizard Energy API v2 */
   api?: ApiV2Options;
+  /** Options of the WebSocket (`api.websocket`) */
+  websocket?: WebSocketOptions;
 }
 
 export interface PairOptions {
@@ -141,6 +148,9 @@ export class BaseApiV2 extends BaseApi<BaseMeasurementResponse> {
   protected token: ApiV2Options['token'];
   protected readonly identifier: ApiV2Options['identifier'];
   protected readonly dispatcher: Dispatcher | undefined;
+  protected readonly tlsOptions: WebSocketConnectionOptions['tls'];
+  protected readonly websocketOptions: WebSocketOptions | undefined;
+  protected webSocket: HomeWizardEnergyWebSocket | undefined;
 
   constructor(baseUrl: string, options?: BaseApiV2Options) {
     super(baseUrl, {
@@ -157,18 +167,23 @@ export class BaseApiV2 extends BaseApi<BaseMeasurementResponse> {
     this.token = options?.api?.token;
     this.identifier = options?.api?.identifier;
 
+    this.websocketOptions = options?.websocket;
+
+    const verifyCertificate = options?.api?.verifyCertificate !== false;
+
+    // The same validation of the certificate is used for the HTTPS requests and the WebSocket
+    this.tlsOptions = {
+      ca: options?.api?.ca || HOMEWIZARD_CA_CERT,
+      rejectUnauthorized: verifyCertificate,
+      checkServerIdentity: createCheckServerIdentity(
+        verifyCertificate ? this.identifier : undefined,
+      ),
+    };
+
     // Only needed when using HTTPS and when the user did not provide its own dispatcher
     if (baseUrl.startsWith('https:') && !options?.requestOptions?.dispatcher) {
-      const verifyCertificate = options?.api?.verifyCertificate !== false;
-
       this.dispatcher = new Agent({
-        connect: {
-          ca: options?.api?.ca || HOMEWIZARD_CA_CERT,
-          rejectUnauthorized: verifyCertificate,
-          checkServerIdentity: createCheckServerIdentity(
-            verifyCertificate ? this.identifier : undefined,
-          ),
-        },
+        connect: this.tlsOptions,
       });
     }
   }
@@ -199,8 +214,39 @@ export class BaseApiV2 extends BaseApi<BaseMeasurementResponse> {
     this.token = token;
   }
 
+  /**
+   * The WebSocket of the device. The device pushes the data when it changes, so there is no need to poll the device.
+   *
+   * @example
+   * api.websocket.on('measurement', measurement => console.log(measurement));
+   * api.websocket.subscribe('measurement');
+   * api.websocket.start();
+   *
+   * @link https://api-documentation.homewizard.com/docs/v2/websocket
+   */
+  get websocket(): HomeWizardEnergyWebSocket {
+    if (!this.webSocket) {
+      this.webSocket = new HomeWizardEnergyWebSocket(
+        // http://... => ws://... and https://... => wss://...
+        `${this.baseUrl.replace(/^http/, 'ws')}/api/ws`,
+        {
+          getToken: () => this.token,
+          tls: this.baseUrl.startsWith('https:') ? this.tlsOptions : undefined,
+          logger: this.loggerOptions,
+          websocket: this.websocketOptions,
+        },
+      );
+    }
+
+    return this.webSocket;
+  }
+
   /** Closes the connections to the device. Use this when you don't need this instance anymore. */
   async close(): Promise<void> {
+    if (this.webSocket) {
+      this.webSocket.stop();
+    }
+
     if (this.dispatcher) {
       await this.dispatcher.close();
     }

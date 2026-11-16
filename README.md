@@ -266,7 +266,23 @@ Good to know:
 - Errors of the API v2 are thrown as `HomeWizardEnergyApiV2ResponseError`, with the code of the device in `errorCode` (for example `user:unauthorized`).
 - The certificate of the device is validated with the HomeWizard CA certificate (included). Use `api.verifyCertificate: false` to turn this off.
 - Devices with the API v2 are discovered on another mDNS domain, use `new HomeWizardEnergyDiscovery({ types: ['hwenergy', 'homewizard'] })` and `isMdnsTxtRecordV2(response.txt)`.
-- The WebSocket of the API v2 is not implemented, use the polling interface.
+
+### WebSocket
+
+With the API v2 the device can push its data over a WebSocket, so there is no need to poll. The WebSocket uses the same token and the same validation of the certificate.
+
+```typescript
+p1Meter.websocket.on('measurement', measurement => console.log(measurement.power_w));
+p1Meter.websocket.on('error', error => console.log(error));
+
+p1Meter.websocket.subscribe('measurement'); // or 'system', 'batteries', 'device', 'user', '*'
+p1Meter.websocket.start();
+
+// later
+p1Meter.websocket.stop();
+```
+
+The connection is opened again (and the subscriptions are sent again) when it is lost, see the `websocket` options (`reconnect`, `reconnectInterval` and `heartbeatInterval`). `updateSystem()`, `updateBatteries()`, `request()` and `identify()` are also available on the WebSocket.
 
 ## Discover HomeWizard devices in your network
 

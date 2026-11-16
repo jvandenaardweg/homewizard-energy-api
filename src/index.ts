@@ -16,3 +16,4 @@ export * from './types';
 export * from './types-v2';
 export * from './water-meter-api';
 export * from './water-meter-api-v2';
+export * from './websocket-v2';
