@@ -14,6 +14,27 @@ describe('utils/buffer', () => {
       const actual = bufferArrayToJSON(mockMdnsTxtData);
       expect(actual).toEqual(expected);
     });
+
+    it('should keep every "=" after the first one in the value', () => {
+      const actual = bufferArrayToJSON([Buffer.from('token=a=b==')]);
+      expect(actual).toStrictEqual({ token: 'a=b==' });
+    });
+
+    it('should keep a key without "=" with an undefined value', () => {
+      const actual = bufferArrayToJSON([Buffer.from('flag')]);
+      expect(actual).toStrictEqual({ flag: undefined });
+    });
+
+    it('should skip entries without a key', () => {
+      const actual = bufferArrayToJSON([Buffer.from('=value'), Buffer.from('')]);
+      expect(actual).toStrictEqual({});
+    });
+
+    it('should not let a "__proto__" entry change the prototype', () => {
+      const actual = bufferArrayToJSON([Buffer.from('__proto__=x'), Buffer.from('serial=1')]);
+      expect(Object.getPrototypeOf(actual)).toBe(Object.prototype);
+      expect(Object.keys(actual)).toStrictEqual(['serial']);
+    });
   });
   describe('isBufferArray', () => {
     it('should true if invoked with a buffer array', () => {
