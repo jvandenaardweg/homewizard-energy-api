@@ -13,7 +13,17 @@ import { createCheckServerIdentity, HOMEWIZARD_CA_CERT } from './tls';
 import { API_MAJOR_VERSION, DOCUMENTED_API_VERSION } from './types';
 import type { DeviceSocketConnection } from './websocket';
 
-export interface DeviceOptions {
+/**
+ * What a device needs to connect: its address, the token and the identifier. `pair()` returns all three, so store
+ * that object and pass it to the device classes.
+ *
+ * @example
+ * const credentials = await pair('192.168.1.35', 'my-app');
+ * const p1 = new P1Meter(credentials);
+ */
+export interface Credentials {
+  /** The IP address or hostname of the device, for example `192.168.1.35`. */
+  host: string;
   /**
    * The token from `pair()`. Without it, every request fails with `user:unauthorized`.
    *
@@ -30,6 +40,10 @@ export interface DeviceOptions {
    * @link https://api-documentation.homewizard.com/docs/v2/authorization#https
    */
   identifier?: string;
+}
+
+/** How a device connects. All optional. */
+export interface DeviceOptions {
   /**
    * Skip all certificate checks, so any device at this address is accepted. Only use this for debugging.
    */
@@ -51,7 +65,7 @@ export interface DeviceOptions {
 }
 
 /** @internal */
-export interface ClientOptions extends DeviceOptions {
+export interface ClientOptions extends DeviceOptions, Omit<Credentials, 'host'> {
   /** Allows a missing `identifier` without `insecure`, so pairing can learn it. */
   allowMissingIdentifier?: boolean;
   /** Receives the Common Name of each certificate that passes the check. */

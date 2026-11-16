@@ -66,8 +66,16 @@ export function mockV2(path: string, method: string, options: MockV2Options = {}
 }
 
 /** The options for a device in the tests: the mock agent, an identifier and a token. */
-export const mockV2DeviceOptions = {
-  dispatcher: mockApiAgent,
+/** The credentials of the mocked device, as `pair()` returns them. */
+export const mockV2Credentials = {
+  host: mockV2Host,
   identifier: 'appliance/p1dongle/5c2fafaabbcc',
   token: '0123456789ABCDEF0123456789ABCDEF',
+};
+
+/** The options for the internal `Client`: the credentials without the host, and the mock dispatcher. */
+export const mockV2DeviceOptions = {
+  dispatcher: mockApiAgent,
+  identifier: mockV2Credentials.identifier,
+  token: mockV2Credentials.token,
 };

@@ -1,4 +1,5 @@
-import { mockV2, mockV2DeviceOptions, mockV2Host } from '@/mocks/api-v2';
+import { mockApiAgent } from '@/mocks/api';
+import { mockV2, mockV2Credentials, mockV2Host } from '@/mocks/api-v2';
 import {
   mockV2Batteries,
   mockV2DeviceInformation,
@@ -76,7 +77,7 @@ const batteriesCases: MethodCase[] = [
 const devices = [
   {
     name: 'P1Meter',
-    create: () => new P1Meter(mockV2Host, mockV2DeviceOptions),
+    create: () => new P1Meter(mockV2Credentials, { dispatcher: mockApiAgent }),
     Class: P1Meter,
     cases: [
       ...commonCases(mockV2P1MeterMeasurement, mockV2P1MeterSystem),
@@ -89,7 +90,7 @@ const devices = [
   },
   {
     name: 'KwhMeter1Phase',
-    create: () => new KwhMeter1Phase(mockV2Host, mockV2DeviceOptions),
+    create: () => new KwhMeter1Phase(mockV2Credentials, { dispatcher: mockApiAgent }),
     Class: KwhMeter1Phase,
     cases: [
       ...commonCases(mockV2KwhMeter1PhaseMeasurement, mockV2KwhMeterSystem),
@@ -100,7 +101,7 @@ const devices = [
   },
   {
     name: 'KwhMeter3Phase',
-    create: () => new KwhMeter3Phase(mockV2Host, mockV2DeviceOptions),
+    create: () => new KwhMeter3Phase(mockV2Credentials, { dispatcher: mockApiAgent }),
     Class: KwhMeter3Phase,
     cases: [
       ...commonCases(mockV2KwhMeter3PhaseMeasurement, mockV2KwhMeterSystem),
@@ -111,7 +112,7 @@ const devices = [
   },
   {
     name: 'PlugInBattery',
-    create: () => new PlugInBattery(mockV2Host, mockV2DeviceOptions),
+    create: () => new PlugInBattery(mockV2Credentials, { dispatcher: mockApiAgent }),
     Class: PlugInBattery,
     cases: [
       ...commonCases(mockV2PlugInBatteryMeasurement, mockV2PlugInBatterySystem),
@@ -176,25 +177,23 @@ describe.each(devices)('v2.$name', ({ create, Class, cases, missing }) => {
     expect(onDelete.mock.calls[0][0].body).toStrictEqual({ name: 'cloud/cloud_user' });
   });
 
-  it('should pair and return the device with the token and identifier', async () => {
+  it('should pair and return the device with the credentials', async () => {
     mockV2('/api/user', 'POST', { response: mockV2UserCreated });
     const onRequest = vi.fn();
     mockV2('/api', 'GET', { response: mockV2DeviceInformation['HWE-P1'], onRequest });
 
-    const { device, token, identifier, name } = await (Class as typeof P1Meter).pair(
-      mockV2Host,
-      'new_user',
-      {
-        dispatcher: mockV2DeviceOptions.dispatcher,
-        identifier: mockV2DeviceOptions.identifier,
-      },
-    );
+    const { device, credentials } = await (Class as typeof P1Meter).pair(mockV2Host, 'new_user', {
+      dispatcher: mockApiAgent,
+      identifier: mockV2Credentials.identifier,
+    });
 
     expect(device).toBeInstanceOf(Class);
-    expect({ token, identifier, name }).toStrictEqual({
+    expect(device.host).toBe(mockV2Host);
+    expect(credentials).toStrictEqual({
+      host: mockV2Host,
       token: mockV2UserCreated.token,
-      identifier: mockV2DeviceOptions.identifier,
       name: mockV2UserCreated.name,
+      identifier: mockV2Credentials.identifier,
     });
 
     await device.getDevice();
@@ -205,6 +204,13 @@ describe.each(devices)('v2.$name', ({ create, Class, cases, missing }) => {
 
   it('should close its connections', async () => {
     await expect(create().close()).resolves.toBeUndefined();
+  });
+
+  it('should create its own TLS agent without options', async () => {
+    const device = new (Class as typeof P1Meter)(mockV2Credentials);
+
+    expect(device.host).toBe(mockV2Host);
+    await expect(device.close()).resolves.toBeUndefined();
   });
 
   it('should pair without options', async () => {

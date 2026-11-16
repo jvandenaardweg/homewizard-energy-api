@@ -1,4 +1,4 @@
-import { Client, DeviceOptions } from '../client';
+import { Client, Credentials, DeviceOptions } from '../client';
 import * as endpoints from '../endpoints';
 import { pair, PairOptions, PairResult, splitPairOptions } from '../pairing';
 import { DeviceInformation, System, User } from '../types';
@@ -20,15 +20,17 @@ export interface Users {
   delete(name: string): Promise<void>;
 }
 
-export interface PairedDevice<TDevice> extends PairResult {
-  /** The device, set up with the new token and identifier. */
+export interface PairedDevice<TDevice> {
+  /** The host, token and identifier. Store them, to create the device next time without pairing again. */
+  credentials: PairResult;
+  /** The device, set up with the credentials. */
   device: TDevice;
 }
 
 /**
  * What every device with the API v2 has: device information, measurement, system, users and the WebSocket.
  *
- * @internal Use the device classes, such as `v2.P1Meter`.
+ * @internal Use the device classes, such as `P1Meter`.
  */
 export abstract class Device<
   TMeasurement,
@@ -38,12 +40,18 @@ export abstract class Device<
   TUpdates extends object = { system: TSystemUpdate },
 > {
   protected readonly client: Client;
+  /** The IP address or hostname this device connects to, as given in the credentials. */
+  readonly host: string;
 
   /**
-   * @param host The IP address or hostname of the device, for example `192.168.1.35`.
+   * @param credentials The host, token and identifier, as `pair()` returns them.
+   * @param options How to connect, for example a `timeout` or a `logger`.
    */
-  constructor(host: string, options: DeviceOptions) {
-    this.client = new Client(host, options);
+  constructor(credentials: Credentials, options: DeviceOptions = {}) {
+    const { host, token, identifier } = credentials;
+
+    this.host = host;
+    this.client = new Client(host, { ...options, token, identifier });
   }
 
   /**
@@ -71,27 +79,22 @@ export abstract class Device<
   }
 
   /**
-   * Pairs with the device, see `v2.pair()`, and returns the device set up with the new token and identifier.
-   * Store the token and identifier: next time, create the device with them instead of pairing again.
+   * Pairs with the device, see `pair()`, and returns the device set up with the new credentials. Store the
+   * credentials: next time, create the device with them instead of pairing again.
    *
    * @example
-   * const { device, token, identifier } = await v2.P1Meter.pair('192.168.1.35', 'my-app');
+   * const { device, credentials } = await P1Meter.pair('192.168.1.35', 'my-app');
    */
   static async pair<TDevice>(
-    this: new (host: string, options: DeviceOptions) => TDevice,
+    this: new (credentials: Credentials, options?: DeviceOptions) => TDevice,
     host: string,
     name: string,
     options: PairOptions = {},
   ): Promise<PairedDevice<TDevice>> {
-    const result = await pair(host, name, options);
+    const credentials = await pair(host, name, options);
+    const { identifier: _identifier, ...deviceOptions } = splitPairOptions(options).deviceOptions;
 
-    const device = new this(host, {
-      ...splitPairOptions(options).deviceOptions,
-      token: result.token,
-      identifier: result.identifier,
-    });
-
-    return { ...result, device };
+    return { credentials, device: new this(credentials, deviceOptions) };
   }
 
   /**

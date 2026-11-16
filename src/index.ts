@@ -8,9 +8,9 @@
  *
  * @link https://api-documentation.homewizard.com/docs/category/api-v2
  */
-export type { DeviceOptions } from './client';
+export type { Credentials, DeviceOptions } from './client';
 export * from './devices';
-export { Discovery, fromDiscovery } from './discovery';
+export { Discovery, connect } from './discovery';
 export type { DiscoveredDevice, DiscoveryOptions, DiscoveryResponse } from './discovery';
 export {
   HomeWizardApiV2Error,
