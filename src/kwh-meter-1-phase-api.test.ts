@@ -48,6 +48,17 @@ describe('KwhMeter1PhaseApi', () => {
 
       expect(basicInformation).toStrictEqual(mockBasicResponse);
     });
+
+    it('should throw an error when GET the "basic" endpoint returns a server error', async () => {
+      apiMocks.getBasicInformation({
+        response: 'Server error!',
+        statusCode: 500,
+      });
+
+      await expect(kwhMeter1PhaseApi.getBasicInformation()).rejects.toThrowError(
+        'Api GET call at http://localhost/api failed with status 500 and response data: Server error!',
+      );
+    });
   });
 
   describe('getData()', () => {
@@ -59,6 +70,17 @@ describe('KwhMeter1PhaseApi', () => {
       const data = await kwhMeter1PhaseApi.getData();
 
       expect(data).toStrictEqual(mockKwhMeter1PhaseResponse);
+    });
+
+    it('should throw an error when GET the "data" endpoint returns a server error', async () => {
+      apiMocks.getData({
+        response: 'Server error!',
+        statusCode: 500,
+      });
+
+      await expect(kwhMeter1PhaseApi.getData()).rejects.toThrowError(
+        'Api GET call at http://localhost/api/v1/data failed with status 500 and response data: Server error!',
+      );
     });
   });
 
