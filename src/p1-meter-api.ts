@@ -17,6 +17,14 @@ export interface P1MeterPolling<
   getParsedTelegram: PollMethod<TParsedTelegram>;
 }
 
+/**
+ * The P1 Meter (`HWE-P1`) over the API v1.
+ *
+ * @deprecated Use `v2.P1Meter`, over the API v2. HomeWizard no longer develops the API v1 and plans to remove it.
+ * This class keeps working while the device has the API v1 enabled.
+ *
+ * @link https://api-documentation.homewizard.com/docs/changelog
+ */
 export class P1MeterApi extends BaseApi {
   getBasicInformation<T extends BasicInformationResponse>(): Promise<T> {
     return super.getBasicInformation();

@@ -65,6 +65,9 @@ Each class assumes it talks to the device type it's named after and doesn't chec
 
 ## P1 Meter
 
+> [!NOTE]
+> `P1MeterApi` is deprecated in favour of [`v2.P1Meter`](#api-v2), because HomeWizard plans to remove the API v1. It keeps working while the device has the API v1 enabled.
+
 Get the power consumption or gas usage in your home from the [Wi-Fi P1 Meter](https://www.homewizard.com/shop/wi-fi-p1-meter/):
 
 ```typescript
@@ -181,6 +184,9 @@ A simple polling interface for the Watermeter is exposed via `api.polling.getDat
 
 ## kWh Meter 1-phase
 
+> [!NOTE]
+> `KwhMeter1PhaseApi` is deprecated in favour of [`v2.KwhMeter1Phase`](#api-v2), because HomeWizard plans to remove the API v1. It keeps working while the device has the API v1 enabled.
+
 Get the power consumption from the [Wi-Fi kWh meter 1-phase MID](https://www.homewizard.com/shop/wi-fi-kwh-meter-1-phase/):
 
 ```typescript
@@ -205,6 +211,9 @@ const data = await kwhMeter1Phase.getData();
 A simple polling interface for the kWh Meter 1-phase is exposed via `api.polling.getData`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
 
 ## kWh Meter 3-phase
+
+> [!NOTE]
+> `KwhMeter3PhaseApi` is deprecated in favour of [`v2.KwhMeter3Phase`](#api-v2), because HomeWizard plans to remove the API v1. It keeps working while the device has the API v1 enabled.
 
 Get the power consumption from the [Wi-Fi kWh meter 3-phase MID](https://www.homewizard.com/shop/wi-fi-kwh-meter-3-phase/):
 

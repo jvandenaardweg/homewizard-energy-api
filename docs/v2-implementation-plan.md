@@ -10,7 +10,7 @@ Steps 0 to 8 are built on one branch, one commit per PR. What's still open:
 
 - **Hardware checks that need a button press.** On a real P1 Meter (API 2.2.0) the following are confirmed: the certificate CN matches the mDNS `id`, a strict check rejects another identifier, `checkServerIdentity` runs on each connection, 401 `user:unauthorized` is parsed, a pairing times out without a button press, the WebSocket sends `authorization_requested`, and a wrong token makes the device drop the connection (now reported as `user:unauthorized`). Still unchecked: pairing with the button, and every authorized endpoint and WebSocket topic.
 - **kWh meters and Plug-In Battery:** built from the docs, untested on hardware.
-- **Deprecations of the v1 classes:** not done, because they wait for the hardware checks.
+- **Deprecations of the v1 classes:** done for `P1MeterApi` and the kWh classes, ahead of the hardware checks at the maintainer's request. `EnergySocketApi` and `WaterMeterApi` stay, because those devices have no API v2 yet.
 - **The WebSocket heartbeat** assumes the device answers a `{"type":"device"}` request, as the docs describe. If it answers with an error instead, users get an `error` event every interval. This needs a token to check.
 - **The token-rejection rule** comes from one P1: two drops in a row between sending the token and `authorized` stop reconnecting.
 
