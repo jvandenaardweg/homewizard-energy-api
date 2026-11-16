@@ -42,10 +42,17 @@ export class HomeWizardEnergyDiscovery {
     return this.loggerOptions.method(loggerPrefix, ...args);
   }
 
+  /**
+   * Starts discovery by sending an mDNS query. Calling it again while started sends a new query
+   * on the same mDNS instance.
+   */
   start() {
     this.log('start');
 
-    this.mdns = multicastDns.default();
+    // Reuse the running instance, so a second start() doesn't leave the first socket open
+    if (!this.mdns) {
+      this.mdns = multicastDns.default();
+    }
 
     this.mdns.query(MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE);
   }

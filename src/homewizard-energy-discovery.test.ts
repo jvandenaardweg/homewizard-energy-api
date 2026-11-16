@@ -56,6 +56,20 @@ describe('HomeWizardEnergyDiscovery', () => {
     expect(querySpy).toHaveBeenCalledWith(MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE);
   });
 
+  it('should reuse the mdns instance when start() is invoked twice', () => {
+    discoveryService.start();
+    const mdns = discoveryService['mdns'];
+
+    discoveryService.start();
+
+    expect(discoveryService['mdns']).toBe(mdns);
+    expect(querySpy).toHaveBeenCalledTimes(2);
+
+    discoveryService.stop();
+
+    expect(destroySpy).toHaveBeenCalledOnce();
+  });
+
   it('should run mdns.removeAllListeners() and mdns.destroy() when stop() is invoked', () => {
     discoveryService.start();
     discoveryService.stop();
