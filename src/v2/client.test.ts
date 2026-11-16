@@ -3,7 +3,7 @@ import { Agent } from 'undici';
 import { HomeWizardEnergyApiError, HomeWizardEnergyApiTimeoutError } from '@/shared/errors';
 import { mockV2, mockV2DeviceOptions, mockV2Host, mockV2Pool, mockV2Url } from '@/mocks/api-v2';
 import { DEFAULT_TIMEOUT } from '@/shared/request';
-import { Client, toBaseUrl } from './client';
+import { Client, isNewerApiVersion, toBaseUrl } from './client';
 import { HomeWizardApiV2Error } from './errors';
 import { HOMEWIZARD_CA_CERT } from './tls';
 
@@ -181,6 +181,48 @@ describe('v2/Client', () => {
       await vi.advanceTimersByTimeAsync(DEFAULT_TIMEOUT + 1000);
 
       await expect(request).resolves.toStrictEqual({});
+    });
+  });
+
+  describe('API version', () => {
+    it('should tell whether a version is newer', () => {
+      expect(isNewerApiVersion('2.4.0', '2.3.0')).toBe(true);
+      expect(isNewerApiVersion('2.3.1', '2.3.0')).toBe(true);
+      expect(isNewerApiVersion('3', '2.3.0')).toBe(true);
+      expect(isNewerApiVersion('2.10.0', '2.9.0')).toBe(true);
+      expect(isNewerApiVersion('2.3.0.1', '2.3.0')).toBe(true);
+      expect(isNewerApiVersion('2.3.0', '2.3.0')).toBe(false);
+      expect(isNewerApiVersion('2.3', '2.3.0')).toBe(false);
+      expect(isNewerApiVersion('2.2.0', '2.3.0')).toBe(false);
+      expect(isNewerApiVersion('v2', '2.3.0')).toBe(false);
+    });
+
+    it('should log once when the device answers with a newer API version', async () => {
+      const method = vi.fn();
+      mockV2('/api', 'GET', { response: {}, headers: { 'x-api-version': '2.4.0' } });
+      mockV2('/api', 'GET', { response: {}, headers: { 'x-api-version': '2.4.0' } });
+
+      const client = new Client(mockV2Host, { ...mockV2DeviceOptions, logger: { method } });
+      await client.json('GET', '/api');
+      await client.json('GET', '/api');
+
+      const warnings = method.mock.calls.filter(call => String(call[1]).includes('newer than'));
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0][1]).toBe(
+        "The device answers with API 2.4.0, newer than the 2.3.0 this library follows. It keeps working, but fields added since aren't in the types yet.",
+      );
+    });
+
+    it('should not log for a documented API version or without the header', async () => {
+      const method = vi.fn();
+      mockV2('/api', 'GET', { response: {}, headers: { 'x-api-version': '2.2.0' } });
+      mockV2('/api', 'GET', { response: {} });
+
+      const client = new Client(mockV2Host, { ...mockV2DeviceOptions, logger: { method } });
+      await client.json('GET', '/api');
+      await client.json('GET', '/api');
+
+      expect(JSON.stringify(method.mock.calls)).not.toContain('newer than');
     });
   });
 

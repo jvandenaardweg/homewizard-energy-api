@@ -430,6 +430,8 @@ Anyone on the network can announce a device, so pass the identifier you stored a
 
 An error response throws a `v2.HomeWizardApiV2Error`, with the error `code` from the device, such as `user:unauthorized` or `json:parameter-invalid-type:status_led_brightness_pct`. It extends `HomeWizardEnergyApiResponseError`, so it has the same `url`, `statusCode` and `response` as the v1 errors, and timeouts throw a `HomeWizardEnergyApiTimeoutError`. WebSocket errors arrive as `error` events with a `v2.HomeWizardApiV2WebSocketError`, which has the `code` too. See the [official docs](https://api-documentation.homewizard.com/docs/v2/error-handling) for the codes.
 
+With a `logger`, a device logs once when it answers with a newer API version than the 2.3.0 these types follow. It keeps working, because HomeWizard keeps each major version backward compatible, but the fields it added since aren't typed yet.
+
 ```typescript
 try {
   await p1.getMeasurement();

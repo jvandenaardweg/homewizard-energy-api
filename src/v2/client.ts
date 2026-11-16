@@ -10,7 +10,7 @@ import {
 } from '@/shared/request';
 import { HomeWizardApiV2Error } from './errors';
 import { createCheckServerIdentity, HOMEWIZARD_CA_CERT } from './tls';
-import { API_MAJOR_VERSION } from './types';
+import { API_MAJOR_VERSION, DOCUMENTED_API_VERSION } from './types';
 import type { DeviceSocketConnection } from './websocket';
 
 export interface DeviceOptions {
@@ -60,6 +60,24 @@ export interface ClientOptions extends DeviceOptions {
 
 export type HttpMethod = 'GET' | 'PUT' | 'POST' | 'DELETE';
 
+/**
+ * Returns `true` when `version` (such as `2.4.0`) is newer than `than`. A version it can't read counts as not newer.
+ */
+export function isNewerApiVersion(version: string, than: string): boolean {
+  const parse = (value: string) => value.trim().split('.').map(Number);
+  const a = parse(version);
+  const b = parse(than);
+
+  if (a.some(Number.isNaN)) return false;
+
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const difference = (a[i] ?? 0) - (b[i] ?? 0);
+    if (difference !== 0) return difference > 0;
+  }
+
+  return false;
+}
+
 /** Formats a value for a log line, with every `token` field replaced, so a token never ends up in a log. */
 export function redact(value: unknown): string {
   return JSON.stringify(value, (key, field) => (key === 'token' ? '[redacted]' : field));
@@ -95,6 +113,7 @@ export class Client {
   token: string | undefined;
   protected readonly timeout: number;
   protected readonly ownsDispatcher: boolean;
+  protected warnedAboutApiVersion = false;
 
   constructor(host: string, options: ClientOptions = {}) {
     if (!options.identifier && !options.insecure && !options.allowMissingIdentifier) {
@@ -174,6 +193,8 @@ export class Client {
       this.timeout,
     );
 
+    this.checkApiVersion(response.headers['x-api-version']);
+
     if (!isResponseOk(response)) {
       const text = await response.body.text();
 
@@ -186,6 +207,22 @@ export class Client {
     }
 
     return { url, response };
+  }
+
+  /**
+   * Logs once when the device answers with a newer API version than the types follow. The device keeps the
+   * API backward compatible within a major version, so this is a hint, not an error.
+   *
+   * @link https://api-documentation.homewizard.com/docs/versioning
+   */
+  protected checkApiVersion(version: unknown): void {
+    if (this.warnedAboutApiVersion || typeof version !== 'string') return;
+    if (!isNewerApiVersion(version, DOCUMENTED_API_VERSION)) return;
+
+    this.warnedAboutApiVersion = true;
+    this.log(
+      `The device answers with API ${version}, newer than the ${DOCUMENTED_API_VERSION} this library follows. It keeps working, but fields added since aren't in the types yet.`,
+    );
   }
 
   /** Sends a request and returns the JSON body. */
