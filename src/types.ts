@@ -343,7 +343,7 @@ export type WaterMeterDataResponse = Pick<
 >;
 
 /** Keys sent by every kWh meter, both 1-phase (`HWE-KWH1`, `SDM230-wifi`) and 3-phase (`HWE-KWH3`, `SDM630-wifi`). */
-type KwhMeterDataKeys =
+type KwhMeterCommonDataKeys =
   | 'wifi_ssid'
   | 'wifi_strength'
   | 'total_power_import_kwh'
@@ -366,7 +366,7 @@ type KwhMeterDataKeys =
  */
 export type KwhMeter1PhaseDataResponse = Pick<
   BaseDataResponse,
-  KwhMeterDataKeys | 'active_voltage_v' | 'active_power_factor'
+  KwhMeterCommonDataKeys | 'active_voltage_v' | 'active_power_factor'
 >;
 
 /**
@@ -376,7 +376,7 @@ export type KwhMeter1PhaseDataResponse = Pick<
  */
 export type KwhMeter3PhaseDataResponse = Pick<
   BaseDataResponse,
-  | KwhMeterDataKeys
+  | KwhMeterCommonDataKeys
   | 'active_power_l2_w'
   | 'active_power_l3_w'
   | 'active_voltage_l1_v'
