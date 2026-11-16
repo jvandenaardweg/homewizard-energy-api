@@ -4,6 +4,7 @@ import { apiMocks, mockApiUrl } from '@/mocks/api';
 import { mockKwhMeter1PhaseResponse } from '@/mocks/data/data';
 import { KwhMeter1PhaseApi } from '@/kwh-meter-1-phase-api';
 import { mockSystemResponse } from './mocks/data/system';
+import { mockIdentifyResponse } from '@/mocks/data/identify';
 
 let kwhMeter1PhaseApi: KwhMeter1PhaseApi;
 
@@ -132,6 +133,29 @@ describe('KwhMeter1PhaseApi', () => {
 
       expect(responseFn()).rejects.toThrowError(
         'Api PUT call at http://localhost/api/v1/system failed with status 500 and response data: Server error!',
+      );
+    });
+  });
+
+  describe('identify()', () => {
+    it('should PUT the "identify" endpoint', async () => {
+      apiMocks.identify({
+        response: mockIdentifyResponse,
+      });
+
+      const identify = await kwhMeter1PhaseApi.identify();
+
+      expect(identify).toStrictEqual(mockIdentifyResponse);
+    });
+
+    it('should throw an error when PUT on the "identify" endpoint returns a server error', async () => {
+      apiMocks.identify({
+        response: 'Server error!',
+        statusCode: 500,
+      });
+
+      await expect(kwhMeter1PhaseApi.identify()).rejects.toThrowError(
+        'Api PUT call at http://localhost/api/v1/identify failed with status 500 and response data: Server error!',
       );
     });
   });

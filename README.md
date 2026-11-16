@@ -155,10 +155,13 @@ const waterMeter = new WaterMeterApi('http://192.168.1.12');
 const data = await waterMeter.getData();
 ```
 
-| Method | API          | Function     | Description                                                                                                                                          |
-| ------ | ------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | /api         | `getBasic()` | Get basic information from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/api).                       |
-| GET    | /api/v1/data | `getData()`  | Returns the most recent measurement from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/measurement). |
+| Method | API              | Function         | Description                                                                                                                                                                                              |
+| ------ | ---------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /api             | `getBasic()`     | Get basic information from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/api).                                                                           |
+| GET    | /api/v1/data     | `getData()`      | Returns the most recent measurement from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/measurement).                                                     |
+| PUT    | /api/v1/identify | `identify()`     | Identify the device. The status light will blink for a few seconds after calling this endpoint. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/identify).             |
+| GET    | /api/v1/system   | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system).                                                                           |
+| PUT    | /api/v1/system   | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system). |
 
 ### Data polling
 
@@ -177,12 +180,13 @@ const kwhMeter1Phase = new KwhMeter1PhaseApi('http://192.168.1.13');
 const data = await kwhMeter1Phase.getData();
 ```
 
-| Method | API            | Function         | Description                                                                                                                                                                                              |
-| ------ | -------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | /api           | `getBasic()`     | Get basic information from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/api).                                                                           |
-| GET    | /api/v1/data   | `getData()`      | Returns the most recent measurement from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/measurement).                                                     |
-| GET    | /api/v1/system | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system).                                                                           |
-| PUT    | /api/v1/system | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system). |
+| Method | API              | Function         | Description                                                                                                                                                                                              |
+| ------ | ---------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /api             | `getBasic()`     | Get basic information from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/api).                                                                           |
+| GET    | /api/v1/data     | `getData()`      | Returns the most recent measurement from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/measurement).                                                     |
+| GET    | /api/v1/system   | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system).                                                                           |
+| PUT    | /api/v1/system   | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system). |
+| PUT    | /api/v1/identify | `identify()`     | Identify the device. The status light will blink for a few seconds after calling this endpoint. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/identify).             |
 
 ### Data polling
 
@@ -201,12 +205,13 @@ const kwhMeter3Phase = new KwhMeter3PhaseApi('http://192.168.1.14');
 const data = await kwhMeter3Phase.getData();
 ```
 
-| Method | API            | Function         | Description                                                                                                                                                                                              |
-| ------ | -------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | /api           | `getBasic()`     | Get basic information from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/api).                                                                           |
-| GET    | /api/v1/data   | `getData()`      | Returns the most recent measurement from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/measurement).                                                     |
-| GET    | /api/v1/system | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system).                                                                           |
-| PUT    | /api/v1/system | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system). |
+| Method | API              | Function         | Description                                                                                                                                                                                              |
+| ------ | ---------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /api             | `getBasic()`     | Get basic information from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/api).                                                                           |
+| GET    | /api/v1/data     | `getData()`      | Returns the most recent measurement from the device. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/measurement).                                                     |
+| GET    | /api/v1/system   | `getSystem()`    | Returns the actual system settings. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system).                                                                           |
+| PUT    | /api/v1/system   | `updateSystem()` | Configure system settings. Currently the only available option it to turn on and off all cloud communication. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/system). |
+| PUT    | /api/v1/identify | `identify()`     | Identify the device. The status light will blink for a few seconds after calling this endpoint. More info in the [official docs](https://api-documentation.homewizard.com/docs/v1/identify).             |
 
 ### Data polling
 

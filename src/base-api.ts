@@ -1,6 +1,12 @@
 import { EventEmitter } from 'events';
 import { Dispatcher, request as undiciRequest } from 'undici';
-import { BasicInformationResponse, BaseDataResponse } from './types';
+import {
+  BasicInformationResponse,
+  BaseDataResponse,
+  IdentifyResponse,
+  SystemPutParams,
+  SystemResponse,
+} from './types';
 
 export type RequestParameters = Parameters<typeof undiciRequest>;
 
@@ -121,6 +127,8 @@ export class BaseApi {
     return {
       basic: `${baseUrl}/api`, // all products
       data: `${baseUrl}/api/${this.apiVersion}/data`, // all products
+      identify: `${baseUrl}/api/${this.apiVersion}/identify`,
+      system: `${baseUrl}/api/${this.apiVersion}/system`,
     };
   }
 
@@ -244,6 +252,98 @@ export class BaseApi {
     const data = (await response.body.json()) as T;
 
     this.log(`Fetched data: ${JSON.stringify(data)}`);
+
+    return data;
+  }
+
+  /**
+   * The /api/v1/system endpoint can be used to configure system settings.
+   * Currently the only available option is to turn on and off all cloud communication.
+   *
+   * With GET will send the actual system state.
+   *
+   * Available for: `HWE-P1`, `HWE-SKT`, `HWE-WTR`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`
+   *
+   * @link https://api-documentation.homewizard.com/docs/v1/system
+   */
+  protected async getSystem(): Promise<SystemResponse> {
+    const url = this.endpoints.system;
+
+    this.log(`Fetching system state at ${url}`);
+
+    const method = 'GET';
+    const response = await this.request(url, {
+      method,
+    });
+
+    if (!this.isResponseOk(response)) {
+      return this.throwResponseError(url, method, response);
+    }
+
+    const data = (await response.body.json()) as SystemResponse;
+
+    this.log(`Received system state ${JSON.stringify(data)} from ${url}`);
+
+    return data;
+  }
+
+  /**
+   * The /api/v1/system endpoint can be used to configure system settings.
+   * Currently the only available option is to turn on and off all cloud communication.
+   *
+   * With PUT allows to set the system state.
+   *
+   * Available for: `HWE-P1`, `HWE-SKT`, `HWE-WTR`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`
+   *
+   * @link https://api-documentation.homewizard.com/docs/v1/system
+   */
+  protected async updateSystem(params: SystemPutParams): Promise<SystemResponse> {
+    const url = this.endpoints.system;
+
+    this.log(`Setting system state to ${JSON.stringify(params)} at ${url}`);
+
+    const method = 'PUT';
+    const response = await this.request(url, {
+      method,
+      body: JSON.stringify(params),
+    });
+
+    if (!this.isResponseOk(response)) {
+      return this.throwResponseError(url, method, response);
+    }
+
+    const data = (await response.body.json()) as SystemResponse;
+
+    this.log(`Received updated system state ${JSON.stringify(data)} from ${url}`);
+
+    return data;
+  }
+
+  /**
+   * The /api/v1/identify endpoint can be used to let the user identify the device. The status light will blink for a few seconds after calling this endpoint.
+   *
+   * Available for: `HWE-P1`, `HWE-SKT`, `HWE-WTR`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`
+   *
+   * @link https://api-documentation.homewizard.com/docs/v1/identify
+   */
+  protected async identify(): Promise<IdentifyResponse> {
+    const url = this.endpoints.identify;
+
+    this.log(`Fetching identify at ${url}`);
+
+    const method = 'PUT';
+
+    const response = await this.request(url, {
+      method,
+    });
+
+    if (!this.isResponseOk(response)) {
+      return this.throwResponseError(url, method, response);
+    }
+
+    const data = (await response.body.json()) as IdentifyResponse;
+
+    this.log(`Device identified: ${JSON.stringify(data)}`);
 
     return data;
   }
