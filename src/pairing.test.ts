@@ -30,7 +30,11 @@ describe('v2/pair', () => {
     const pairing = pair(mockV2Host, 'new_user', { ...options, onAttempt });
     await vi.advanceTimersByTimeAsync(4000);
 
-    await expect(pairing).resolves.toStrictEqual({ ...mockV2UserCreated, identifier });
+    await expect(pairing).resolves.toStrictEqual({
+      host: mockV2Host,
+      ...mockV2UserCreated,
+      identifier,
+    });
     expect(onAttempt).toHaveBeenCalledTimes(3);
     expect(onAttempt).toHaveBeenNthCalledWith(1, 120000);
     expect(onAttempt).toHaveBeenNthCalledWith(3, 116000);
@@ -139,7 +143,7 @@ describe('v2/pair', () => {
 
     await expect(
       pair(mockV2Host, 'new_user', { dispatcher: mockApiAgent, insecure: true }),
-    ).resolves.toStrictEqual({ ...mockV2UserCreated, identifier: '' });
+    ).resolves.toStrictEqual({ host: mockV2Host, ...mockV2UserCreated, identifier: '' });
   });
 
   it('should never log the token', async () => {
@@ -217,7 +221,11 @@ describe('v2/pair', () => {
     it('should learn the identifier from the certificate', async () => {
       const result = await pair(server.host, 'new_user', { ca: mockTlsCa, interval: 10 });
 
-      expect(result).toStrictEqual({ ...mockV2UserCreated, identifier: mockTlsIdentifier });
+      expect(result).toStrictEqual({
+        host: server.host,
+        ...mockV2UserCreated,
+        identifier: mockTlsIdentifier,
+      });
       expect(attempts).toBe(2);
     });
 

@@ -1,5 +1,5 @@
 import { HomeWizardEnergyApiError, HomeWizardEnergyApiTimeoutError } from '@/shared/errors';
-import { Client, DeviceOptions } from './client';
+import { Client, Credentials, DeviceOptions } from './client';
 import { createUser, getDevice } from './endpoints';
 import { HomeWizardApiV2Error, HomeWizardApiV2PairingError } from './errors';
 import { getCertificateIdentifier, isCertificateError } from './tls';
@@ -8,7 +8,7 @@ import { UserCreated } from './types';
 export const DEFAULT_PAIR_TIMEOUT = 120000;
 export const DEFAULT_PAIR_INTERVAL = 2000;
 
-export interface PairOptions extends Omit<DeviceOptions, 'token'> {
+export interface PairOptions extends DeviceOptions {
   /**
    * The identifier of the device, when you have it, for example from discovery. The certificate must match it.
    * Without it, any genuine HomeWizard device at this address is accepted, and its identifier is returned.
@@ -24,14 +24,16 @@ export interface PairOptions extends Omit<DeviceOptions, 'token'> {
   onAttempt?: (remainingMs: number) => void;
 }
 
-export interface PairResult {
-  /** The token for the `token` option. Store it: the device can't return it again. Keep it secret. */
-  token: string;
+/**
+ * The credentials of the new user: pass them to the device classes. Store them, because the device can't return
+ * the token again. Keep the token secret.
+ */
+export interface PairResult extends Required<Credentials> {
   /** The name of the user, prefixed with `local/`. */
   name: string;
   /**
-   * The identifier the device's certificate is issued to. Store it with the token, for the `identifier` option.
-   * With `insecure`, it's empty for a product type whose identifier isn't known.
+   * The identifier the device's certificate is issued to. With `insecure`, it's empty for a product type whose
+   * identifier isn't known.
    */
   identifier: string;
 }
@@ -47,7 +49,7 @@ export function splitPairOptions(options: PairOptions) {
     interval,
     signal,
     onAttempt,
-    deviceOptions: deviceOptions as DeviceOptions,
+    deviceOptions,
   };
 }
 
@@ -65,7 +67,7 @@ function wait(ms: number, signal?: AbortSignal): Promise<void> {
 }
 
 /**
- * Creates a user on the device and returns its token, once the user presses the button on the device.
+ * Creates a user on the device and returns its credentials, once the user presses the button on the device.
  *
  * It keeps sending `POST /api/user` until the device accepts it, the `pairTimeout` passes, or `signal` aborts.
  * After the button press there are 30 seconds to request the token. On the kWh meters, hold the button for 1 to 3
@@ -74,9 +76,10 @@ function wait(ms: number, signal?: AbortSignal): Promise<void> {
  * Pairing again with the same name returns a new token, and the old one stops working.
  *
  * @example
- * const { token, identifier } = await v2.pair('192.168.1.35', 'my-app', {
+ * const credentials = await pair('192.168.1.35', 'my-app', {
  *   onAttempt: remainingMs => console.log(`Press the button on the device (${remainingMs / 1000}s left)`),
  * });
+ * const p1 = new P1Meter(credentials);
  *
  * @link https://api-documentation.homewizard.com/docs/v2/authorization#create-user-and-get-token
  */
@@ -154,7 +157,12 @@ export async function pair(
 
       client.log(`Paired as ${user.name}`);
 
-      return { ...user, identifier: await learnIdentifier(client, user, options, seenIdentifiers) };
+      return {
+        host,
+        token: user.token,
+        name: user.name,
+        identifier: await learnIdentifier(client, user, options, seenIdentifiers),
+      };
     }
   } finally {
     await client.close();

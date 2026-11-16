@@ -30,7 +30,10 @@ describe('v2/DeviceSocket', () => {
   const sockets: DeviceSocket<object>[] = [];
 
   const open = (options: WebSocketOptions = {}, token: string | undefined = mockV2Token) => {
-    const p1 = new P1Meter(server.host, { ca: mockTlsCa, identifier: mockTlsIdentifier, token });
+    const p1 = new P1Meter(
+      { host: server.host, identifier: mockTlsIdentifier, token },
+      { ca: mockTlsCa },
+    );
     const socket = p1.openWebSocket({ reconnectDelay: 10, ...options });
     sockets.push(socket as DeviceSocket<object>);
     return socket;
@@ -241,12 +244,10 @@ describe('v2/DeviceSocket', () => {
     };
 
     const method = vi.fn();
-    const p1 = new P1Meter(server.host, {
-      ca: mockTlsCa,
-      identifier: mockTlsIdentifier,
-      token: mockV2Token,
-      logger: { method },
-    });
+    const p1 = new P1Meter(
+      { host: server.host, identifier: mockTlsIdentifier, token: mockV2Token },
+      { ca: mockTlsCa, logger: { method } },
+    );
     const socket = p1.openWebSocket({ reconnectDelay: 10, maxReconnectDelay: 15 });
     sockets.push(socket as DeviceSocket<object>);
 
@@ -321,11 +322,10 @@ describe('v2/DeviceSocket', () => {
   });
 
   it('should report a certificate of another identifier and not authorize', async () => {
-    const p1 = new P1Meter(server.host, {
-      ca: mockTlsCa,
-      identifier: 'appliance/p1dongle/000000000000',
-      token: mockV2Token,
-    });
+    const p1 = new P1Meter(
+      { host: server.host, identifier: 'appliance/p1dongle/000000000000', token: mockV2Token },
+      { ca: mockTlsCa },
+    );
     const socket = p1.openWebSocket({ reconnect: false });
     sockets.push(socket as DeviceSocket<object>);
     const onError = vi.fn();
@@ -354,9 +354,10 @@ describe('v2/DeviceSocket', () => {
   });
 
   it('should only offer the commands each device supports', () => {
-    const options = { ca: mockTlsCa, identifier: mockTlsIdentifier, token: mockV2Token };
-    const kwh = new KwhMeter1Phase(server.host, options).openWebSocket({ reconnect: false });
-    const battery = new PlugInBattery(server.host, options).openWebSocket({ reconnect: false });
+    const credentials = { host: server.host, identifier: mockTlsIdentifier, token: mockV2Token };
+    const options = { ca: mockTlsCa };
+    const kwh = new KwhMeter1Phase(credentials, options).openWebSocket({ reconnect: false });
+    const battery = new PlugInBattery(credentials, options).openWebSocket({ reconnect: false });
     sockets.push(kwh as DeviceSocket<object>, battery as DeviceSocket<object>);
 
     // The kWh meters can't identify, and their status LED isn't adjustable

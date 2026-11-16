@@ -21,12 +21,12 @@ type P1MeterUpdates = { system: P1MeterSystemUpdate; batteries: BatteriesUpdate 
  * The P1 Meter (`HWE-P1`) over the API v2.
  *
  * @example
- * import { v2 } from 'homewizard-energy-api';
+ * import { pair, P1Meter } from 'homewizard-energy-api';
  *
- * // Once: pair, then store the token and identifier
- * const { token, identifier } = await v2.pair('192.168.1.35', 'my-app');
+ * // Once: pair, then store the credentials (host, token and identifier)
+ * const credentials = await pair('192.168.1.35', 'my-app');
  *
- * const p1 = new v2.P1Meter('192.168.1.35', { token, identifier });
+ * const p1 = new P1Meter(credentials);
  * const measurement = await p1.getMeasurement();
  *
  * @link https://api-documentation.homewizard.com/docs/category/api-v2
