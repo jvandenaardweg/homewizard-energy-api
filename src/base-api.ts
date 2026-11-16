@@ -131,6 +131,28 @@ export class BaseApi {
     return this.eventEmitter.on(event, listener);
   }
 
+  /**
+   * Returns the `on` method for `polling.<method>`, so its listeners only receive events from polling that method.
+   */
+  protected pollingOn<T>(method: string): PollMethod<T>['on'] {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (event: 'response' | 'error', listener: (...args: any[]) => void) => {
+      this.eventEmitter.on(`${method}:${event}`, listener);
+    };
+  }
+
+  /**
+   * Emits a polling event scoped to `method`. The unscoped event is also emitted for listeners added with `on()`,
+   * but only when there are any, because an unhandled `error` event throws.
+   */
+  protected emitPollingEvent(method: string, event: 'response' | 'error', payload: unknown): void {
+    this.eventEmitter.emit(`${method}:${event}`, payload);
+
+    if (this.eventEmitter.listenerCount(event) > 0) {
+      this.eventEmitter.emit(event, payload);
+    }
+  }
+
   protected request(url: RequestParameters[0], options: RequestParameters[1]) {
     return undiciRequest(url, {
       ...this.requestOptions,
@@ -250,7 +272,7 @@ export class BaseApi {
       [getData]: {
         start: () => this.startPolling(getData, this.getData.bind(this)),
         stop: () => this.stopPolling(getData),
-        on: this.on.bind(this),
+        on: this.pollingOn(getData),
       },
     };
   }
@@ -276,7 +298,7 @@ export class BaseApi {
           )}`,
         );
 
-        this.eventEmitter.emit('response', response);
+        this.emitPollingEvent(method, 'response', response);
       } catch (error) {
         this.log(`Received error while polling "${method}": ${JSON.stringify(error)}`);
 
@@ -285,7 +307,7 @@ export class BaseApi {
           this.stopPolling(method);
         }
 
-        this.eventEmitter.emit('error', error);
+        this.emitPollingEvent(method, 'error', error);
       } finally {
         this.log(`Waiting for next polling interval for "${method}"...`);
         await new Promise(resolve => setTimeout(resolve, interval));

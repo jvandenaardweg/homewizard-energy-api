@@ -276,6 +276,43 @@ describe('HomeWizardEnergyApi', () => {
         });
       }));
 
+    it('should only emit responses of the polled method to its listeners', async () =>
+      new Promise(done => {
+        apiMocks.getData({
+          response: mockP1MeterDataResponse,
+        });
+        apiMocks.getTelegram({
+          response: mockTelegramResponse['v50l3_2'],
+        });
+
+        const dataResponses: unknown[] = [];
+        const telegramResponses: unknown[] = [];
+
+        const checkDone = () => {
+          if (!dataResponses.length || !telegramResponses.length) return;
+
+          p1MeterApi.polling.getData.stop();
+          p1MeterApi.polling.getTelegram.stop();
+
+          expect(dataResponses).toStrictEqual([mockP1MeterDataResponse]);
+          expect(telegramResponses).toStrictEqual([mockTelegramResponse['v50l3_2']]);
+          done(true);
+        };
+
+        p1MeterApi.polling.getData.on('response', response => {
+          dataResponses.push(response);
+          checkDone();
+        });
+
+        p1MeterApi.polling.getTelegram.on('response', response => {
+          telegramResponses.push(response);
+          checkDone();
+        });
+
+        p1MeterApi.polling.getData.start();
+        p1MeterApi.polling.getTelegram.start();
+      }));
+
     // it('should stop polling getTelegram when stop() is invoked', () => {
     //   apiMocks.getTelegram({
     //     response: mockTelegramResponse['v50l3_2'],
