@@ -1,0 +1,14 @@
+import { P1MeterApi } from '../../v1';
+
+const p1Meter = new P1MeterApi('http://192.168.1.35');
+
+(async () => {
+  try {
+    // Get the active power and gas usage
+    const data = await p1Meter.getData();
+
+    console.log(data);
+  } catch (err) {
+    console.error(err);
+  }
+})();

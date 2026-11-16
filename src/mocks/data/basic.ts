@@ -1,4 +1,4 @@
-import { BasicInformationResponse, SupportedDevices } from '../../types';
+import { BasicInformationResponse, SupportedDevices } from '../../v1/types';
 
 export const mockBasicInformationResponse: Record<SupportedDevices, BasicInformationResponse> = {
   'HWE-SKT': {

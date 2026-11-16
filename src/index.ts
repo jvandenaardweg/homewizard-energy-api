@@ -1,20 +1,57 @@
-export * from './base-api';
-export * from './energy-socket-api';
-export * from './homewizard-energy-discovery';
-export * from './kwh-meter-1-phase-api';
-export * from './kwh-meter-3-phase-api';
-export * from './p1-meter-api';
-export * from './types';
-export * from './water-meter-api';
-export * as v2 from './v2';
-export { parseTelegram } from './utils/telegram';
+/*
+ * The API v2, exported from the package root as the `v2` namespace:
+ *
+ *   import { v2 } from 'homewizard-energy-api';
+ *
+ * Everything exported here is public API. Keep helpers and constants that users don't need out of it: adding an
+ * export later is a feature, removing one is a breaking change.
+ *
+ * @link https://api-documentation.homewizard.com/docs/category/api-v2
+ */
+export type { DeviceOptions } from './client';
+export * from './devices';
+export { Discovery, fromDiscovery } from './discovery';
+export type { DiscoveredDevice, DiscoveryOptions, DiscoveryResponse } from './discovery';
+export {
+  HomeWizardApiV2Error,
+  HomeWizardApiV2PairingError,
+  HomeWizardApiV2WebSocketError,
+} from './errors';
+export { pair } from './pairing';
+export type { PairOptions, PairResult } from './pairing';
+export { poll } from './poll';
+export type { Poller, PollOptions } from './poll';
+export { getCertificateIdentifier } from './tls';
+export { MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_TYPE, ProductTypeList } from './types';
 export type {
-  ParsedTelegram,
-  TelegramPowerFailureLog,
-  TelegramPeakDemand,
-  TelegramPeakDemandHistory,
-  TelegramPeakDemandHistoryItem,
-  TelegramPowerFailureLogItem,
-  TelegramUnit,
-  TelegramValueItem,
-} from './utils/telegram';
+  Batteries,
+  BatteriesMode,
+  BatteriesPermission,
+  BatteriesUpdate,
+  DeviceInformation,
+  ErrorCode,
+  ExternalMeter,
+  KwhMeter1PhaseMeasurement,
+  KwhMeter3PhaseMeasurement,
+  KwhMeterSystem,
+  KwhMeterSystemUpdate,
+  MdnsTxtRecord,
+  P1MeterMeasurement,
+  P1MeterSystem,
+  P1MeterSystemUpdate,
+  PlugInBatteryMeasurement,
+  PlugInBatterySystem,
+  PlugInBatterySystemUpdate,
+  ProductType,
+  System,
+  Timestamp,
+  User,
+  UserCreated,
+} from './types';
+export type {
+  BatteriesTopic,
+  CommonTopics,
+  DeviceSocket,
+  IdentifiableDeviceSocket,
+  WebSocketOptions,
+} from './websocket';

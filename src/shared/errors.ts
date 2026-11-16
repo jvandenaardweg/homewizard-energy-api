@@ -1,4 +1,4 @@
-import { ErrorResponse } from '@/types';
+import { ErrorResponse } from '@/v1/types';
 
 function parseApiError(response: string): ErrorResponse['error'] | undefined {
   try {

@@ -1,5 +1,5 @@
 import * as multicastDns from 'multicast-dns';
-import { DiscoveryResponse } from '..';
+import { DiscoveryResponse } from '../v1';
 
 export const mockMdnsTxtData = [
   Buffer.from('api_enabled=1'),

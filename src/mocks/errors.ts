@@ -1,4 +1,4 @@
-import { ErrorResponse } from '../types';
+import { ErrorResponse } from '../v1/types';
 
 export const mockErrorApiNotEnabled: ErrorResponse = {
   error: {

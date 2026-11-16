@@ -1,0 +1,24 @@
+/*
+ * The API v1, at `homewizard-energy-api/v1`. It's frozen: HomeWizard no longer develops the API v1 and plans to
+ * remove it, so these classes get no new features. Use the root for devices that have the API v2.
+ *
+ * @link https://api-documentation.homewizard.com/docs/category/api-v1
+ */
+export * from './base-api';
+export * from './energy-socket-api';
+export * from './homewizard-energy-discovery';
+export * from './kwh-meter-1-phase-api';
+export * from './kwh-meter-3-phase-api';
+export * from './p1-meter-api';
+export * from './types';
+export * from './water-meter-api';
+export type {
+  ParsedTelegram,
+  TelegramPowerFailureLog,
+  TelegramPeakDemand,
+  TelegramPeakDemandHistory,
+  TelegramPeakDemandHistoryItem,
+  TelegramPowerFailureLogItem,
+  TelegramUnit,
+  TelegramValueItem,
+} from '../telegram';

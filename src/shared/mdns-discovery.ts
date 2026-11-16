@@ -1,6 +1,6 @@
 import * as multicastDns from 'multicast-dns';
 import util from 'util';
-import { bufferArrayToJSON, isBufferArray } from '@/utils/buffer';
+import { bufferArrayToJSON, isBufferArray } from '@/shared/buffer';
 import { log, LoggerOptions } from './logger';
 
 export const MDNS_QUERY_TYPE = 'PTR';

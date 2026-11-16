@@ -1,5 +1,5 @@
 import { MockAgent } from 'undici';
-import { SupportedDevices } from '../types';
+import { SupportedDevices } from '../v1/types';
 
 export const mockHostname = 'localhost';
 export const mockApiUrl = `http://${mockHostname}`;
