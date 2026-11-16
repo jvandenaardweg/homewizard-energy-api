@@ -4,6 +4,8 @@ import {
   convertHexToAscii,
   parseHourlyReading,
   parseLine,
+  parsePeakDemand,
+  parsePeakDemandHistory,
   parsePowerFailureEventLog,
   parseTelegram,
   parseTimestamp,
@@ -112,6 +114,74 @@ describe('utils/telegram', () => {
       expect(parseTimestamp('260329015959')).toBe('2026-03-29T01:59:59+01:00');
       expect(parseTimestamp('260329030000')).toBe('2026-03-29T03:00:00+02:00');
       expect(parseTimestamp('261025040000')).toBe('2026-10-25T04:00:00+01:00');
+    });
+  });
+
+  describe('parsePeakDemand', () => {
+    it('should parse a peak demand with its timestamp', () => {
+      expect(parsePeakDemand('230903114500S)(02.762*kW')).toStrictEqual({
+        timestamp: '2023-09-03T11:45:00+02:00',
+        value: 2.762,
+        unit: 'kW',
+      });
+    });
+
+    it('should return nulls for a value it cannot read', () => {
+      expect(parsePeakDemand('')).toStrictEqual({ timestamp: null, value: null, unit: null });
+      expect(parsePeakDemand('230903114500S')).toStrictEqual({
+        timestamp: null,
+        value: null,
+        unit: null,
+      });
+    });
+  });
+
+  describe('parsePeakDemandHistory', () => {
+    it('should parse each month of the history', () => {
+      expect(
+        parsePeakDemandHistory(
+          '2)(1-0:1.6.0)(1-0:1.6.0)(230201000000W)(230110174500W)(04.769*kW)(230301000000W)(230212181500W)(05.012*kW',
+        ),
+      ).toStrictEqual({
+        count: 2,
+        log: [
+          {
+            endOfPeriod: '2023-02-01T00:00:00+01:00',
+            timestamp: '2023-01-10T17:45:00+01:00',
+            value: 4.769,
+            unit: 'kW',
+          },
+          {
+            endOfPeriod: '2023-03-01T00:00:00+01:00',
+            timestamp: '2023-02-12T18:15:00+01:00',
+            value: 5.012,
+            unit: 'kW',
+          },
+        ],
+      });
+    });
+
+    it('should return an empty history when there are no months yet', () => {
+      expect(parsePeakDemandHistory('0')).toStrictEqual({ count: 0, log: [] });
+      expect(parsePeakDemandHistory('')).toStrictEqual({ count: 0, log: [] });
+    });
+
+    it('should skip an incomplete entry and keep a value without a unit', () => {
+      expect(
+        parsePeakDemandHistory(
+          '2)(1-0:1.6.0)(1-0:1.6.0)(230201000000W)(230110174500W)(04.769)(230301000000W',
+        ),
+      ).toStrictEqual({
+        count: 2,
+        log: [
+          {
+            endOfPeriod: '2023-02-01T00:00:00+01:00',
+            timestamp: '2023-01-10T17:45:00+01:00',
+            value: 4.769,
+            unit: null,
+          },
+        ],
+      });
     });
   });
 
@@ -271,6 +341,44 @@ describe('utils/telegram', () => {
       expect(parsedTelegram.gas.value).toBe(2559.077);
       expect(parsedTelegram.gas.unit).toBe('m3');
       expect(parsedTelegram.gas.timestamp).toBe(parseTimestamp('210320214626W'));
+    });
+
+    it('should parse the BE capacity tariff lines (1-0:1.4.0, 1-0:1.6.0 and 0-0:98.1.0)', () => {
+      const log = vi.fn();
+      const parsedTelegram = parseTelegram(mockTelegramResponse['v50beDemand'], log);
+      const { demand } = parsedTelegram.power;
+
+      expect(demand.average).toStrictEqual({ value: 0.255, unit: 'kW' });
+      expect(demand.monthlyPeak).toStrictEqual({
+        timestamp: '2023-09-03T11:45:00+02:00',
+        value: 2.762,
+        unit: 'kW',
+      });
+      expect(demand.monthlyPeakHistory.count).toBe(8);
+      expect(demand.monthlyPeakHistory.log).toHaveLength(8);
+      expect(demand.monthlyPeakHistory.log[0]).toStrictEqual({
+        endOfPeriod: '2023-02-01T00:00:00+01:00',
+        timestamp: '2023-01-10T17:45:00+01:00',
+        value: 4.769,
+        unit: 'kW',
+      });
+      expect(demand.monthlyPeakHistory.log[7]).toStrictEqual({
+        endOfPeriod: '2023-09-01T00:00:00+02:00',
+        timestamp: '2023-08-12T11:15:00+02:00',
+        value: 2.727,
+        unit: 'kW',
+      });
+      expect(log).not.toHaveBeenCalled();
+    });
+
+    it('should leave the demand empty when the meter does not send it', () => {
+      const parsedTelegram = parseTelegram(mockTelegramResponse['v50l3_2']);
+
+      expect(parsedTelegram.power.demand).toStrictEqual({
+        average: { value: null, unit: null },
+        monthlyPeak: { timestamp: null, value: null, unit: null },
+        monthlyPeakHistory: { count: null, log: [] },
+      });
     });
 
     it('should parse a real CRLF telegram consistently with the /api/v1/data response', () => {

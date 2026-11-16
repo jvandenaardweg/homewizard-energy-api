@@ -27,6 +27,23 @@ export interface TelegramPowerFailureLog {
   log: TelegramPowerFailureLogItem[];
 }
 
+export interface TelegramPeakDemand {
+  /** When the peak was registered. */
+  timestamp: string | null;
+  value: number | null;
+  unit: TelegramUnit | null;
+}
+
+export interface TelegramPeakDemandHistoryItem extends TelegramPeakDemand {
+  /** The end of the month (billing period) this peak belongs to. */
+  endOfPeriod: string | null;
+}
+
+export interface TelegramPeakDemandHistory {
+  count: number | null;
+  log: TelegramPeakDemandHistoryItem[];
+}
+
 // https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_a727fce1f1.pdf
 // https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_40f025334f.pdf
 export interface ParsedTelegram {
@@ -55,6 +72,19 @@ export interface ParsedTelegram {
       t1: TelegramValueItem;
       t2: TelegramValueItem;
       active: TelegramValueItem;
+    };
+    /**
+     * The demand used for the capacity tariff. Only sent by meters that register it, like the Belgian (Fluvius) meters.
+     *
+     * @link https://api-documentation.homewizard.com/docs/v2/measurement#capacity-rate
+     */
+    demand: {
+      /** The average demand of the current quarter-hour (`1-0:1.4.0`). */
+      average: TelegramValueItem;
+      /** The peak demand of the running month, and when it was registered (`1-0:1.6.0`). */
+      monthlyPeak: TelegramPeakDemand;
+      /** The peak demand of each of the last 13 months at most (`0-0:98.1.0`). */
+      monthlyPeakHistory: TelegramPeakDemandHistory;
     };
     /** Tariff indicator electricity. The tariff indicator can also be used to switch tariff dependent loads e.g boilers. This is the responsibility of the P1 user */
     tariffIndicator: number | null;
@@ -169,6 +199,21 @@ export function parseTelegram(
         active: {
           value: null,
           unit: null,
+        },
+      },
+      demand: {
+        average: {
+          value: null,
+          unit: null,
+        },
+        monthlyPeak: {
+          timestamp: null,
+          value: null,
+          unit: null,
+        },
+        monthlyPeakHistory: {
+          count: null,
+          log: [],
         },
       },
       tariffIndicator: null,
@@ -343,6 +388,22 @@ export function parseTelegram(
       case '1-0:2.7.0':
         parsedTelegram.power.export.active.value = parseFloat(parsedLine.value);
         parsedTelegram.power.export.active.unit = parsedLine.unit;
+        break;
+
+      // Average demand of the current quarter-hour, for the capacity tariff (BE)
+      case '1-0:1.4.0':
+        parsedTelegram.power.demand.average.value = parseFloat(parsedLine.value);
+        parsedTelegram.power.demand.average.unit = parsedLine.unit;
+        break;
+
+      // Peak demand of the running month and when it was registered, for the capacity tariff (BE)
+      case '1-0:1.6.0':
+        parsedTelegram.power.demand.monthlyPeak = parsePeakDemand(parsedLine.value);
+        break;
+
+      // Peak demand of the last 13 months at most, for the capacity tariff (BE)
+      case '0-0:98.1.0':
+        parsedTelegram.power.demand.monthlyPeakHistory = parsePeakDemandHistory(parsedLine.value);
         break;
 
       // The actual threshold Electricity in kW
@@ -716,6 +777,50 @@ export function parsePowerFailureEventLog(value: string): TelegramPowerFailureLo
         output.log.push(logEntry);
       }
     }
+  }
+
+  return output;
+}
+
+/**
+ * Parse a peak demand of format: timestamp)(value*unit, example: 230903114500S)(02.762*kW
+ */
+export function parsePeakDemand(value: string): TelegramPeakDemand {
+  const reading = parseHourlyReading(value);
+
+  return {
+    timestamp: parseTimestamp(reading?.timestamp),
+    value: reading?.value ? parseFloat(reading.value) : null,
+    unit: reading?.unit || null,
+  };
+}
+
+/**
+ * Parse the peak demand history of format:
+ * count)(1-0:1.6.0)(1-0:1.6.0)(end of period)(timestamp)(value*unit)(end of period)(timestamp)(value*unit...
+ *
+ * Example: 2)(1-0:1.6.0)(1-0:1.6.0)(230201000000W)(230110174500W)(04.769*kW)(230301000000W)(230212181500W)(05.012*kW
+ */
+export function parsePeakDemandHistory(value: string): TelegramPeakDemandHistory {
+  const parts = value.split(')(');
+
+  const output: TelegramPeakDemandHistory = {
+    count: parseInt(parts[0]) || 0,
+    log: [],
+  };
+
+  // After the count come two references to the OBIS code of the values (1-0:1.6.0), then the entries
+  const entries = parts.slice(1).filter(part => !part.includes(':'));
+
+  for (let i = 0; i + 2 < entries.length; i = i + 3) {
+    const [peakValue, peakUnit] = entries[i + 2].split('*');
+
+    output.log.push({
+      endOfPeriod: parseTimestamp(entries[i]),
+      timestamp: parseTimestamp(entries[i + 1]),
+      value: parseFloat(peakValue),
+      unit: (peakUnit as TelegramUnit) || null,
+    });
   }
 
   return output;
