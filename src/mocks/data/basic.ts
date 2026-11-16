@@ -39,4 +39,34 @@ export const mockBasicInformationResponse: Record<SupportedDevices, BasicInforma
     firmware_version: '3.02',
     api_version: 'v1',
   },
+  'HWE-KWH1': {
+    product_type: 'HWE-KWH1',
+    product_name: 'kWh meter 1-phase',
+    serial: '1c23e7280952',
+    firmware_version: '5.00',
+    api_version: 'v1',
+  },
+  'HWE-KWH3': {
+    product_type: 'HWE-KWH3',
+    product_name: 'kWh meter 3-phase',
+    serial: '1c23e7280952',
+    firmware_version: '5.00',
+    api_version: 'v1',
+  },
+  // Only available in the API v2
+  'HWE-BAT': {
+    product_type: 'HWE-BAT',
+    product_name: 'Plug-In Battery',
+    serial: '5c2fafaabbcc',
+    firmware_version: '2.03',
+    api_version: '2.0.0',
+  },
+  // Only available in the API v2 (in development)
+  'HWE-DSP': {
+    product_type: 'HWE-DSP',
+    product_name: 'Energy Display',
+    serial: '5c2fafaabbcc',
+    firmware_version: '2.03',
+    api_version: '2.0.0',
+  },
 };

@@ -1,4 +1,4 @@
-import { HomeWizardEnergyDiscovery } from '@/homewizard-energy-discovery';
+import { HomeWizardEnergyDiscovery, isMdnsTxtRecordV2 } from '@/homewizard-energy-discovery';
 import { MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE } from '@/types';
 import * as multicastDns from 'multicast-dns';
 import {
@@ -406,4 +406,97 @@ describe('HomeWizardEnergyDiscovery', () => {
   });
 
   // TODO: test on response and error/warning
+
+  describe('API v2 (types option)', () => {
+    const v2TxtData = [
+      'api_version=2.0.0',
+      'id=appliance/battery/5c2fafaabbcc',
+      'serial=5c2fafaabbcc',
+      'product_name=Plug-In Battery',
+      'product_type=HWE-BAT',
+    ].map(entry => Buffer.from(entry));
+
+    const mockMdnsResponseV2 = {
+      ...mockMdnsResponse,
+      answers: [
+        {
+          name: '_homewizard._tcp.local',
+          type: 'PTR',
+          ttl: 4500,
+          class: 'IN',
+          flush: false,
+          data: 'battery-AABBCC._homewizard._tcp.local',
+        },
+        {
+          name: 'battery-AABBCC._homewizard._tcp.local',
+          type: 'TXT',
+          ttl: 4500,
+          class: 'IN',
+          flush: true,
+          data: v2TxtData,
+        },
+        {
+          name: 'battery-AABBCC.local',
+          type: 'A',
+          ttl: 120,
+          class: 'IN',
+          flush: true,
+          data: '192.168.1.50',
+        },
+      ],
+      additionals: [],
+    } as unknown as typeof mockMdnsResponse;
+
+    it('should only query the API v1 domain by default', () => {
+      querySpy.mockClear();
+      new HomeWizardEnergyDiscovery().start();
+
+      expect(querySpy).toHaveBeenCalledWith('_hwenergy._tcp.local', 'PTR');
+    });
+
+    it('should query all the given types when start() is invoked', () => {
+      querySpy.mockClear();
+      new HomeWizardEnergyDiscovery({ types: ['hwenergy', 'homewizard'] }).start();
+
+      expect(querySpy).toHaveBeenCalledWith([
+        { name: '_hwenergy._tcp.local', type: 'PTR' },
+        { name: '_homewizard._tcp.local', type: 'PTR' },
+      ]);
+    });
+
+    it('should ignore API v2 responses by default', () => {
+      const callback = vi.fn();
+
+      new HomeWizardEnergyDiscovery()['handleMdnsResponse'](callback)(mockMdnsResponseV2);
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('should call the callback with the API v2 txt record', () => {
+      const callback = vi.fn();
+      const v2Discovery = new HomeWizardEnergyDiscovery({ types: ['hwenergy', 'homewizard'] });
+
+      v2Discovery['handleMdnsResponse'](callback)(mockMdnsResponseV2);
+      v2Discovery['handleMdnsResponse'](callback)(mockMdnsResponse);
+
+      expect(callback).toHaveBeenCalledTimes(2);
+
+      const v2Response = callback.mock.calls[0][0];
+
+      expect(v2Response).toStrictEqual({
+        ip: '192.168.1.50',
+        hostname: 'battery-AABBCC.local',
+        fqdn: 'battery-AABBCC._homewizard._tcp.local',
+        txt: {
+          api_version: '2.0.0',
+          id: 'appliance/battery/5c2fafaabbcc',
+          serial: '5c2fafaabbcc',
+          product_name: 'Plug-In Battery',
+          product_type: 'HWE-BAT',
+        },
+      });
+      expect(isMdnsTxtRecordV2(v2Response.txt)).toBe(true);
+      expect(isMdnsTxtRecordV2(callback.mock.calls[1][0].txt)).toBe(false);
+    });
+  });
 });

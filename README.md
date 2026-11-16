@@ -212,6 +212,86 @@ const data = await kwhMeter3Phase.getData();
 
 A simple polling interface for the kWh Meter 3-phase is exposed via `api.polling.getData`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
 
+## Installing this fork
+
+This fork is not published on npm. The `dist` branch contains the built library (updated on each push to `main`), install it from GitHub:
+
+```bash
+npm install homewizard-energy-api@github:NebzHB/homewizard-energy-api#dist
+```
+
+## API v2
+
+HomeWizard is moving its devices to the [API v2](https://api-documentation.homewizard.com/docs/category/api-v2): HTTPS, a token per application (the user has to press the button on the device once) and new names for the datapoints. Each device has a `...ApiV2` class next to its API v1 class, they work the same way (same methods, same polling interface).
+
+| Device                              | Class                 | API v2                                            |
+| ----------------------------------- | --------------------- | ------------------------------------------------- |
+| P1 Meter `HWE-P1`                   | `P1MeterApiV2`        | Supported                                         |
+| kWh Meter `HWE-KWH1`, `SDM230-wifi` | `KwhMeter1PhaseApiV2` | Supported                                         |
+| kWh Meter `HWE-KWH3`, `SDM630-wifi` | `KwhMeter3PhaseApiV2` | Supported                                         |
+| Plug-In Battery `HWE-BAT`           | `PlugInBatteryApiV2`  | Supported (this device has no API v1)             |
+| Energy Socket `HWE-SKT`             | `EnergySocketApiV2`   | In development by HomeWizard, common methods only |
+| Watermeter `HWE-WTR`                | `WaterMeterApiV2`     | In development by HomeWizard, common methods only |
+| Energy Display `HWE-DSP`            | `EnergyDisplayApiV2`  | In development by HomeWizard, common methods only |
+
+```typescript
+import { P1MeterApiV2, getCertificateIdentifier } from 'homewizard-energy-api';
+
+const p1Meter = new P1MeterApiV2('https://192.168.1.11', {
+  api: {
+    // Validates that the certificate is issued to this device (optional, but recommended)
+    identifier: getCertificateIdentifier('HWE-P1', '5c2fafaabbcc'),
+    // The token you stored earlier. Without a token, use pair() first.
+    token,
+  },
+});
+
+// Only once: ask the user to press the button on the device and wait for it.
+// On the kWh Meter the button must be held for 1 to 3 seconds.
+const { token } = await p1Meter.pair('my-app', { timeout: 120000 });
+
+const data = await p1Meter.getData();
+```
+
+| Method | API                  | Function                               | Available on        |
+| ------ | -------------------- | -------------------------------------- | ------------------- |
+| POST   | /api/user            | `createUser()`, `pair()`               | All                 |
+| GET    | /api/user            | `getUsers()`                           | All                 |
+| DELETE | /api/user            | `deleteUser()`                         | All                 |
+| GET    | /api                 | `getBasicInformation()`                | All                 |
+| GET    | /api/measurement     | `getData()`                            | All                 |
+| GET    | /api/system          | `getSystem()`                          | All                 |
+| PUT    | /api/system          | `updateSystem()`                       | All                 |
+| PUT    | /api/system/identify | `identify()`                           | All                 |
+| PUT    | /api/system/reboot   | `reboot()`                             | P1 Meter, kWh Meter |
+| GET    | /api/batteries       | `getBatteries()`                       | P1 Meter, kWh Meter |
+| PUT    | /api/batteries       | `updateBatteries()`                    | P1 Meter, kWh Meter |
+| GET    | /api/telegram        | `getTelegram()`, `getParsedTelegram()` | P1 Meter            |
+
+Good to know:
+
+- `pair()` keeps calling `createUser()` until the button is pressed. After the button is pressed there are 30 seconds to create the user. Creating a user with an existing name gives a new token and makes the previous one invalid.
+- Errors of the API v2 are thrown as `HomeWizardEnergyApiV2ResponseError`, with the code of the device in `errorCode` (for example `user:unauthorized`).
+- The certificate of the device is validated with the HomeWizard CA certificate (included). Use `api.verifyCertificate: false` to turn this off.
+- Devices with the API v2 are discovered on another mDNS domain, use `new HomeWizardEnergyDiscovery({ types: ['hwenergy', 'homewizard'] })` and `isMdnsTxtRecordV2(response.txt)`.
+
+### WebSocket
+
+With the API v2 the device can push its data over a WebSocket, so there is no need to poll. The WebSocket uses the same token and the same validation of the certificate.
+
+```typescript
+p1Meter.websocket.on('measurement', measurement => console.log(measurement.power_w));
+p1Meter.websocket.on('error', error => console.log(error));
+
+p1Meter.websocket.subscribe('measurement'); // or 'system', 'batteries', 'device', 'user', '*'
+p1Meter.websocket.start();
+
+// later
+p1Meter.websocket.stop();
+```
+
+The connection is opened again (and the subscriptions are sent again) when it is lost, see the `websocket` options (`reconnect`, `reconnectInterval` and `heartbeatInterval`). `updateSystem()`, `updateBatteries()`, `request()` and `identify()` are also available on the WebSocket.
+
 ## Discover HomeWizard devices in your network
 
 This library exposes a discovery method to discover HomeWizard Energy devices in your local network. Each HomeWizard device broadcasts itself on your local network using Multicast DNS. This allows you to use all the devices in your network without knowing the actual IP address of the device. You can find more details about this in the [official docs](https://homewizard-energy-api.readthedocs.io/discovery.html).

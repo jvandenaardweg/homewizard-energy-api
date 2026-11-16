@@ -1,10 +1,6 @@
 import * as multicastDns from 'multicast-dns';
-import {
-  MdnsTxtRecord,
-  MDNS_DISCOVERY_DOMAIN,
-  MDNS_DISCOVERY_TYPE,
-  MDNS_DISCOVERY_QUERY_TYPE,
-} from '@/types';
+import { MdnsTxtRecord, MDNS_DISCOVERY_TYPE, MDNS_DISCOVERY_QUERY_TYPE } from '@/types';
+import { MdnsTxtRecordV2, MDNS_DISCOVERY_TYPE_V2 } from '@/types-v2';
 import { bufferArrayToJSON, isBufferArray } from '@/utils/buffer';
 import util from 'util';
 import { LoggerOptions } from './base-api';
@@ -13,11 +9,33 @@ export interface DiscoveryResponse {
   ip: string;
   hostname: string;
   fqdn: string;
-  txt: MdnsTxtRecord;
+  /**
+   * The txt record of the device.
+   *
+   * A device that supports both API versions responds on both domains, so you will receive two responses for that device.
+   * Use `isMdnsTxtRecordV2()` to know if the response is from the API v2 domain (`_homewizard._tcp`).
+   */
+  txt: MdnsTxtRecord | MdnsTxtRecordV2;
 }
+
+export type DiscoveryType = typeof MDNS_DISCOVERY_TYPE | typeof MDNS_DISCOVERY_TYPE_V2;
 
 export interface HomeWizardEnergyDiscoveryOptions {
   logger?: LoggerOptions;
+  /**
+   * The mDNS service types to discover. Defaults to `['hwenergy']` (API v1).
+   *
+   * - `hwenergy`: devices with the API v1 (`_hwenergy._tcp`)
+   * - `homewizard`: devices with the API v2 (`_homewizard._tcp`), the only way to discover the Plug-In Battery
+   */
+  types?: DiscoveryType[];
+}
+
+/**
+ * Returns `true` when the txt record is from the API v2 domain (`_homewizard._tcp`).
+ */
+export function isMdnsTxtRecordV2(txt: MdnsTxtRecord | MdnsTxtRecordV2): txt is MdnsTxtRecordV2 {
+  return 'api_version' in txt;
 }
 
 /**
@@ -29,9 +47,18 @@ export class HomeWizardEnergyDiscovery {
   private mdns: multicastDns.MulticastDNS | null = null;
   private loggerOptions: HomeWizardEnergyDiscoveryOptions['logger'];
   private cachedDiscoveryResponses: DiscoveryResponse[] = [];
+  private types: DiscoveryType[];
 
   constructor(options?: HomeWizardEnergyDiscoveryOptions) {
     this.loggerOptions = options?.logger;
+    this.types = options?.types?.length ? options.types : [MDNS_DISCOVERY_TYPE];
+  }
+
+  /**
+   * Find out if the text (name or data of a mDNS answer) is about one of the service types we discover.
+   */
+  protected includesDiscoveryType(text: string): boolean {
+    return this.types.some(type => text.includes(type));
   }
 
   protected log(...args: unknown[]): void {
@@ -47,7 +74,19 @@ export class HomeWizardEnergyDiscovery {
 
     this.mdns = multicastDns.default();
 
-    this.mdns.query(MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE);
+    const [firstType] = this.types;
+
+    if (this.types.length === 1) {
+      this.mdns.query(`_${firstType}._tcp.local`, MDNS_DISCOVERY_QUERY_TYPE);
+      return;
+    }
+
+    this.mdns.query(
+      this.types.map(type => ({
+        name: `_${type}._tcp.local`,
+        type: MDNS_DISCOVERY_QUERY_TYPE,
+      })),
+    );
   }
 
   stop() {
@@ -107,7 +146,7 @@ export class HomeWizardEnergyDiscovery {
         return (
           answer.type === MDNS_DISCOVERY_QUERY_TYPE &&
           answer.ttl === 0 &&
-          answer.data.includes(MDNS_DISCOVERY_TYPE)
+          this.includesDiscoveryType(answer.data)
         );
       }
 
@@ -122,7 +161,7 @@ export class HomeWizardEnergyDiscovery {
     return (
       response.answers?.filter(answer => {
         if ('data' in answer && typeof answer.data === 'string') {
-          return answer.data.includes(MDNS_DISCOVERY_TYPE);
+          return this.includesDiscoveryType(answer.data);
         }
 
         return false;
@@ -130,7 +169,9 @@ export class HomeWizardEnergyDiscovery {
     );
   }
 
-  protected getTxtRecordFromResponse(response: multicastDns.ResponsePacket): MdnsTxtRecord | null {
+  protected getTxtRecordFromResponse(
+    response: multicastDns.ResponsePacket,
+  ): MdnsTxtRecord | MdnsTxtRecordV2 | null {
     const txt = response.answers.find(answer => answer.type === 'TXT');
 
     // no txt record found
@@ -144,7 +185,7 @@ export class HomeWizardEnergyDiscovery {
 
     // txt.data must be an Array of Buffers when we end up here
 
-    const txtRecordFromBuffers = bufferArrayToJSON<MdnsTxtRecord>(txt.data);
+    const txtRecordFromBuffers = bufferArrayToJSON<MdnsTxtRecord | MdnsTxtRecordV2>(txt.data);
 
     return txtRecordFromBuffers;
   }
@@ -180,7 +221,7 @@ export class HomeWizardEnergyDiscovery {
 
   protected getFqdnFromResponse(response: multicastDns.ResponsePacket): string | null {
     const ptr = response.answers.find(
-      a => a.type === 'PTR' && a.name?.includes(MDNS_DISCOVERY_TYPE),
+      a => a.type === 'PTR' && !!a.name && this.includesDiscoveryType(a.name),
     );
 
     if (!ptr) {

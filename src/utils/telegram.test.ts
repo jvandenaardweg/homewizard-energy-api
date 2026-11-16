@@ -2,6 +2,8 @@ import { mockParsedTelegramResponse, mockTelegramResponse } from '@/mocks/data/t
 import {
   convertHexToAscii,
   parseHourlyReading,
+  parsePeakDemand,
+  parsePeakDemandHistory,
   parseLine,
   parsePowerFailureEventLog,
   parseTelegram,
@@ -236,6 +238,103 @@ describe('utils/telegram', () => {
       const expected = mockParsedTelegramResponse['v50l3_2'];
 
       expect(parsedTelegram).toMatchObject(expected);
+    });
+
+    // https://github.com/jvandenaardweg/homewizard-energy-api/issues/100
+    it('should parse the demand (capacity tariff) of a Belgian telegram', () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      const parsedTelegram = parseTelegram(mockTelegramResponse['v50beDemand']);
+
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+      expect(parsedTelegram.power.demand.average).toStrictEqual({ value: 0.255, unit: 'kW' });
+      expect(parsedTelegram.power.demand.monthlyPeak).toStrictEqual({
+        timestamp: '2023-09-03T13:45:00+02:00',
+        value: 2.762,
+        unit: 'kW',
+      });
+      expect(parsedTelegram.power.demand.monthlyPeakHistory.count).toBe(3);
+      expect(parsedTelegram.power.demand.monthlyPeakHistory.log).toStrictEqual([
+        {
+          endOfPeriod: '2023-02-01T01:00:00+01:00',
+          timestamp: '2023-01-10T18:45:00+01:00',
+          value: 4.769,
+          unit: 'kW',
+        },
+        {
+          endOfPeriod: '2023-03-01T01:00:00+01:00',
+          timestamp: '2023-02-12T19:15:00+01:00',
+          value: 5.012,
+          unit: 'kW',
+        },
+        {
+          endOfPeriod: '2023-04-01T02:00:00+02:00',
+          timestamp: '2023-03-05T13:00:00+01:00',
+          value: 3.5,
+          unit: 'kW',
+        },
+      ]);
+      // The lines around the demand are still parsed
+      expect(parsedTelegram.power.import.active).toStrictEqual({ value: 0.37, unit: 'kW' });
+      expect(parsedTelegram.power.tariffIndicator).toBe(1);
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should parse the gas reading of a Belgian telegram', () => {
+      const parsedTelegram = parseTelegram(mockTelegramResponse['v50be']);
+
+      expect(parsedTelegram.gas).toStrictEqual({
+        deviceType: '003',
+        equipmentId: '37464C4F32313139303331393634',
+        timestamp: '2021-03-20T22:46:26+01:00',
+        value: 2559.077,
+        unit: 'm3',
+        valvePosition: '1',
+      });
+    });
+
+    it('should leave the demand empty when the telegram has none', () => {
+      const parsedTelegram = parseTelegram(mockTelegramResponse['v50l3_2']);
+
+      expect(parsedTelegram.power.demand).toStrictEqual({
+        average: { value: null, unit: null },
+        monthlyPeak: { timestamp: null, value: null, unit: null },
+        monthlyPeakHistory: { count: null, log: [] },
+      });
+    });
+  });
+
+  describe('parsePeakDemand', () => {
+    it('should parse a peak demand', () => {
+      expect(parsePeakDemand('230903114500S)(02.762*kW')).toStrictEqual({
+        timestamp: '2023-09-03T13:45:00+02:00',
+        value: 2.762,
+        unit: 'kW',
+      });
+    });
+
+    it('should return empty values when the peak demand can not be parsed', () => {
+      expect(parsePeakDemand('')).toStrictEqual({ timestamp: null, value: null, unit: null });
+    });
+  });
+
+  describe('parsePeakDemandHistory', () => {
+    it('should parse an empty history', () => {
+      expect(parsePeakDemandHistory('0)(1-0:1.6.0)(1-0:1.6.0')).toStrictEqual({
+        count: 0,
+        log: [],
+      });
+    });
+
+    it('should ignore an incomplete entry', () => {
+      const history = parsePeakDemandHistory(
+        '2)(1-0:1.6.0)(1-0:1.6.0)(230201000000W)(230110174500W)(04.769*kW)(230301000000W',
+      );
+
+      expect(history.count).toBe(2);
+      expect(history.log).toHaveLength(1);
     });
   });
 });
