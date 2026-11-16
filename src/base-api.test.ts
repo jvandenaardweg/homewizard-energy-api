@@ -491,6 +491,24 @@ describe('BaseApi', () => {
       await run;
     });
 
+    it('should log errors that cannot be converted to JSON as a string', async () => {
+      const circularError: Record<string, unknown> = {};
+      circularError.self = circularError;
+      const apiMethod = vi.fn().mockRejectedValue(circularError);
+
+      const run = baseApi['startPolling']('getData', apiMethod);
+      await flushPromises();
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        '[HomeWizard Energy API]:',
+        'Received error while polling "getData": [object Object]',
+      );
+
+      baseApi['stopPolling']('getData');
+      vi.advanceTimersByTime(1000);
+      await run;
+    });
+
     it('should log errors that are not an Error as JSON', async () => {
       const apiMethod = vi.fn().mockRejectedValue({ code: 'ECONNRESET' });
 

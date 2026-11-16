@@ -29,7 +29,12 @@ function parseApiError(response: string): ErrorResponse['error'] | undefined {
 function formatError(error: unknown): string {
   if (error instanceof Error) return `${error.name}: ${error.message}`;
 
-  return JSON.stringify(error);
+  try {
+    return JSON.stringify(error);
+  } catch {
+    // For example a circular object, which JSON can't represent
+    return String(error);
+  }
 }
 
 export class HomeWizardEnergyApiError extends Error {
