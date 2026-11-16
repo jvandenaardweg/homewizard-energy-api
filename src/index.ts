@@ -6,6 +6,7 @@ export * from './kwh-meter-3-phase-api';
 export * from './p1-meter-api';
 export * from './types';
 export * from './water-meter-api';
+export * as v2 from './v2';
 export type {
   ParsedTelegram,
   TelegramPowerFailureLog,

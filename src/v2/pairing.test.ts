@@ -1,0 +1,200 @@
+import { HomeWizardEnergyApiError, HomeWizardEnergyApiTimeoutError } from '@/shared/errors';
+import { mockApiAgent } from '@/mocks/api';
+import { mockV2, mockV2Host, mockV2Pool } from '@/mocks/api-v2';
+import { mockV2UserCreated } from '@/mocks/data/v2';
+import {
+  mockTlsCa,
+  mockTlsIdentifier,
+  MockTlsServer,
+  startMockTlsServer,
+} from '@/mocks/tls/server';
+import { HomeWizardApiV2Error, HomeWizardApiV2PairingError } from './errors';
+import { getIdentifier, isRetryable, pair } from './pairing';
+import { CERTIFICATE_IDENTITY_ERROR_CODE } from './tls';
+
+const identifier = 'appliance/p1dongle/5c2fafaabbcc';
+const options = { dispatcher: mockApiAgent, identifier };
+
+const mockButtonNotPressed = (times = 1) =>
+  mockV2Pool
+    .intercept({ path: '/api/user', method: 'POST' })
+    .reply(403, { error: 'user:creation-not-enabled' })
+    .times(times);
+
+describe('v2/pair', () => {
+  it('should keep trying until the button is pressed', async () => {
+    const onAttempt = vi.fn();
+    mockButtonNotPressed(2);
+    mockV2('/api/user', 'POST', { response: mockV2UserCreated });
+
+    const pairing = pair(mockV2Host, 'new_user', { ...options, onAttempt });
+    await vi.advanceTimersByTimeAsync(4000);
+
+    await expect(pairing).resolves.toStrictEqual({ ...mockV2UserCreated, identifier });
+    expect(onAttempt).toHaveBeenCalledTimes(3);
+    expect(onAttempt).toHaveBeenNthCalledWith(1, 120000);
+    expect(onAttempt).toHaveBeenNthCalledWith(3, 116000);
+  });
+
+  it('should give up after the pair timeout', async () => {
+    mockButtonNotPressed(3);
+
+    const pairing = pair(mockV2Host, 'new_user', { ...options, pairTimeout: 5000 }).catch(
+      error => error,
+    );
+    await vi.advanceTimersByTimeAsync(6000);
+
+    const error = await pairing;
+    expect(error).toBeInstanceOf(HomeWizardApiV2PairingError);
+    expect(error.reason).toBe('timeout');
+    expect(error.message).toBe('The button on the device was not pressed within 5000ms');
+  });
+
+  it('should stop when aborted while waiting', async () => {
+    const controller = new AbortController();
+    mockButtonNotPressed();
+
+    const pairing = pair(mockV2Host, 'new_user', { ...options, signal: controller.signal }).catch(
+      error => error,
+    );
+    await vi.advanceTimersByTimeAsync(100);
+    controller.abort();
+
+    const error = await pairing;
+    expect(error).toBeInstanceOf(HomeWizardApiV2PairingError);
+    expect(error.reason).toBe('aborted');
+  });
+
+  it('should not start when already aborted', async () => {
+    const error = await pair(mockV2Host, 'new_user', {
+      ...options,
+      signal: AbortSignal.abort(),
+    }).catch(error => error);
+
+    expect(error.reason).toBe('aborted');
+  });
+
+  it('should throw an error from the device straight away', async () => {
+    mockV2('/api/user', 'POST', { statusCode: 400, response: { error: 'user:no-storage' } });
+
+    const error = await pair(mockV2Host, 'new_user', options).catch(error => error);
+
+    expect(error).toBeInstanceOf(HomeWizardApiV2Error);
+    expect(error.code).toBe('user:no-storage');
+  });
+
+  it('should throw an invalid name without sending a request', async () => {
+    await expect(pair(mockV2Host, 'my.app', options)).rejects.toThrow(/is invalid/);
+  });
+
+  it('should retry after a network error', async () => {
+    mockV2Pool
+      .intercept({ path: '/api/user', method: 'POST' })
+      .replyWithError(new Error('socket hang up'));
+    mockV2('/api/user', 'POST', { response: mockV2UserCreated });
+
+    const method = vi.fn();
+    const pairing = pair(mockV2Host, 'new_user', { ...options, logger: { method } });
+    await vi.advanceTimersByTimeAsync(2000);
+
+    await expect(pairing).resolves.toMatchObject({ token: mockV2UserCreated.token });
+    expect(JSON.stringify(method.mock.calls)).toContain('Pairing attempt failed, trying again');
+  });
+
+  it('should throw when the identifier is not given and no certificate was seen', async () => {
+    mockV2('/api/user', 'POST', { response: mockV2UserCreated });
+
+    await expect(pair(mockV2Host, 'new_user', { dispatcher: mockApiAgent })).rejects.toThrow(
+      /could not be read from its certificate/,
+    );
+  });
+
+  describe('isRetryable', () => {
+    it('should retry network errors and timeouts only', () => {
+      expect(isRetryable(new Error('ECONNRESET'))).toBe(true);
+      expect(isRetryable(new HomeWizardEnergyApiTimeoutError('slow', 'https://x', 1))).toBe(true);
+      expect(isRetryable(new HomeWizardEnergyApiError('invalid name'))).toBe(false);
+      expect(isRetryable(new HomeWizardApiV2Error('x', 'https://x', 400, ''))).toBe(false);
+      expect(isRetryable({ code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' })).toBe(false);
+      expect(isRetryable({ code: CERTIFICATE_IDENTITY_ERROR_CODE })).toBe(false);
+    });
+  });
+
+  describe('getIdentifier', () => {
+    it('should prefer the given identifier', () => {
+      expect(getIdentifier('a', new Set(['b']))).toBe('a');
+    });
+
+    it('should use the one identifier seen', () => {
+      expect(getIdentifier(undefined, new Set(['b']))).toBe('b');
+    });
+
+    it('should refuse when different devices answered', () => {
+      expect(() => getIdentifier(undefined, new Set(['a', 'b']))).toThrow(
+        /Different devices answered at this address during pairing \(a, b\)/,
+      );
+    });
+  });
+
+  describe('with a TLS connection', () => {
+    let server: MockTlsServer;
+    let attempts = 0;
+
+    beforeEach(async () => {
+      vi.useRealTimers();
+      attempts = 0;
+      server = await startMockTlsServer((_request, response) => {
+        attempts++;
+        response.setHeader('content-type', 'application/json');
+
+        if (attempts === 1) {
+          response.statusCode = 403;
+          response.end('{"error":"user:creation-not-enabled"}');
+          return;
+        }
+
+        response.end(JSON.stringify(mockV2UserCreated));
+      });
+    });
+
+    afterEach(async () => {
+      await server.close();
+      // The global afterEach in vitest.setup.ts runs the fake timers
+      vi.useFakeTimers();
+    });
+
+    it('should learn the identifier from the certificate', async () => {
+      const result = await pair(server.host, 'new_user', { ca: mockTlsCa, interval: 10 });
+
+      expect(result).toStrictEqual({ ...mockV2UserCreated, identifier: mockTlsIdentifier });
+      expect(attempts).toBe(2);
+    });
+
+    it('should accept the certificate of the given identifier', async () => {
+      await expect(
+        pair(server.host, 'new_user', {
+          ca: mockTlsCa,
+          interval: 10,
+          identifier: mockTlsIdentifier,
+        }),
+      ).resolves.toMatchObject({ identifier: mockTlsIdentifier });
+    });
+
+    it('should stop straight away for a certificate of another identifier', async () => {
+      const error = await pair(server.host, 'new_user', {
+        ca: mockTlsCa,
+        identifier: 'appliance/p1dongle/000000000000',
+      }).catch(error => error);
+
+      expect(error.code).toBe(CERTIFICATE_IDENTITY_ERROR_CODE);
+      expect(attempts).toBe(0);
+    });
+
+    it('should stop straight away for a certificate the HomeWizard CA did not sign', async () => {
+      const error = await pair(server.host, 'new_user').catch(error => error);
+
+      expect(error.code).toMatch(/CERT|SIGNATURE|ISSUER/);
+      expect(attempts).toBe(0);
+    });
+  });
+});
