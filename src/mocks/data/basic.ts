@@ -24,9 +24,25 @@ export const mockBasicInformationResponse: Record<SupportedDevices, BasicInforma
     api_version: 'v1',
   },
   // TODO: mock properly
+  'HWE-KWH1': {
+    product_type: 'HWE-KWH1',
+    product_name: 'kWh meter 1-phase',
+    serial: '1c23e7280952',
+    firmware_version: '4.19',
+    api_version: 'v1',
+  },
+  // TODO: mock properly
+  'HWE-KWH3': {
+    product_type: 'HWE-KWH3',
+    product_name: 'kWh meter 3-phase',
+    serial: '1c23e7280952',
+    firmware_version: '4.19',
+    api_version: 'v1',
+  },
+  // TODO: mock properly
   'SDM230-wifi': {
     product_type: 'SDM230-wifi',
-    product_name: 'kWh meter 3-phase',
+    product_name: 'kWh meter 1-phase',
     serial: '1c23e7280952',
     firmware_version: '3.02',
     api_version: 'v1',
@@ -34,7 +50,7 @@ export const mockBasicInformationResponse: Record<SupportedDevices, BasicInforma
   // TODO: mock properly
   'SDM630-wifi': {
     product_type: 'SDM630-wifi',
-    product_name: 'kWh meter 1-phase',
+    product_name: 'kWh meter 3-phase',
     serial: '1c23e7280952',
     firmware_version: '3.02',
     api_version: 'v1',

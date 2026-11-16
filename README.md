@@ -46,8 +46,8 @@ This library supports all devices from HomeWizard that expose an API. This inclu
 - [Wi-Fi P1 meter](#p1-meter) `HWE-P1`
 - [Wi-Fi Energy Socket](#energy-socket) `HWE-SKT`
 - [Wi-Fi Watermeter](#watermeter) (Only when powered over USB) `HWE-WTR`
-- [Wi-Fi kWh meter (1 phase)](#kwh-meter-1-phase) `SDM230-wifi`
-- [Wi-Fi kWh meter (3 phase)](#kwh-meter-3-phase) `SDM630-wifi`
+- [Wi-Fi kWh meter (1 phase)](#kwh-meter-1-phase) `HWE-KWH1`, `SDM230-wifi`
+- [Wi-Fi kWh meter (3 phase)](#kwh-meter-3-phase) `HWE-KWH3`, `SDM630-wifi`
 
 Make sure to enable the `Local API` setting for each device you want to use with this library. You can do this in the Energy app.
 
