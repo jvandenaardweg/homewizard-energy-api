@@ -26,6 +26,12 @@ function parseApiError(response: string): ErrorResponse['error'] | undefined {
   return undefined;
 }
 
+function formatError(error: unknown): string {
+  if (error instanceof Error) return `${error.name}: ${error.message}`;
+
+  return JSON.stringify(error);
+}
+
 export class HomeWizardEnergyApiError extends Error {
   constructor(message: string) {
     super(message);
@@ -128,6 +134,7 @@ export class BaseApi {
   protected eventEmitter: EventEmitter;
 
   protected isPolling: Record<string, boolean> = {};
+  protected pollingRuns: Record<string, number> = {};
 
   constructor(baseUrl: string, options?: BaseApiOptions) {
     this.baseUrl = baseUrl;
@@ -405,16 +412,31 @@ export class BaseApi {
    * Start polling for a specific method. This method will keep polling until the stop method is called.
    *
    * It will use the `interval` and `stopOnError` options from the polling options.
+   *
+   * Calling it while the method is already polling does nothing. The returned promise never rejects.
    */
   protected async startPolling(method: string, apiMethod: () => Promise<unknown>): Promise<void> {
+    if (this.isPolling[method]) {
+      this.log(`Polling for "${method}" is already started.`);
+      return;
+    }
+
     const interval = this.pollingOptions?.interval || 1000;
     const stopOnError = !!this.pollingOptions?.stopOnError;
 
+    // Each start gets its own run, so a loop from before a stop() can't continue after a quick start() again
+    const run = (this.pollingRuns[method] || 0) + 1;
+    this.pollingRuns[method] = run;
     this.isPolling[method] = true;
 
-    while (this.isPolling[method]) {
+    const isCurrentRun = () => this.isPolling[method] && this.pollingRuns[method] === run;
+
+    while (isCurrentRun()) {
       try {
         const response = await apiMethod();
+
+        // Polling may have been stopped while the request was in flight
+        if (!isCurrentRun()) return;
 
         this.log(
           `Received response while polling "${method}". Emitting "response": ${JSON.stringify(
@@ -424,18 +446,29 @@ export class BaseApi {
 
         this.emitPollingEvent(method, 'response', response);
       } catch (error) {
-        this.log(`Received error while polling "${method}": ${JSON.stringify(error)}`);
+        if (!isCurrentRun()) return;
+
+        this.log(`Received error while polling "${method}": ${formatError(error)}`);
 
         // If the user wants to stop polling on error, we stop polling
         if (stopOnError) {
           this.stopPolling(method);
         }
 
-        this.emitPollingEvent(method, 'error', error);
-      } finally {
-        this.log(`Waiting for next polling interval for "${method}"...`);
-        await new Promise(resolve => setTimeout(resolve, interval));
+        try {
+          this.emitPollingEvent(method, 'error', error);
+        } catch (listenerError) {
+          // A throwing "error" listener would otherwise reject this promise, which nothing awaits, and crash the process
+          this.log(
+            `An "error" listener for polling "${method}" threw: ${formatError(listenerError)}`,
+          );
+        }
       }
+
+      if (!isCurrentRun()) return;
+
+      this.log(`Waiting for next polling interval for "${method}"...`);
+      await new Promise(resolve => setTimeout(resolve, interval));
     }
   }
 }

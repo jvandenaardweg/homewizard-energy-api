@@ -18,6 +18,11 @@ let baseApi: BaseApi;
 
 const loggerSpy = vi.fn();
 
+/** Lets pending promise callbacks run, because the fake timers don't advance them. */
+async function flushPromises() {
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+}
+
 describe('BaseApi', () => {
   beforeEach(() => {
     baseApi = new BaseApi(mockApiUrl, {
@@ -241,6 +246,124 @@ describe('BaseApi', () => {
       baseApi.polling[method].stop();
 
       expect(baseApi['isPolling'][method]).toBe(false);
+    });
+
+    it('should not start a second loop when start() is invoked while polling', async () => {
+      const apiMethod = vi.fn().mockResolvedValue('ok');
+
+      const firstRun = baseApi['startPolling']('getData', apiMethod);
+      await baseApi['startPolling']('getData', apiMethod);
+
+      expect(apiMethod).toHaveBeenCalledOnce();
+      expect(loggerSpy).toHaveBeenCalledWith(
+        '[HomeWizard Energy API]:',
+        'Polling for "getData" is already started.',
+      );
+
+      baseApi['stopPolling']('getData');
+      await flushPromises();
+      vi.advanceTimersByTime(1000);
+      await firstRun;
+    });
+
+    it('should end the previous loop when stop() and start() are invoked within one interval', async () => {
+      const apiMethod = vi.fn().mockResolvedValue('ok');
+
+      const firstRun = baseApi['startPolling']('getData', apiMethod);
+      await flushPromises();
+
+      baseApi['stopPolling']('getData');
+      const secondRun = baseApi['startPolling']('getData', apiMethod);
+      await flushPromises();
+
+      vi.advanceTimersByTime(1000);
+      await firstRun;
+      await flushPromises();
+
+      // The first loop ended, so only the second loop requested again
+      expect(apiMethod).toHaveBeenCalledTimes(3);
+
+      baseApi['stopPolling']('getData');
+      vi.advanceTimersByTime(1000);
+      await secondRun;
+    });
+
+    it('should not emit a response that arrives after stop() is invoked', async () => {
+      let resolveRequest: (value: string) => void = () => undefined;
+      const apiMethod = vi.fn(() => new Promise<string>(resolve => (resolveRequest = resolve)));
+      const responseListener = vi.fn();
+
+      baseApi.polling.getData.on('response', responseListener);
+
+      const run = baseApi['startPolling']('getData', apiMethod);
+      baseApi['stopPolling']('getData');
+      resolveRequest('ok');
+      await run;
+
+      expect(responseListener).not.toHaveBeenCalled();
+    });
+
+    it('should not emit an error that arrives after stop() is invoked', async () => {
+      let rejectRequest: (reason: Error) => void = () => undefined;
+      const apiMethod = vi.fn(() => new Promise<string>((_, reject) => (rejectRequest = reject)));
+      const errorListener = vi.fn();
+
+      baseApi.polling.getData.on('error', errorListener);
+
+      const run = baseApi['startPolling']('getData', apiMethod);
+      baseApi['stopPolling']('getData');
+      rejectRequest(new Error('Too late'));
+      await run;
+
+      expect(errorListener).not.toHaveBeenCalled();
+    });
+
+    it('should keep polling when an error listener throws', async () => {
+      const apiMethod = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('Request failed'))
+        .mockResolvedValue('ok');
+
+      baseApi.polling.getData.on('error', () => {
+        throw new Error('Listener failed');
+      });
+
+      const run = baseApi['startPolling']('getData', apiMethod);
+      await flushPromises();
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        '[HomeWizard Energy API]:',
+        'Received error while polling "getData": Error: Request failed',
+      );
+      expect(loggerSpy).toHaveBeenCalledWith(
+        '[HomeWizard Energy API]:',
+        'An "error" listener for polling "getData" threw: Error: Listener failed',
+      );
+
+      vi.advanceTimersByTime(1000);
+      await flushPromises();
+
+      expect(apiMethod).toHaveBeenCalledTimes(2);
+
+      baseApi['stopPolling']('getData');
+      vi.advanceTimersByTime(1000);
+      await run;
+    });
+
+    it('should log errors that are not an Error as JSON', async () => {
+      const apiMethod = vi.fn().mockRejectedValue({ code: 'ECONNRESET' });
+
+      const run = baseApi['startPolling']('getData', apiMethod);
+      await flushPromises();
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        '[HomeWizard Energy API]:',
+        'Received error while polling "getData": {"code":"ECONNRESET"}',
+      );
+
+      baseApi['stopPolling']('getData');
+      vi.advanceTimersByTime(1000);
+      await run;
     });
   });
 });
