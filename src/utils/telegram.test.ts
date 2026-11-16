@@ -237,5 +237,13 @@ describe('utils/telegram', () => {
 
       expect(parsedTelegram).toMatchObject(expected);
     });
+
+    it('should parse the BE gas reading (0-1:24.2.3)', () => {
+      const parsedTelegram = parseTelegram(mockTelegramResponse['v50be']);
+
+      expect(parsedTelegram.gas.value).toBe(2559.077);
+      expect(parsedTelegram.gas.unit).toBe('m3');
+      expect(parsedTelegram.gas.timestamp).toBe(parseTimestamp('210320214626W'));
+    });
   });
 });

@@ -486,28 +486,18 @@ export function parseTelegram(telegram: string): ParsedTelegram {
       // Last 5-minute Meter reading Heat or Cold in 0,01 GJ and capture time
       // Last 5-minute Meter reading in 0,001 m3 and capture time
       // Last 5-minute Meter reading and capture time (e.g. slave E meter)
+      // Last value of gas delivered to client in m3 and capture time (BE, 0-1:24.2.3)
       case '0-1:24.2.1':
       case '0-2:24.2.1':
       case '0-3:24.2.1':
       case '0-4:24.2.1':
+      case '0-1:24.2.3':
         // eslint-disable-next-line no-case-declarations
         const hourlyReading = parseHourlyReading(parsedLine.value);
 
         parsedTelegram.gas.timestamp = parseTimestamp(hourlyReading?.timestamp);
         parsedTelegram.gas.value = parseFloat(hourlyReading?.value || '0');
         parsedTelegram.gas.unit = hourlyReading?.unit || null;
-        break;
-
-      // Gas, probably BE
-      case '0-1:24.2.3':
-        // eslint-disable-next-line no-case-declarations
-        const instantValue = parsedLine.value.substring(15, 9);
-
-        // eslint-disable-next-line no-case-declarations
-        const instantUnit = parsedLine.value.substring(25, 2) as TelegramUnit;
-
-        parsedTelegram.gas.value = parseFloat(instantValue);
-        parsedTelegram.gas.unit = instantUnit;
         break;
 
       // Valve position (Gas) (BE)
