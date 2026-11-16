@@ -1,11 +1,12 @@
 import { mockBasicInformationResponse } from '@/mocks/data/basic';
 import { mockStateResponse } from '@/mocks/data/state';
 import { mockIdentifyResponse } from '@/mocks/data/identify';
-import { apiMocks, mockApiUrl } from '@/mocks/api';
-import { mockEnergySocketDataResponse } from '@/mocks/data/data';
+import { apiMocks, HTML_HEADERS, mockApiUrl } from '@/mocks/api';
+import { HomeWizardEnergyApiResponseError } from '@/base-api';
+import { mockEnergySocket21DataResponse, mockEnergySocketDataResponse } from '@/mocks/data/data';
 import { mockSystemResponse } from '@/mocks/data/system';
 import { EnergySocketApi } from '@/energy-socket-api';
-import { mockErrorSwitchLockEnabled } from '@/mocks/errors';
+import { mockErrorMethodNotAllowed, mockErrorSwitchLockEnabled } from '@/mocks/errors';
 
 let energySocketApi: EnergySocketApi;
 
@@ -219,6 +220,23 @@ describe('EnergySocketApi', () => {
         'Api PUT call at http://localhost/api/v1/identify failed with status 500 and response data: Server error!',
       );
     });
+
+    it('should throw an error with the plain-text body when the method is not allowed', async () => {
+      apiMocks.identify({
+        response: mockErrorMethodNotAllowed,
+        statusCode: 405,
+        headers: HTML_HEADERS,
+      });
+
+      const error = await energySocketApi.identify().catch(error => error);
+
+      expect(error).toBeInstanceOf(HomeWizardEnergyApiResponseError);
+      expect(error).toMatchObject({
+        statusCode: 405,
+        response: mockErrorMethodNotAllowed,
+        apiError: undefined,
+      });
+    });
   });
 
   describe('getData()', () => {
@@ -230,6 +248,16 @@ describe('EnergySocketApi', () => {
       const data = await energySocketApi.getData();
 
       expect(data).toStrictEqual(mockEnergySocketDataResponse);
+    });
+
+    it('should GET the "data" endpoint as an Energy Socket HWE-SKT-21', async () => {
+      apiMocks.getData({
+        response: mockEnergySocket21DataResponse,
+      });
+
+      const data = await energySocketApi.getData();
+
+      expect(data).toStrictEqual(mockEnergySocket21DataResponse);
     });
 
     it('should throw an error when GET on the "data" endpoint returns a server error', async () => {

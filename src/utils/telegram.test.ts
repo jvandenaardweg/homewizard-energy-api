@@ -1,4 +1,5 @@
 import { mockParsedTelegramResponse, mockTelegramResponse } from '@/mocks/data/telegram';
+import { mockP1MeterDataResponse } from '@/mocks/data/data';
 import {
   convertHexToAscii,
   parseHourlyReading,
@@ -270,6 +271,76 @@ describe('utils/telegram', () => {
       expect(parsedTelegram.gas.value).toBe(2559.077);
       expect(parsedTelegram.gas.unit).toBe('m3');
       expect(parsedTelegram.gas.timestamp).toBe(parseTimestamp('210320214626W'));
+    });
+
+    it('should parse a real CRLF telegram consistently with the /api/v1/data response', () => {
+      const parsedTelegram = parseTelegram(mockTelegramResponse['v50l3_3']);
+      const data = mockP1MeterDataResponse;
+      const { power, gas } = parsedTelegram;
+
+      expect(parsedTelegram.meter).toStrictEqual({ brand: 'ISK5', model: '2M550T-1012' });
+      expect(parsedTelegram.version).toBe('50');
+      expect(parsedTelegram.timestamp).toBe('2026-11-16T20:07:07+01:00');
+      expect(parsedTelegram.equipmentId).toBe(data.unique_id);
+      expect(parsedTelegram.textMessage.message).toBe('');
+
+      expect(power.tariffIndicator).toBe(data.active_tariff);
+      expect(power.import.t1.value).toBe(data.total_power_import_t1_kwh);
+      expect(power.import.t2.value).toBe(data.total_power_import_t2_kwh);
+      expect(power.export.t1.value).toBe(data.total_power_export_t1_kwh);
+      expect(power.export.t2.value).toBe(data.total_power_export_t2_kwh);
+      expect(power.import.active.value).toBe(0.398);
+      expect(power.instantaneous.power.positive.l2.value).toBe(0.13);
+      expect(power.instantaneous.voltage.l1.value).toBe(data.active_voltage_l1_v);
+      expect(power.instantaneous.voltage.l2.value).toBe(data.active_voltage_l2_v);
+      expect(power.instantaneous.voltage.l3.value).toBe(data.active_voltage_l3_v);
+      expect(power.voltageSags).toStrictEqual({
+        l1: data.voltage_sag_l1_count,
+        l2: data.voltage_sag_l2_count,
+        l3: data.voltage_sag_l3_count,
+      });
+      expect(power.voltageSwell).toStrictEqual({
+        l1: data.voltage_swell_l1_count,
+        l2: data.voltage_swell_l2_count,
+        l3: data.voltage_swell_l3_count,
+      });
+      expect(power.numberOfPowerFailures).toBe(data.any_power_fail_count);
+      expect(power.numberOfLongPowerFailures).toBe(data.long_power_fail_count);
+
+      // The event log mixes winter (W) and summer (S) timestamps
+      expect(power.longPowerFailureLog).toStrictEqual({
+        count: 4,
+        log: [
+          {
+            startOfFailure: '2017-11-30T18:14:43+01:00',
+            endOfFailure: '2017-11-30T18:30:27+01:00',
+            duration: 944,
+            unit: 's',
+          },
+          {
+            startOfFailure: '2026-05-05T08:17:40+02:00',
+            endOfFailure: '2026-05-05T11:01:22+02:00',
+            duration: 9822,
+            unit: 's',
+          },
+          {
+            startOfFailure: '2026-06-17T08:11:27+02:00',
+            endOfFailure: '2026-06-17T15:12:12+02:00',
+            duration: 25245,
+            unit: 's',
+          },
+          {
+            startOfFailure: '2026-10-08T09:37:32+02:00',
+            endOfFailure: '2026-10-08T11:58:41+02:00',
+            duration: 8469,
+            unit: 's',
+          },
+        ],
+      });
+
+      expect(gas.equipmentId).toBe(data.gas_unique_id);
+      expect(gas.value).toBe(data.total_gas_m3);
+      expect(gas.timestamp).toBe('2026-11-16T20:05:01+01:00');
     });
 
     it('should keep the decimals of voltages and currents', () => {

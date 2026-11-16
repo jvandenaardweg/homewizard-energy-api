@@ -5,14 +5,14 @@ export const mockBasicInformationResponse: Record<SupportedDevices, BasicInforma
     product_type: 'HWE-SKT',
     product_name: 'Energy Socket',
     serial: '1c23e7280952',
-    firmware_version: '3.02',
+    firmware_version: '4.08',
     api_version: 'v1',
   },
   'HWE-P1': {
     product_type: 'HWE-P1',
     product_name: 'P1 Meter',
     serial: '3c39e7aabbcc',
-    firmware_version: '2.11',
+    firmware_version: '6.0305',
     api_version: 'v1',
   },
   // TODO: mock properly

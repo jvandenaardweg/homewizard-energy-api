@@ -1,6 +1,8 @@
 import { mockBasicInformationResponse } from '@/mocks/data/basic';
 
-import { apiMocks, mockApiUrl } from '@/mocks/api';
+import { apiMocks, HTML_HEADERS, mockApiUrl } from '@/mocks/api';
+import { mockErrorNotFound } from '@/mocks/errors';
+import { HomeWizardEnergyApiResponseError } from '@/base-api';
 import { mockP1MeterDataResponse } from '@/mocks/data/data';
 import { mockParsedTelegramResponse, mockTelegramResponse } from '@/mocks/data/telegram';
 import { P1MeterApi } from '@/p1-meter-api';
@@ -100,6 +102,35 @@ describe('P1MeterApi', () => {
       const data = await p1MeterApi.getTelegram();
 
       expect(data).toStrictEqual(mockTelegramResponse['v50l3_2']);
+    });
+
+    it('should return a CRLF telegram as is', async () => {
+      apiMocks.getTelegram({
+        response: mockTelegramResponse['v50l3_3'],
+      });
+
+      const data = await p1MeterApi.getTelegram();
+
+      expect(data).toBe(mockTelegramResponse['v50l3_3']);
+      expect(data).toContain('\r\n');
+    });
+
+    it('should throw an error with the plain-text body when the device has no /api/v1/telegram', async () => {
+      apiMocks.getTelegram({
+        response: mockErrorNotFound,
+        statusCode: 404,
+        headers: HTML_HEADERS,
+      });
+
+      const error = await p1MeterApi.getTelegram().catch(error => error);
+
+      expect(error).toBeInstanceOf(HomeWizardEnergyApiResponseError);
+      expect(error).toMatchObject({
+        message: `Api GET call at http://localhost/api/v1/telegram failed with status 404 and response data: ${mockErrorNotFound}`,
+        statusCode: 404,
+        response: mockErrorNotFound,
+        apiError: undefined,
+      });
     });
 
     it('should throw an error when /api/v1/telegram returns an error response', async () => {

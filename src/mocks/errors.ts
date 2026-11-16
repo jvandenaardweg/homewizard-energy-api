@@ -27,3 +27,9 @@ export const mockErrorSwitchLockEnabled: ErrorResponse = {
     description: 'power_on cannot be turned off when switch_lock is on',
   },
 };
+
+// The device's router answers a path it doesn't know, like /api/v1/state on a HWE-P1, with this text/html body
+export const mockErrorNotFound = 'Nothing matches the given URI';
+
+// The device's router answers a method an endpoint doesn't accept, like GET on /api/v1/identify, with this text/html body
+export const mockErrorMethodNotAllowed = 'Specified method is invalid for this resource';
