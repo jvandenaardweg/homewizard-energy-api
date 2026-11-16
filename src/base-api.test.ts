@@ -1,12 +1,14 @@
-import { apiMocks, mockApiUrl } from '@/mocks/api';
+import { apiMocks, mockApiPool, mockApiUrl } from '@/mocks/api';
 
 import {
   BaseApi,
   DEFAULT_API_VERSION,
   DEFAULT_BODY_TIMEOUT,
   DEFAULT_HEADERS_TIMEOUT,
+  DEFAULT_TIMEOUT,
   HomeWizardEnergyApiError,
   HomeWizardEnergyApiResponseError,
+  HomeWizardEnergyApiTimeoutError,
 } from '@/base-api';
 import { Dispatcher } from 'undici';
 import { mockP1MeterDataResponse } from './mocks/data/data';
@@ -118,6 +120,91 @@ describe('BaseApi', () => {
       });
 
       expect(await response.body.json()).toMatchObject(mockP1MeterDataResponse);
+    });
+
+    it('should use a timeout of 5 seconds by default', () => {
+      expect(DEFAULT_TIMEOUT).toBe(5000);
+      expect(baseApi['timeout']).toBe(DEFAULT_TIMEOUT);
+    });
+
+    it('should throw a HomeWizardEnergyApiTimeoutError when the request takes longer than the timeout', async () => {
+      mockApiPool
+        .intercept({ path: '/api/v1/data', method: 'GET' })
+        .reply(200, mockP1MeterDataResponse)
+        .delay(10000);
+
+      const request = baseApi['request']('http://localhost/api/v1/data', { method: 'GET' });
+      const assertion = expect(request).rejects.toThrowError(
+        new HomeWizardEnergyApiTimeoutError(
+          'Api GET call at http://localhost/api/v1/data timed out after 5000ms',
+          'http://localhost/api/v1/data',
+          5000,
+        ),
+      );
+
+      vi.advanceTimersByTime(DEFAULT_TIMEOUT);
+
+      await assertion;
+      await expect(request).rejects.toMatchObject({
+        name: 'HomeWizardEnergyApiTimeoutError',
+        url: 'http://localhost/api/v1/data',
+        timeout: 5000,
+      });
+    });
+
+    it('should mention GET in the timeout error when no method is given', async () => {
+      mockApiPool
+        .intercept({ path: '/api/v1/data', method: 'GET' })
+        .reply(200, mockP1MeterDataResponse)
+        .delay(10000);
+
+      const request = baseApi['request']('http://localhost/api/v1/data', undefined);
+      const assertion = expect(request).rejects.toThrowError(
+        'Api GET call at http://localhost/api/v1/data timed out after 5000ms',
+      );
+
+      vi.advanceTimersByTime(DEFAULT_TIMEOUT);
+
+      await assertion;
+    });
+
+    it('should rethrow other request errors as is', async () => {
+      mockApiPool
+        .intercept({ path: '/api/v1/data', method: 'GET' })
+        .replyWithError(new Error('socket hang up'));
+
+      await expect(
+        baseApi['request']('http://localhost/api/v1/data', { method: 'GET' }),
+      ).rejects.toThrowError('socket hang up');
+    });
+
+    it('should not use the timeout when it is set to 0', async () => {
+      const api = new BaseApi(mockApiUrl, { timeout: 0 });
+
+      apiMocks.getData({
+        response: mockP1MeterDataResponse,
+      });
+
+      const response = await api['request']('http://localhost/api/v1/data', { method: 'GET' });
+
+      expect(response.statusCode).toBe(200);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('should not use the timeout when a signal is passed', async () => {
+      const signal = new EventEmitter();
+
+      apiMocks.getData({
+        response: mockP1MeterDataResponse,
+      });
+
+      const response = await baseApi['request']('http://localhost/api/v1/data', {
+        method: 'GET',
+        signal,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(vi.getTimerCount()).toBe(0);
     });
   });
 

@@ -62,6 +62,22 @@ export class HomeWizardEnergyApiResponseError extends HomeWizardEnergyApiError {
   }
 }
 
+/**
+ * Thrown when a request takes longer than the `timeout` option, for example when the device is unreachable.
+ */
+export class HomeWizardEnergyApiTimeoutError extends HomeWizardEnergyApiError {
+  url: string;
+  /** The timeout in milliseconds that was exceeded. */
+  timeout: number;
+
+  constructor(message: string, url: string, timeout: number) {
+    super(message);
+    this.name = 'HomeWizardEnergyApiTimeoutError';
+    this.url = url;
+    this.timeout = timeout;
+  }
+}
+
 export interface PollingOptions {
   /**
    * The polling interval in milliseconds. Defaults to `1000`.
@@ -112,6 +128,14 @@ export interface BaseApiOptions {
   api?: ApiOptions;
   /** Request options to be used in the HTTP request to the API */
   requestOptions?: RequestParameters[1];
+  /**
+   * The maximum time in milliseconds a request may take until the response headers arrive, including
+   * connecting to the device. Defaults to `5000`. Set to `0` to disable it.
+   *
+   * When it's exceeded, the request throws a `HomeWizardEnergyApiTimeoutError`. It isn't used when
+   * `requestOptions.signal` is set. Other network failures throw the error from `undici` as is.
+   */
+  timeout?: number;
   /** Logging options */
   logger?: LoggerOptions;
   /** Polling options to request API endpoints at the given interval. */
@@ -121,6 +145,8 @@ export interface BaseApiOptions {
 // 2 seconds, we are on a local network, so all request should be fast
 export const DEFAULT_BODY_TIMEOUT = 2000;
 export const DEFAULT_HEADERS_TIMEOUT = 2000;
+// Covers connecting too, which undici otherwise allows 10 seconds for
+export const DEFAULT_TIMEOUT = 5000;
 
 export const DEFAULT_API_VERSION = 'v1';
 
@@ -131,6 +157,7 @@ export class BaseApi {
   protected requestOptions: BaseApiOptions['requestOptions'];
   protected loggerOptions: BaseApiOptions['logger'];
   protected pollingOptions: BaseApiOptions['polling'];
+  protected timeout: number;
   protected eventEmitter: EventEmitter;
 
   protected isPolling: Record<string, boolean> = {};
@@ -146,6 +173,8 @@ export class BaseApi {
       // Allow user to overwrite the defaults
       ...options?.requestOptions,
     };
+
+    this.timeout = options?.timeout ?? DEFAULT_TIMEOUT;
 
     this.pollingOptions = options?.polling;
 
@@ -194,11 +223,46 @@ export class BaseApi {
     }
   }
 
-  protected request(url: RequestParameters[0], options: RequestParameters[1]) {
-    return undiciRequest(url, {
+  protected async request(
+    url: RequestParameters[0],
+    options: RequestParameters[1],
+  ): Promise<Dispatcher.ResponseData> {
+    const requestOptions = {
       ...this.requestOptions,
       ...options,
-    });
+    };
+
+    const { timeout } = this;
+
+    // A signal from the user takes precedence over the timeout
+    if (!timeout || requestOptions.signal) {
+      return undiciRequest(url, requestOptions);
+    }
+
+    // undici accepts an EventEmitter as signal, which works on every supported Node version
+    const signal = new EventEmitter();
+    let isTimedOut = false;
+
+    const timer = setTimeout(() => {
+      isTimedOut = true;
+      signal.emit('abort');
+    }, timeout);
+
+    try {
+      return await undiciRequest(url, { ...requestOptions, signal });
+    } catch (error) {
+      if (isTimedOut) {
+        throw new HomeWizardEnergyApiTimeoutError(
+          `Api ${requestOptions.method || 'GET'} call at ${url} timed out after ${timeout}ms`,
+          String(url),
+          timeout,
+        );
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   protected log(...args: unknown[]): void {
