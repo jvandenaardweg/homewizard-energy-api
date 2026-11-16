@@ -632,6 +632,28 @@ function getEuropeanDstSwitch(year: number, month: number): number {
   return Date.UTC(year, month, lastSunday, 1);
 }
 
+/** The UTC offset of a timestamp's DST marker: `S` for summer time, `W` for winter time. */
+const UTC_OFFSET_IN_HOURS_BY_DST_MARKER = { S: 2, W: 1 } as const;
+
+type DstMarker = keyof typeof UTC_OFFSET_IN_HOURS_BY_DST_MARKER;
+
+function isDstMarker(value: string): value is DstMarker {
+  return value === 'S' || value === 'W';
+}
+
+/**
+ * Returns the UTC offset of a local CET/CEST time, using the European summer time rules.
+ * `localTimeAsUtc` is the local time with its digits read as UTC.
+ */
+function getEuropeanUtcOffsetInHours(localTimeAsUtc: number, year: number): number {
+  const utcIfWinterTime = localTimeAsUtc - HOUR_IN_MS;
+  const isSummerTime =
+    utcIfWinterTime >= getEuropeanDstSwitch(year, 2) &&
+    utcIfWinterTime < getEuropeanDstSwitch(year, 9);
+
+  return isSummerTime ? 2 : 1;
+}
+
 /**
  * Parse timestamp of format: YYMMDDhhmmssX
  *
@@ -654,21 +676,10 @@ export function parseTimestamp(timestamp: string | null | undefined): string | n
     parseInt(timestamp.substring(10, 12)),
   );
 
-  const dstMarker = timestamp.substring(12, 13);
-
-  let offsetInHours: number;
-
-  if (dstMarker === 'S') {
-    offsetInHours = 2;
-  } else if (dstMarker === 'W') {
-    offsetInHours = 1;
-  } else {
-    const winterTime = localTimeAsUtc - HOUR_IN_MS;
-    const isSummerTime =
-      winterTime >= getEuropeanDstSwitch(year, 2) && winterTime < getEuropeanDstSwitch(year, 9);
-
-    offsetInHours = isSummerTime ? 2 : 1;
-  }
+  const dstMarker = timestamp.charAt(12);
+  const offsetInHours = isDstMarker(dstMarker)
+    ? UTC_OFFSET_IN_HOURS_BY_DST_MARKER[dstMarker]
+    : getEuropeanUtcOffsetInHours(localTimeAsUtc, year);
 
   return formatISO(new Date(localTimeAsUtc - offsetInHours * HOUR_IN_MS));
 }
