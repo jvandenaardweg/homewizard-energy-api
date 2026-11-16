@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 import path from 'path';
 
 export default defineConfig({
@@ -6,6 +6,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['./vitest.setup.ts'],
+    // Agent worktrees under .claude/ hold other checkouts of this repo
+    exclude: [...configDefaults.exclude, '**/.claude/**'],
     coverage: {
       provider: 'istanbul',
       all: true,
