@@ -224,15 +224,16 @@ npm install homewizard-energy-api@github:NebzHB/homewizard-energy-api#dist
 
 HomeWizard is moving its devices to the [API v2](https://api-documentation.homewizard.com/docs/category/api-v2): HTTPS, a token per application (the user has to press the button on the device once) and new names for the datapoints. Each device has a `...ApiV2` class next to its API v1 class, they work the same way (same methods, same polling interface).
 
-| Device                              | Class                 | API v2                                            |
-| ----------------------------------- | --------------------- | ------------------------------------------------- |
-| P1 Meter `HWE-P1`                   | `P1MeterApiV2`        | Supported                                         |
-| kWh Meter `HWE-KWH1`, `SDM230-wifi` | `KwhMeter1PhaseApiV2` | Supported                                         |
-| kWh Meter `HWE-KWH3`, `SDM630-wifi` | `KwhMeter3PhaseApiV2` | Supported                                         |
-| Plug-In Battery `HWE-BAT`           | `PlugInBatteryApiV2`  | Supported (this device has no API v1)             |
-| Energy Socket `HWE-SKT`             | `EnergySocketApiV2`   | In development by HomeWizard, common methods only |
-| Watermeter `HWE-WTR`                | `WaterMeterApiV2`     | In development by HomeWizard, common methods only |
-| Energy Display `HWE-DSP`            | `EnergyDisplayApiV2`  | In development by HomeWizard, common methods only |
+| Device                               | Class                           | API v2                                                            |
+| ------------------------------------ | ------------------------------- | ----------------------------------------------------------------- |
+| P1 Meter `HWE-P1`                    | `P1MeterApiV2`                  | Supported                                                         |
+| kWh Meter `HWE-KWH1`, `SDM230-wifi`  | `KwhMeter1PhaseApiV2`           | Supported                                                         |
+| kWh Meter `HWE-KWH3`, `SDM630-wifi`  | `KwhMeter3PhaseApiV2`           | Supported                                                         |
+| Plug-In Battery `HWE-BAT`            | `PlugInBatteryApiV2`            | Supported (this device has no API v1)                             |
+| Energy Socket `HWE-SKT`              | `EnergySocketApiV2`             | In development by HomeWizard, common methods only                 |
+| Watermeter `HWE-WTR`                 | `WaterMeterApiV2`               | In development by HomeWizard, common methods only                 |
+| Energy Display `HWE-DSP`             | `EnergyDisplayApiV2`            | In development by HomeWizard, common methods only                 |
+| Temperature Humidity Meter `HWE-TMP` | `TemperatureHumidityMeterApiV2` | No API yet (under exploration by HomeWizard), common methods only |
 
 ```typescript
 import { P1MeterApiV2, getCertificateIdentifier } from 'homewizard-energy-api';

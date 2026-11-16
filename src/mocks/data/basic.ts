@@ -61,6 +61,14 @@ export const mockBasicInformationResponse: Record<SupportedDevices, BasicInforma
     firmware_version: '2.03',
     api_version: '2.0.0',
   },
+  // No API yet, the API v2 is under exploration by HomeWizard
+  'HWE-TMP': {
+    product_type: 'HWE-TMP',
+    product_name: 'Temperature Humidity Meter',
+    serial: '5c2fafaabbcc',
+    firmware_version: '1.00',
+    api_version: '2.0.0',
+  },
   // Only available in the API v2 (in development)
   'HWE-DSP': {
     product_type: 'HWE-DSP',

@@ -27,6 +27,7 @@ export const SupportedDevicesList = [
   'HWE-KWH3',
   'HWE-BAT',
   'HWE-DSP',
+  'HWE-TMP',
 ] as const;
 
 export type SupportedDevices = (typeof SupportedDevicesList)[number];
