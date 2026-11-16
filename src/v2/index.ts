@@ -6,6 +6,7 @@
  * @link https://api-documentation.homewizard.com/docs/category/api-v2
  */
 export type { DeviceOptions } from './client';
+export * from './devices';
 export {
   HomeWizardApiV2Error,
   HomeWizardApiV2PairingError,
