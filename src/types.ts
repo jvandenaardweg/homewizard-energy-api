@@ -21,6 +21,8 @@ export const SupportedDevicesList = [
   'HWE-P1',
   'HWE-SKT',
   'HWE-WTR',
+  'HWE-KWH1',
+  'HWE-KWH3',
   'SDM230-wifi',
   'SDM630-wifi',
 ] as const;
@@ -123,13 +125,13 @@ export interface BaseDataResponse {
   smr_version?: number;
   /** The brand indification the smart meter. Available for: `HWE-P1` */
   meter_model?: string;
-  /** The Wi-Fi network that the meter is connected to. Available for: `HWE-P1`, `HWE-WTR`, `SDM630-wifi`, `SDM230-wifi */
+  /** The Wi-Fi network that the meter is connected to. Available for: `HWE-P1`, `HWE-WTR`, `HWE-KWH3`, `SDM630-wifi`, `HWE-KWH1`, `SDM230-wifi` */
   wifi_ssid?: string;
-  /** The strength of the Wi-Fi signal in %. Available for: `HWE-P1`, `HWE-WTR`, `SDM630-wifi`, `SDM230-wifi` */
+  /** The strength of the Wi-Fi signal in %. Available for: `HWE-P1`, `HWE-WTR`, `HWE-KWH3`, `SDM630-wifi`, `HWE-KWH1`, `SDM230-wifi` */
   wifi_strength?: number;
-  /** The power usage meter reading in kWh. Available for: `HWE-P1` */
-  total_power_import_kwh?: number; // TODO: determine what this is, not in docs, but only found in example
-  /** The power usage meter reading for tariff 1 in kWh. Available for: `HWE-P1`, `SDM230-wifi`, `SDM630-wifi` */
+  /** The power usage meter reading in kWh. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  total_power_import_kwh?: number;
+  /** The power usage meter reading for tariff 1 in kWh. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   total_power_import_t1_kwh?: number;
   /** The power usage meter reading for tariff 2 in kWh. Available for: `HWE-P1` */
   total_power_import_t2_kwh?: number;
@@ -137,9 +139,9 @@ export interface BaseDataResponse {
   total_power_import_t3_kwh?: number;
   /** The power usage meter reading for tariff 4 in kWh. Available for: `HWE-P1` */
   total_power_import_t4_kwh?: number;
-  /** The power feed-in meter reading in kWh. Available for: `HWE-P1` */
-  total_power_export_kwh?: number; // TODO: determine what this is, not in docs, but only found in example
-  /** The power feed-in meter reading for tariff 1 in kWh. Available: `HWE-P1`, `HWE-SKT`, `SDM230-wifi`, `SDM630-wifi` */
+  /** The power feed-in meter reading in kWh. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  total_power_export_kwh?: number;
+  /** The power feed-in meter reading for tariff 1 in kWh. Available: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   total_power_export_t1_kwh?: number;
   /** The power feed-in meter reading for tariff 2 in kWh. Available for: `HWE-P1` */
   total_power_export_t2_kwh?: number;
@@ -147,31 +149,71 @@ export interface BaseDataResponse {
   total_power_export_t3_kwh?: number;
   /** The power feed-in meter reading for tariff 4 in kWh. Available for: `HWE-P1` */
   total_power_export_t4_kwh?: number;
-  /** The total active usage in Watts: Available for: `HWE-P1`, `HWE-SKT`, SDM230-wifi, `SDM630-wifi` */
+  /** The total active usage in Watts: Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   active_power_w?: number;
-  /** The active usage for fase 1 in Watts. Abailable for: `HWE-P1`, `HWE-SKT`, SDM230-wifi, `SDM630-wifi` */
+  /** The active usage for fase 1 in Watts. Abailable for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   active_power_l1_w?: number;
-  /** The active usage for fase 2 in Watts. Available for: `HWE-P1`, `SDM630-wifi` */
+  /** The active usage for fase 2 in Watts. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
   active_power_l2_w?: number;
-  /** The active usage for fase 3 in Watts. Available for: `HWE-P1`, `SDM630-wifi`  */
+  /** The active usage for fase 3 in Watts. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi`  */
   active_power_l3_w?: number;
-  /** The active voltage in volts. Available for: `HWE-SKT`, `SDM230-wifi` */
+  /** The active voltage in volts. Available for: `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi` */
   active_voltage_v?: number;
-  /** The active voltage for phase 1 in volt. Available for: `HWE-P1`, `SDM630-wifi` */
+  /** The active voltage for phase 1 in volt. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
   active_voltage_l1_v?: number;
-  /** The active voltage for phase 2 in volt. Available for: `HWE-P1`, `SDM630-wifi` */
+  /** The active voltage for phase 2 in volt. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
   active_voltage_l2_v?: number;
-  /** The active voltage for phase 3 in volt. Available for: `HWE-P1`, `SDM630-wifi` */
+  /** The active voltage for phase 3 in volt. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
   active_voltage_l3_v?: number;
-  /** The active current in amperes. Sum of all phases for 3-phase meter. Available for: `HWE-SKT`, `SDM230-wifi`, `SDM630-wifi` */
+  /** The active current in amperes. Sum of all phases for 3-phase meter. Available for: `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   active_current_a?: number;
-  /** The active current for phase 1 in ampere. Available for: `HWE-P1`, `SDM630-wifi` */
+  /** The active current for phase 1 in ampere. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
   active_current_l1_a?: number;
-  /** The active current for phase 2 in ampere. Available for: `HWE-P1`, `SDM630-wifi` */
+  /** The active current for phase 2 in ampere. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
   active_current_l2_a?: number;
-  /** The active current for phase 3 in ampere. Available for: `HWE-P1`, `SDM630-wifi` */
+  /** The active current for phase 3 in ampere. Available for: `HWE-P1`, `HWE-KWH3`, `SDM630-wifi` */
   active_current_l3_a?: number;
-  /** Line frequency in hertz. Available for: `HWE-P1`, `HWE-SKT`, `SDM230-wifi`, `SDM630-wifi` */
+  /** The apparent current in amperes. Sum of all phases for 3-phase meter. Available for: `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_current_a?: number;
+  /** The apparent current for phase 1 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_current_l1_a?: number;
+  /** The apparent current for phase 2 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_current_l2_a?: number;
+  /** The apparent current for phase 3 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_current_l3_a?: number;
+  /** The reactive current in amperes. Sum of all phases for 3-phase meter. Available for: `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_current_a?: number;
+  /** The reactive current for phase 1 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_current_l1_a?: number;
+  /** The reactive current for phase 2 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_current_l2_a?: number;
+  /** The reactive current for phase 3 in ampere. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_current_l3_a?: number;
+  /** The apparent power in volt-amperes. Sum of all phases for 3-phase meter. Available for: `HWE-SKT` (HWE-SKT-21 only), `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_power_va?: number;
+  /** The apparent power for phase 1 in volt-amperes. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_power_l1_va?: number;
+  /** The apparent power for phase 2 in volt-amperes. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_power_l2_va?: number;
+  /** The apparent power for phase 3 in volt-amperes. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_apparent_power_l3_va?: number;
+  /** The reactive power in volt-amperes reactive. Sum of all phases for 3-phase meter. Available for: `HWE-SKT` (HWE-SKT-21 only), `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_power_var?: number;
+  /** The reactive power for phase 1 in volt-amperes reactive. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_power_l1_var?: number;
+  /** The reactive power for phase 2 in volt-amperes reactive. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_power_l2_var?: number;
+  /** The reactive power for phase 3 in volt-amperes reactive. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_reactive_power_l3_var?: number;
+  /** The power factor, unitless. Available for: `HWE-SKT` (HWE-SKT-21 only), `HWE-KWH1`, `SDM230-wifi` */
+  active_power_factor?: number;
+  /** The power factor for phase 1, unitless. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_power_factor_l1?: number;
+  /** The power factor for phase 2, unitless. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_power_factor_l2?: number;
+  /** The power factor for phase 3, unitless. Available for: `HWE-KWH3`, `SDM630-wifi` */
+  active_power_factor_l3?: number;
+  /** Line frequency in hertz. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   active_frequency_hz?: number;
   /** Number of voltage sags detected by meter for phase 1. Available for: `HWE-P1` */
   voltage_sag_l1_count?: number;
@@ -225,13 +267,18 @@ export type EnergySocketDataResponse = Pick<
   BaseDataResponse,
   | 'wifi_ssid'
   | 'wifi_strength'
+  | 'total_power_import_kwh'
   | 'total_power_import_t1_kwh'
+  | 'total_power_export_kwh'
   | 'total_power_export_t1_kwh'
   | 'active_power_w'
   | 'active_power_l1_w'
   | 'active_voltage_v'
   | 'active_current_a'
   | 'active_frequency_hz'
+  | 'active_reactive_power_var'
+  | 'active_apparent_power_va'
+  | 'active_power_factor'
 >;
 
 /**
@@ -244,6 +291,26 @@ export type P1MeterDataResponse = Omit<
   | 'total_liter_offset_m3'
   | 'active_voltage_v'
   | 'active_current_a'
+  | 'active_apparent_current_a'
+  | 'active_reactive_current_a'
+  | 'active_apparent_power_va'
+  | 'active_reactive_power_var'
+  | 'active_power_factor'
+  | 'active_apparent_current_l1_a'
+  | 'active_apparent_current_l2_a'
+  | 'active_apparent_current_l3_a'
+  | 'active_reactive_current_l1_a'
+  | 'active_reactive_current_l2_a'
+  | 'active_reactive_current_l3_a'
+  | 'active_apparent_power_l1_va'
+  | 'active_apparent_power_l2_va'
+  | 'active_apparent_power_l3_va'
+  | 'active_reactive_power_l1_var'
+  | 'active_reactive_power_l2_var'
+  | 'active_reactive_power_l3_var'
+  | 'active_power_factor_l1'
+  | 'active_power_factor_l2'
+  | 'active_power_factor_l3'
 >;
 
 /**
@@ -257,7 +324,7 @@ export type WaterMeterDataResponse = Pick<
 >;
 
 /**
- * API /data response for `SDM230-wifi`
+ * API /data response for `HWE-KWH1` and `SDM230-wifi`
  *
  * @link: https://api-documentation.homewizard.com/docs/v1/measurement
  */
@@ -265,17 +332,24 @@ export type KwhMeter1PhaseDataResponse = Pick<
   BaseDataResponse,
   | 'wifi_ssid'
   | 'wifi_strength'
+  | 'total_power_import_kwh'
   | 'total_power_import_t1_kwh'
+  | 'total_power_export_kwh'
   | 'total_power_export_t1_kwh'
   | 'active_power_w'
   | 'active_power_l1_w'
   | 'active_voltage_v'
   | 'active_current_a'
+  | 'active_apparent_current_a'
+  | 'active_reactive_current_a'
+  | 'active_apparent_power_va'
+  | 'active_reactive_power_var'
+  | 'active_power_factor'
   | 'active_frequency_hz'
 >;
 
 /**
- * API /data response for `SDM630-wifi`
+ * API /data response for `HWE-KWH3` and `SDM630-wifi`
  *
  * @link: https://api-documentation.homewizard.com/docs/v1/measurement
  */
@@ -283,7 +357,9 @@ export type KwhMeter3PhaseDataResponse = Pick<
   BaseDataResponse,
   | 'wifi_ssid'
   | 'wifi_strength'
+  | 'total_power_import_kwh'
   | 'total_power_import_t1_kwh'
+  | 'total_power_export_kwh'
   | 'total_power_export_t1_kwh'
   | 'active_power_w'
   | 'active_power_l1_w'
@@ -296,6 +372,25 @@ export type KwhMeter3PhaseDataResponse = Pick<
   | 'active_current_l1_a'
   | 'active_current_l2_a'
   | 'active_current_l3_a'
+  | 'active_apparent_current_a'
+  | 'active_apparent_current_l1_a'
+  | 'active_apparent_current_l2_a'
+  | 'active_apparent_current_l3_a'
+  | 'active_reactive_current_a'
+  | 'active_reactive_current_l1_a'
+  | 'active_reactive_current_l2_a'
+  | 'active_reactive_current_l3_a'
+  | 'active_apparent_power_va'
+  | 'active_apparent_power_l1_va'
+  | 'active_apparent_power_l2_va'
+  | 'active_apparent_power_l3_va'
+  | 'active_reactive_power_var'
+  | 'active_reactive_power_l1_var'
+  | 'active_reactive_power_l2_var'
+  | 'active_reactive_power_l3_var'
+  | 'active_power_factor_l1'
+  | 'active_power_factor_l2'
+  | 'active_power_factor_l3'
   | 'active_frequency_hz'
 >;
 
