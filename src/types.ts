@@ -141,7 +141,7 @@ export interface BaseDataResponse {
   total_power_import_t4_kwh?: number;
   /** The power feed-in meter reading in kWh. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   total_power_export_kwh?: number;
-  /** The power feed-in meter reading for tariff 1 in kWh. Available: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
+  /** The power feed-in meter reading for tariff 1 in kWh. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   total_power_export_t1_kwh?: number;
   /** The power feed-in meter reading for tariff 2 in kWh. Available for: `HWE-P1` */
   total_power_export_t2_kwh?: number;
