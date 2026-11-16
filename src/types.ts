@@ -125,9 +125,9 @@ export interface BaseDataResponse {
   smr_version?: number;
   /** The brand indification the smart meter. Available for: `HWE-P1` */
   meter_model?: string;
-  /** The Wi-Fi network that the meter is connected to. Available for: `HWE-P1`, `HWE-WTR`, `HWE-KWH3`, `SDM630-wifi`, `HWE-KWH1`, `SDM230-wifi` */
+  /** The Wi-Fi network that the meter is connected to. Available for: `HWE-P1`, `HWE-SKT`, `HWE-WTR`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   wifi_ssid?: string;
-  /** The strength of the Wi-Fi signal in %. Available for: `HWE-P1`, `HWE-WTR`, `HWE-KWH3`, `SDM630-wifi`, `HWE-KWH1`, `SDM230-wifi` */
+  /** The strength of the Wi-Fi signal in %. Available for: `HWE-P1`, `HWE-SKT`, `HWE-WTR`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   wifi_strength?: number;
   /** The power usage meter reading in kWh. Available for: `HWE-P1`, `HWE-SKT`, `HWE-KWH1`, `SDM230-wifi`, `HWE-KWH3`, `SDM630-wifi` */
   total_power_import_kwh?: number;

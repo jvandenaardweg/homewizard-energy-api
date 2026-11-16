@@ -31,7 +31,7 @@ export interface PollingOptions {
    * There is no limit to the time between each request on the local API, however,
    * HomeWizard advises not to retrieve data more often than every `500`ms.
    *
-   * @link: https://api-documentation.homewizard.com/docs/getting-started
+   * @link: https://api-documentation.homewizard.com/docs/getting-started#data-update-frequency
    * */
   interval?: number;
   /**
