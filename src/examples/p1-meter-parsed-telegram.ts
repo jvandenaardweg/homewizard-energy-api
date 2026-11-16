@@ -13,7 +13,7 @@ const p1Meter = new P1MeterApi('http://192.168.1.35');
     //     model: '2M550T-1012',
     //   },
     //   version: '50',
-    //   timestamp: '2022-12-18T22:48:20.000Z',
+    //   timestamp: '2022-12-18T22:48:20+01:00',
     //   equipmentId: '4530303132333435363738393031323334',
     //   textMessage: {
     //     codes: null,
@@ -64,8 +64,8 @@ const p1Meter = new P1MeterApi('http://192.168.1.35');
     //       count: 1,
     //       log: [
     //         {
-    //           startOfFailure: '2017-11-30T18:14:43.000Z',
-    //           endOfFailure: '2017-11-30T18:30:27.000Z',
+    //           startOfFailure: '2017-11-30T18:14:43+01:00',
+    //           endOfFailure: '2017-11-30T18:30:27+01:00',
     //           duration: 944,
     //           unit: 's',
     //         },
@@ -145,7 +145,7 @@ const p1Meter = new P1MeterApi('http://192.168.1.35');
     //   gas: {
     //     deviceType: '003',
     //     equipmentId: '4730303132333435363738393031323334',
-    //     timestamp: '2022-12-18T22:45:01.000Z',
+    //     timestamp: '2022-12-18T22:45:01+01:00',
     //     value: 6798.545,
     //     unit: 'm3',
     //     valvePosition: null,
