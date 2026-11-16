@@ -648,15 +648,14 @@ export function parsePowerFailureEventLog(value: string): TelegramPowerFailureLo
     // Loop the log structure: timestamp)(duration)(timestamp)(duration...
     for (let i = 0; i <= log.length; i = i + 2) {
       if (log[i] && log[i + 1]) {
-        const endOfFailure = parseTimestamp(log[i]);
+        // log[i] is a non-empty string here, so parseTimestamp() always returns a timestamp
+        const endOfFailure = parseTimestamp(log[i]) as string;
         const duration = parseInt(log[i + 1].split('*')[0]);
-        const startOfFailure = endOfFailure
-          ? subtractNumberOfSecondsFromDate(endOfFailure, duration)
-          : null;
+        const startOfFailure = subtractNumberOfSecondsFromDate(endOfFailure, duration);
 
         const logEntry = {
           startOfFailure,
-          endOfFailure: parseTimestamp(log[i]),
+          endOfFailure,
           duration,
           unit: log[i + 1].split('*')[1],
         } as TelegramPowerFailureLogItem;

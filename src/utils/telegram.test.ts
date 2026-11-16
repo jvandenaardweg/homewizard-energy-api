@@ -246,4 +246,60 @@ describe('utils/telegram', () => {
       expect(parsedTelegram.gas.timestamp).toBe(parseTimestamp('210320214626W'));
     });
   });
+
+  describe('parseTelegram() edge cases', () => {
+    it('should parse a DSMR 2.2 telegram and add a server timestamp', () => {
+      vi.setSystemTime(new Date('2024-01-01T12:00:00.500Z'));
+
+      const parsedTelegram = parseTelegram(mockTelegramResponse['v22']);
+
+      expect(parsedTelegram.version).toBe('22');
+      expect(parsedTelegram.timestamp).toBe('2024-01-01T12:00:00.000Z');
+      expect(parsedTelegram.textMessage.codes).toBe('');
+      expect(parsedTelegram.gas.timestamp).toBe(parseTimestamp('180902110000'));
+      expect(parsedTelegram.gas.unit).toBe('m3');
+      expect(parsedTelegram.gas.value).toBe(12007.76);
+    });
+
+    it('should log lines it cannot parse', () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      parseTelegram('/ISK5\\2M550T-1012\n\n1-0:1.8.1(000001.000*kWh)\nnot a telegram line\n!');
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Unable to parse line: not a telegram line');
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should default an empty hourly gas reading to 0 without a unit', () => {
+      const parsedTelegram = parseTelegram('/ISK5\\2M550T-1012\n\n1-3:0.2.8(50)\n0-1:24.2.1()\n!');
+
+      expect(parsedTelegram.gas.timestamp).toBeNull();
+      expect(parsedTelegram.gas.value).toBe(0);
+      expect(parsedTelegram.gas.unit).toBeNull();
+    });
+  });
+
+  describe('parser helper edge cases', () => {
+    it('should return an empty power failure log for a value without entries', () => {
+      expect(parsePowerFailureEventLog('')).toStrictEqual({ count: 0, log: [] });
+    });
+
+    it('should return null for an empty hourly reading', () => {
+      expect(parseHourlyReading(null)).toBeNull();
+      expect(parseHourlyReading('')).toBeNull();
+    });
+
+    it('should return empty fields for an hourly reading without a value part', () => {
+      expect(parseHourlyReading('221219072008W')).toStrictEqual({
+        timestamp: null,
+        value: null,
+        unit: null,
+      });
+    });
+
+    it('should return an empty string when converting a non-string hex value', () => {
+      expect(convertHexToAscii(null as unknown as string)).toBe('');
+    });
+  });
 });
