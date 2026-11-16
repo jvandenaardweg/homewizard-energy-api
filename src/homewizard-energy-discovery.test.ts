@@ -447,6 +447,99 @@ describe('HomeWizardEnergyDiscovery', () => {
       additionals: [],
     } as unknown as typeof mockMdnsResponse;
 
+    it('should call the callback for each service when a device answers both in one response', () => {
+      const callback = vi.fn();
+      const v2Discovery = new HomeWizardEnergyDiscovery({ types: ['hwenergy', 'homewizard'] });
+      const v1Txt = ['api_enabled=1', 'path=/api/v1', 'serial=5c2fafaabbcc', 'product_type=HWE-P1'];
+      const v2Txt = [
+        'api_version=2.3.0',
+        'id=appliance/p1dongle/5c2fafaabbcc',
+        'product_type=HWE-P1',
+      ];
+
+      const combined = {
+        ...mockMdnsResponse,
+        answers: [
+          {
+            name: '_hwenergy._tcp.local',
+            type: 'PTR',
+            ttl: 4500,
+            data: 'p1-AABBCC._hwenergy._tcp.local',
+          },
+          {
+            name: '_homewizard._tcp.local',
+            type: 'PTR',
+            ttl: 4500,
+            data: 'p1-AABBCC._homewizard._tcp.local',
+          },
+        ],
+        // txt and host records in the additionals, the txt of the API v2 first
+        additionals: [
+          {
+            name: 'p1-AABBCC._homewizard._tcp.local',
+            type: 'TXT',
+            data: v2Txt.map(t => Buffer.from(t)),
+          },
+          {
+            name: 'p1-AABBCC._hwenergy._tcp.local',
+            type: 'TXT',
+            data: v1Txt.map(t => Buffer.from(t)),
+          },
+          { name: 'p1-AABBCC.local', type: 'A', ttl: 120, data: '192.168.1.60' },
+        ],
+      } as unknown as typeof mockMdnsResponse;
+
+      v2Discovery['handleMdnsResponse'](callback)(combined);
+
+      expect(callback).toHaveBeenCalledTimes(2);
+      expect(callback.mock.calls[0][0].fqdn).toBe('p1-AABBCC._hwenergy._tcp.local');
+      expect(callback.mock.calls[0][0].txt.api_enabled).toBe('1');
+      expect(isMdnsTxtRecordV2(callback.mock.calls[0][0].txt)).toBe(false);
+      expect(callback.mock.calls[1][0].fqdn).toBe('p1-AABBCC._homewizard._tcp.local');
+      expect(callback.mock.calls[1][0].txt.api_version).toBe('2.3.0');
+      expect(callback.mock.calls[1][0].ip).toBe('192.168.1.60');
+    });
+
+    it('should ignore an incomplete response without throwing', () => {
+      const callback = vi.fn();
+      const v2Discovery = new HomeWizardEnergyDiscovery({ types: ['hwenergy', 'homewizard'] });
+
+      // no A record (ip) and no txt record
+      const incomplete = {
+        ...mockMdnsResponse,
+        answers: [
+          {
+            name: '_homewizard._tcp.local',
+            type: 'PTR',
+            ttl: 4500,
+            data: 'p1-AABBCC._homewizard._tcp.local',
+          },
+        ],
+        additionals: [],
+      } as unknown as typeof mockMdnsResponse;
+
+      expect(() => v2Discovery['handleMdnsResponse'](callback)(incomplete)).not.toThrow();
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('should remove only the service of the goodbye from the cache', () => {
+      const callback = vi.fn();
+      const v2Discovery = new HomeWizardEnergyDiscovery({ types: ['hwenergy', 'homewizard'] });
+
+      v2Discovery['handleMdnsResponse'](callback)(mockMdnsResponseV2);
+      expect(v2Discovery['cachedDiscoveryResponses']).toHaveLength(1);
+
+      const goodbye = {
+        ...mockMdnsResponseV2,
+        answers: [{ ...mockMdnsResponseV2.answers[0], ttl: 0 }],
+      } as unknown as typeof mockMdnsResponse;
+
+      v2Discovery['handleMdnsResponse'](callback)(goodbye);
+
+      expect(v2Discovery['cachedDiscoveryResponses']).toHaveLength(0);
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+
     it('should only query the API v1 domain by default', () => {
       querySpy.mockClear();
       new HomeWizardEnergyDiscovery().start();

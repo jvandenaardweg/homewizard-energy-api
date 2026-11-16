@@ -70,6 +70,8 @@ export class HomeWizardEnergyApiV2WebSocketError extends Error {
 
 // The device closes the connection when it did not receive the token within 40 seconds.
 export const WEBSOCKET_AUTHORIZATION_TIMEOUT = 40000;
+// When the device does not answer our token, the connection is closed (and opened again when reconnect is enabled).
+export const WEBSOCKET_AUTHORIZED_TIMEOUT = 10000;
 export const DEFAULT_WEBSOCKET_RECONNECT_INTERVAL = 5000;
 export const DEFAULT_WEBSOCKET_HEARTBEAT_INTERVAL = 30000;
 
@@ -96,6 +98,7 @@ export class HomeWizardEnergyWebSocket<
   protected authorized = false;
   protected reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   protected heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  protected authorizedTimeout: ReturnType<typeof setTimeout> | null = null;
   protected lastActivityAt = 0;
 
   constructor(url: string, connectionOptions: WebSocketConnectionOptions) {
@@ -190,6 +193,7 @@ export class HomeWizardEnergyWebSocket<
     }
 
     this.stopHeartbeat();
+    this.clearAuthorizedTimeout();
 
     if (this.socket) {
       this.log('Closing WebSocket.');
@@ -304,6 +308,7 @@ export class HomeWizardEnergyWebSocket<
       this.socket = null;
       this.authorized = false;
       this.stopHeartbeat();
+      this.clearAuthorizedTimeout();
       this.eventEmitter.emit('close', code, reason.toString());
 
       if (this.started && this.connectionOptions.websocket?.reconnect !== false) {
@@ -356,11 +361,23 @@ export class HomeWizardEnergyWebSocket<
         // We don't log the token
         this.log('Authorization requested, sending the token.');
         socket.send(JSON.stringify({ type: 'authorization', data: token }));
+
+        // A connection that stays open without being authorized would never receive anything
+        this.clearAuthorizedTimeout();
+        this.authorizedTimeout = setTimeout(() => {
+          this.authorizedTimeout = null;
+
+          if (this.socket === socket && !this.authorized) {
+            this.log('No answer to the authorization, closing the WebSocket.');
+            socket.terminate();
+          }
+        }, WEBSOCKET_AUTHORIZED_TIMEOUT);
         break;
       }
 
       case 'authorized':
         this.log('WebSocket authorized.');
+        this.clearAuthorizedTimeout();
         this.authorized = true;
         this.subscriptions.forEach(topic => this.send({ type: 'subscribe', data: topic }));
         this.eventEmitter.emit('authorized');
@@ -415,6 +432,13 @@ export class HomeWizardEnergyWebSocket<
         this.socket.ping();
       }
     }, interval);
+  }
+
+  protected clearAuthorizedTimeout(): void {
+    if (this.authorizedTimeout) {
+      clearTimeout(this.authorizedTimeout);
+      this.authorizedTimeout = null;
+    }
   }
 
   protected stopHeartbeat(): void {
