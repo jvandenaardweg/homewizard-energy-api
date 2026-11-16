@@ -245,4 +245,46 @@ describe('EnergySocketApi', () => {
       );
     });
   });
+
+  describe('polling', () => {
+    it('should emit the "data" response to polling.getData listeners', async () =>
+      new Promise(done => {
+        apiMocks.getData({
+          response: mockEnergySocketDataResponse,
+        });
+
+        energySocketApi.polling.getData.on('response', response => {
+          energySocketApi.polling.getData.stop();
+
+          expect(response).toStrictEqual(mockEnergySocketDataResponse);
+          done(true);
+        });
+
+        energySocketApi.polling.getData.start();
+      }));
+
+    it('should emit the "state" response to polling.getState listeners', async () =>
+      new Promise(done => {
+        apiMocks.getState({
+          response: mockStateResponse,
+        });
+
+        energySocketApi.polling.getState.on('response', response => {
+          energySocketApi.polling.getState.stop();
+
+          expect(response).toStrictEqual(mockStateResponse);
+          done(true);
+        });
+
+        energySocketApi.polling.getState.start();
+      }));
+
+    it('should stop polling getState when stop() is invoked', () => {
+      energySocketApi['isPolling']['getState'] = true;
+
+      energySocketApi.polling.getState.stop();
+
+      expect(energySocketApi['isPolling']['getState']).toBe(false);
+    });
+  });
 });

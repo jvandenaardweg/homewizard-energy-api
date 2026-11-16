@@ -177,6 +177,22 @@ describe('BaseApi', () => {
   });
 
   describe('polling', () => {
+    it('should also emit unscoped events to listeners added with the protected on()', async () =>
+      new Promise(done => {
+        apiMocks.getData({
+          response: mockP1MeterDataResponse,
+        });
+
+        baseApi['on']('response', response => {
+          baseApi.polling.getData.stop();
+
+          expect(response).toStrictEqual(mockP1MeterDataResponse);
+          done(true);
+        });
+
+        baseApi.polling.getData.start();
+      }));
+
     it('should start polling when start() is invoked', () => {
       const startPollingSpy = vi.fn();
       const method = 'getData';
