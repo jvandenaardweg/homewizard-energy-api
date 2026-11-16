@@ -57,6 +57,13 @@ describe('BaseApi', () => {
       expect(baseApi['baseUrl']).toBe(mockApiUrl);
     });
 
+    it('should remove trailing slashes from the baseUrl', () => {
+      const api = new BaseApi(`${mockApiUrl}//`);
+
+      expect(api['baseUrl']).toBe(mockApiUrl);
+      expect(api['endpoints'].data).toBe(`${mockApiUrl}/api/v1/data`);
+    });
+
     it('should have the eventEmitter set', () => {
       expect(baseApi['eventEmitter']).toBeTruthy();
       expect(baseApi['eventEmitter']).toBeInstanceOf(EventEmitter);

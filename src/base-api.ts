@@ -164,7 +164,8 @@ export class BaseApi {
   protected pollingRuns: Record<string, number> = {};
 
   constructor(baseUrl: string, options?: BaseApiOptions) {
-    this.baseUrl = baseUrl;
+    // Endpoints start with a slash, so a trailing slash would request a path like //api/v1/data
+    this.baseUrl = baseUrl.replace(/\/+$/, '');
     this.apiOptions = options?.api;
     this.apiVersion = this.apiOptions?.version || DEFAULT_API_VERSION;
     this.requestOptions = {
