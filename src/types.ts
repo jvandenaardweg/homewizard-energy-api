@@ -417,7 +417,7 @@ export type KwhMeter3PhaseDataResponse = Pick<
 /**
  * The /api/v1/identify endpoint can be used to let the user identify the device. The status light will blink for a few seconds after calling this endpoint.
  *
- * This feature is currently only available for HWE-SKT running firmware version 3.00 or later.
+ * Available for: `HWE-P1`, `HWE-SKT`, `HWE-WTR`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`
  *
  * @link: https://api-documentation.homewizard.com/docs/v1/identify
  */
