@@ -58,7 +58,7 @@ describe('EnergySocketApi', () => {
 
       const responseFn = () => energySocketApi.getBasicInformation();
 
-      expect(responseFn()).rejects.toThrowError(
+      await expect(responseFn()).rejects.toThrowError(
         'Api GET call at http://localhost/api failed with status 500 and response data: Server error!',
       );
     });
@@ -83,7 +83,7 @@ describe('EnergySocketApi', () => {
 
       const responseFn = () => energySocketApi.getState();
 
-      expect(responseFn()).rejects.toThrowError(
+      await expect(responseFn()).rejects.toThrowError(
         'Api GET call at http://localhost/api/v1/state failed with status 500 and response data: Server error!',
       );
     });
@@ -119,7 +119,7 @@ describe('EnergySocketApi', () => {
           power_on: true,
         });
 
-      expect(responseFn()).rejects.toThrowError(
+      await expect(responseFn()).rejects.toThrowError(
         'Api PUT call at http://localhost/api/v1/state failed with status 500 and response data: Server error!',
       );
     });
@@ -156,7 +156,7 @@ describe('EnergySocketApi', () => {
 
       const responseFn = () => energySocketApi.getSystem();
 
-      expect(responseFn()).rejects.toThrowError(
+      await expect(responseFn()).rejects.toThrowError(
         'Api GET call at http://localhost/api/v1/system failed with status 500 and response data: Server error!',
       );
     });
@@ -190,7 +190,7 @@ describe('EnergySocketApi', () => {
           cloud_enabled: true,
         });
 
-      expect(responseFn()).rejects.toThrowError(
+      await expect(responseFn()).rejects.toThrowError(
         'Api PUT call at http://localhost/api/v1/system failed with status 500 and response data: Server error!',
       );
     });
@@ -215,7 +215,7 @@ describe('EnergySocketApi', () => {
 
       const responseFn = () => energySocketApi.identify();
 
-      expect(responseFn()).rejects.toThrowError(
+      await expect(responseFn()).rejects.toThrowError(
         'Api PUT call at http://localhost/api/v1/identify failed with status 500 and response data: Server error!',
       );
     });
@@ -240,7 +240,7 @@ describe('EnergySocketApi', () => {
 
       const dataFn = () => energySocketApi.getData();
 
-      expect(dataFn()).rejects.toThrowError(
+      await expect(dataFn()).rejects.toThrowError(
         'Api GET call at http://localhost/api/v1/data failed with status 500 and response data: Server error!',
       );
     });

@@ -110,7 +110,7 @@ describe('P1MeterApi', () => {
 
       const responseFn = () => p1MeterApi.getTelegram();
 
-      expect(responseFn()).rejects.toThrowError(
+      await expect(responseFn()).rejects.toThrowError(
         'Api GET call at http://localhost/api/v1/telegram failed with status 500 and response data: Server error!',
       );
     });
@@ -135,7 +135,7 @@ describe('P1MeterApi', () => {
 
       const responseFn = () => p1MeterApi.getParsedTelegram();
 
-      expect(responseFn()).rejects.toThrowError(
+      await expect(responseFn()).rejects.toThrowError(
         'Api GET call at http://localhost/api/v1/telegram failed with status 500 and response data: Server error!',
       );
     });
@@ -160,7 +160,7 @@ describe('P1MeterApi', () => {
 
       const responseFn = () => p1MeterApi.getSystem();
 
-      expect(responseFn()).rejects.toThrowError(
+      await expect(responseFn()).rejects.toThrowError(
         'Api GET call at http://localhost/api/v1/system failed with status 500 and response data: Server error!',
       );
     });
@@ -194,7 +194,7 @@ describe('P1MeterApi', () => {
           cloud_enabled: true,
         });
 
-      expect(responseFn()).rejects.toThrowError(
+      await expect(responseFn()).rejects.toThrowError(
         'Api PUT call at http://localhost/api/v1/system failed with status 500 and response data: Server error!',
       );
     });
@@ -219,7 +219,7 @@ describe('P1MeterApi', () => {
 
       const responseFn = () => p1MeterApi.identify();
 
-      expect(responseFn()).rejects.toThrowError(
+      await expect(responseFn()).rejects.toThrowError(
         'Api PUT call at http://localhost/api/v1/identify failed with status 500 and response data: Server error!',
       );
     });

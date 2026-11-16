@@ -119,7 +119,7 @@ describe('KwhMeter3PhaseApi', () => {
 
       const responseFn = () => kwhMeter3PhaseApi.getSystem();
 
-      expect(responseFn()).rejects.toThrowError(
+      await expect(responseFn()).rejects.toThrowError(
         'Api GET call at http://localhost/api/v1/system failed with status 500 and response data: Server error!',
       );
     });
@@ -153,7 +153,7 @@ describe('KwhMeter3PhaseApi', () => {
           cloud_enabled: true,
         });
 
-      expect(responseFn()).rejects.toThrowError(
+      await expect(responseFn()).rejects.toThrowError(
         'Api PUT call at http://localhost/api/v1/system failed with status 500 and response data: Server error!',
       );
     });

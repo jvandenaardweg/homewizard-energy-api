@@ -77,8 +77,8 @@ describe('BaseApi', () => {
           statusCode: mockStatusCode,
         } as unknown as Dispatcher.ResponseData);
 
-      expect(errorFn()).rejects.toBeInstanceOf(HomeWizardEnergyApiResponseError);
-      expect(errorFn()).rejects.toThrowError(
+      await expect(errorFn()).rejects.toBeInstanceOf(HomeWizardEnergyApiResponseError);
+      await expect(errorFn()).rejects.toThrowError(
         `Api ${mockMethod} call at ${mockUrl} failed with status ${mockStatusCode} and response data: ${mockResponseData}`,
       );
     });
