@@ -336,7 +336,7 @@ describe('BaseApi', () => {
       expect(stopPollingSpy.mock.calls[0][0]).toBe(method);
     });
 
-    it('should return nothing when stop() is invoked when isPolling is not set', () => {
+    it('should return nothing when stop() is invoked while not polling', () => {
       const method = 'getData';
 
       baseApi.polling[method].stop();
@@ -344,21 +344,21 @@ describe('BaseApi', () => {
       expect(baseApi['stopPolling'](method)).toBeUndefined();
     });
 
-    it('should set isPolling for getData to true when start() is invoked', () => {
+    it('should set an active polling run for getData when start() is invoked', () => {
       const method = 'getData';
 
       baseApi.polling[method].start();
 
-      expect(baseApi['isPolling'][method]).toBe(true);
+      expect(baseApi['activePollingRuns'][method]).toBeDefined();
     });
 
-    it('should set isPolling for getData to false when stop() is invoked', () => {
+    it('should clear the active polling run for getData when stop() is invoked', () => {
       const method = 'getData';
 
       baseApi.polling[method].start();
       baseApi.polling[method].stop();
 
-      expect(baseApi['isPolling'][method]).toBe(false);
+      expect(baseApi['activePollingRuns'][method]).toBeUndefined();
     });
 
     it('should not start a second loop when start() is invoked while polling', async () => {

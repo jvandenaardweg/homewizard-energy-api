@@ -308,11 +308,11 @@ describe('EnergySocketApi', () => {
       }));
 
     it('should stop polling getState when stop() is invoked', () => {
-      energySocketApi['isPolling']['getState'] = true;
+      energySocketApi['activePollingRuns']['getState'] = {};
 
       energySocketApi.polling.getState.stop();
 
-      expect(energySocketApi['isPolling']['getState']).toBe(false);
+      expect(energySocketApi['activePollingRuns']['getState']).toBeUndefined();
     });
   });
 });

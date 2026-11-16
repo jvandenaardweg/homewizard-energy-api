@@ -398,14 +398,14 @@ describe('P1MeterApi', () => {
       }));
 
     it('should stop polling getTelegram and getParsedTelegram when stop() is invoked', () => {
-      p1MeterApi['isPolling']['getTelegram'] = true;
-      p1MeterApi['isPolling']['getParsedTelegram'] = true;
+      p1MeterApi['activePollingRuns']['getTelegram'] = {};
+      p1MeterApi['activePollingRuns']['getParsedTelegram'] = {};
 
       p1MeterApi.polling.getTelegram.stop();
       p1MeterApi.polling.getParsedTelegram.stop();
 
-      expect(p1MeterApi['isPolling']['getTelegram']).toBe(false);
-      expect(p1MeterApi['isPolling']['getParsedTelegram']).toBe(false);
+      expect(p1MeterApi['activePollingRuns']['getTelegram']).toBeUndefined();
+      expect(p1MeterApi['activePollingRuns']['getParsedTelegram']).toBeUndefined();
     });
 
     it('should start polling getParsedTelegram when start() is invoked', async () =>

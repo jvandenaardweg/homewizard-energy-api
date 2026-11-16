@@ -166,8 +166,11 @@ export class BaseApi {
   protected timeout: number;
   protected eventEmitter: EventEmitter;
 
-  protected isPolling: Record<string, boolean> = {};
-  protected pollingRuns: Record<string, number> = {};
+  /**
+   * The active polling run per method, or `undefined` when the method isn't polling. Each start gets a new run,
+   * so a loop from before a stop() can't continue after a quick start() again.
+   */
+  protected activePollingRuns: Record<string, object | undefined> = {};
 
   constructor(baseUrl: string, options?: BaseApiOptions) {
     // Endpoints start with a slash, so a trailing slash would request a path like //api/v1/data
@@ -477,12 +480,12 @@ export class BaseApi {
    * Stops polling for a specific method.
    */
   protected stopPolling(method: string): void {
-    if (!this.isPolling[method]) {
+    if (!this.activePollingRuns[method]) {
       this.log(`Polling for "${method}" is not started or already stopped.`);
       return;
     }
 
-    this.isPolling[method] = false;
+    this.activePollingRuns[method] = undefined;
 
     this.log(`Stopping polling for "${method}".`);
   }
@@ -512,7 +515,7 @@ export class BaseApi {
    * Calling it while the method is already polling does nothing. The returned promise never rejects.
    */
   protected async startPolling(method: string, apiMethod: () => Promise<unknown>): Promise<void> {
-    if (this.isPolling[method]) {
+    if (this.activePollingRuns[method]) {
       this.log(`Polling for "${method}" is already started.`);
       return;
     }
@@ -520,12 +523,10 @@ export class BaseApi {
     const interval = this.pollingOptions?.interval || 1000;
     const stopOnError = !!this.pollingOptions?.stopOnError;
 
-    // Each start gets its own run, so a loop from before a stop() can't continue after a quick start() again
-    const run = (this.pollingRuns[method] || 0) + 1;
-    this.pollingRuns[method] = run;
-    this.isPolling[method] = true;
+    const run = {};
+    this.activePollingRuns[method] = run;
 
-    const isCurrentRun = () => this.isPolling[method] && this.pollingRuns[method] === run;
+    const isCurrentRun = () => this.activePollingRuns[method] === run;
 
     while (isCurrentRun()) {
       try {
