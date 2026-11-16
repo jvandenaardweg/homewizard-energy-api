@@ -23,7 +23,7 @@ export interface HomeWizardEnergyDiscoveryOptions {
 /**
  * HomeWizard Energy Discovery
  *
- * @link: https://api-documentation.homewizard.com/docs/discovery
+ * @link https://api-documentation.homewizard.com/docs/discovery
  */
 export class HomeWizardEnergyDiscovery {
   private mdns: multicastDns.MulticastDNS | null = null;

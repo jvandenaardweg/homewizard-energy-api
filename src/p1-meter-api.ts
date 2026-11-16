@@ -97,7 +97,7 @@ export class P1MeterApi extends BaseApi {
    *
    * Note that this endpoint returns plain text instead of formatted JSON, even when an error occours (see Error handling)
    *
-   * @link: https://api-documentation.homewizard.com/docs/v1/telegram
+   * @link https://api-documentation.homewizard.com/docs/v1/telegram
    */
   async getTelegram<T extends TelegramResponse>(): Promise<T> {
     const url = this.endpoints.telegram;

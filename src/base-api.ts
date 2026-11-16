@@ -46,7 +46,8 @@ export class HomeWizardEnergyApiResponseError extends HomeWizardEnergyApiError {
   /**
    * The parsed error when the response body is the API's JSON error object, for example
    * `{ id: ErrorCodes.INVALID_VALUE_FOR_PARAMETER, description: 'brightness value limited to 0-255' }`.
-   * It is `undefined` for plain-text bodies, such as errors from `/api/v1/telegram`.
+   * It is `undefined` for plain-text bodies, such as errors from `/api/v1/telegram`, and for the `text/html` 404 and 405
+   * responses the device sends for a path it doesn't know or a method an endpoint doesn't accept.
    *
    * @link https://api-documentation.homewizard.com/docs/v1/error-handling
    */
@@ -85,7 +86,7 @@ export interface PollingOptions {
    * There is no limit to the time between each request on the local API, however,
    * HomeWizard advises not to retrieve data more often than every `500`ms.
    *
-   * @link: https://api-documentation.homewizard.com/docs/getting-started#data-update-frequency
+   * @link https://api-documentation.homewizard.com/docs/getting-started#data-update-frequency
    * */
   interval?: number;
   /**
@@ -352,7 +353,7 @@ export class BaseApi {
    *
    * All datapoints are “optional”; The API does not send datapoints that are null. Make sure your application can handle this.
    *
-   * @link: https://api-documentation.homewizard.com/docs/v1/measurement
+   * @link https://api-documentation.homewizard.com/docs/v1/measurement
    */
   protected async getData<T extends BaseDataResponse>(): Promise<T> {
     const url = this.endpoints.data;
