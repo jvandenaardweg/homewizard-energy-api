@@ -22,12 +22,75 @@ import { ErrorCode, ErrorResponse } from './types';
  * - `socket`: the WebSocket failed or the device sent an error over it, with its `code`.
  * - `invalid`: the arguments or options can't work, for example a missing identifier or an `http://` host.
  */
-export type HomeWizardErrorKind =
-  'response' | 'timeout' | 'network' | 'certificate' | 'pairing' | 'socket' | 'invalid';
+export type HomeWizardErrorKind = keyof HomeWizardErrorFields;
 
-export type HomeWizardErrorDetails = Partial<
-  Pick<HomeWizardError, 'code' | 'url' | 'statusCode' | 'response' | 'timeout' | 'reason'>
-> & { cause?: unknown };
+/**
+ * The fields each kind of error has. Checking `error.kind` narrows an error to its fields, so `statusCode` is a
+ * number once `error.kind === 'response'`.
+ */
+export interface HomeWizardErrorFields {
+  response: {
+    /** The error code from the device, for example `user:unauthorized`. Upstream may add codes. */
+    code?: ErrorCode;
+    /** The URL of the request. */
+    url: string;
+    /** The HTTP status. */
+    statusCode: number;
+    /** The raw response body. */
+    response: string;
+  };
+  timeout: {
+    /** The URL of the request. */
+    url: string;
+    /** The timeout in milliseconds that passed. */
+    timeout: number;
+  };
+  network: {
+    /** The URL of the request. Missing when discovery failed. */
+    url?: string;
+  };
+  certificate: {
+    /** The URL of the request. Missing when the identifier was refused before a request. */
+    url?: string;
+  };
+  pairing: {
+    /** Why the pairing ended. */
+    reason: 'timeout' | 'aborted';
+  };
+  socket: {
+    /** The error code from the device, when it sent one. */
+    code?: ErrorCode;
+  };
+  invalid: object;
+}
+
+type HomeWizardErrorField = {
+  [K in HomeWizardErrorKind]: keyof HomeWizardErrorFields[K];
+}[HomeWizardErrorKind];
+
+/** An error of one kind: its own fields, and the fields of the other kinds as `undefined`. */
+export type HomeWizardErrorOf<K extends HomeWizardErrorKind> = Error & {
+  readonly kind: K;
+} & Readonly<HomeWizardErrorFields[K]> & {
+    readonly [F in Exclude<HomeWizardErrorField, keyof HomeWizardErrorFields[K]>]?: undefined;
+  };
+
+/** The fields to create an error of one kind with, plus the error that caused it. */
+export type HomeWizardErrorDetails<K extends HomeWizardErrorKind> = HomeWizardErrorFields[K] & {
+  cause?: unknown;
+};
+
+interface HomeWizardErrorConstructor {
+  /** The details are required for the kinds that have required fields. */
+  new <K extends HomeWizardErrorKind>(
+    kind: K,
+    message: string,
+    ...details: object extends HomeWizardErrorFields[K]
+      ? [details?: HomeWizardErrorDetails<K>]
+      : [details: HomeWizardErrorDetails<K>]
+  ): HomeWizardErrorOf<K>;
+  readonly prototype: HomeWizardError;
+}
 
 /** Reads the error code from a JSON body (`{"error": "user:unauthorized"}`) or a plain-text body. */
 export function parseErrorCode(body: string): ErrorCode | undefined {
@@ -46,7 +109,8 @@ export function parseErrorCode(body: string): ErrorCode | undefined {
 
 /**
  * The one error the library throws, and the WebSocket emits. `kind` says what went wrong, and `code` has the
- * error code the device sent, when it sent one.
+ * error code the device sent, when it sent one. Checking `kind` narrows the error to the fields of that kind:
+ * see `HomeWizardErrorFields`. More kinds may be added in a minor version, so handle other values too.
  *
  * @example
  * try {
@@ -55,30 +119,22 @@ export function parseErrorCode(body: string): ErrorCode | undefined {
  *   if (error instanceof HomeWizardError && error.code === 'user:unauthorized') {
  *     // The token was deleted: pair again
  *   }
+ *
+ *   if (error instanceof HomeWizardError && error.kind === 'response') {
+ *     console.log(error.statusCode, error.response);
+ *   }
  * }
  *
  * @link https://api-documentation.homewizard.com/docs/v2/error-handling
  */
-export class HomeWizardError extends Error {
-  /** What went wrong. More kinds may be added in a minor version, so handle other values too. */
-  readonly kind: HomeWizardErrorKind;
-  /**
-   * The error code from the device, for example `user:unauthorized`. Upstream may add codes, so handle other
-   * values too.
-   */
-  readonly code?: ErrorCode;
-  /** The URL of the request. */
-  readonly url?: string;
-  /** The HTTP status, for a `response` error. */
-  readonly statusCode?: number;
-  /** The raw response body, for a `response` error. */
-  readonly response?: string;
-  /** The timeout in milliseconds that passed, for a `timeout` error. */
-  readonly timeout?: number;
-  /** Why the pairing ended, for a `pairing` error. */
-  readonly reason?: 'timeout' | 'aborted';
+export type HomeWizardError = {
+  [K in HomeWizardErrorKind]: HomeWizardErrorOf<K>;
+}[HomeWizardErrorKind];
 
-  constructor(kind: HomeWizardErrorKind, message: string, details: HomeWizardErrorDetails = {}) {
+export const HomeWizardError = class HomeWizardError extends Error {
+  readonly kind: HomeWizardErrorKind;
+
+  constructor(kind: HomeWizardErrorKind, message: string, details: { cause?: unknown } = {}) {
     const { cause, ...fields } = details;
 
     super(message, cause === undefined ? undefined : { cause });
@@ -86,7 +142,7 @@ export class HomeWizardError extends Error {
     this.kind = kind;
     Object.assign(this, fields);
   }
-}
+} as unknown as HomeWizardErrorConstructor;
 
 /** Returns `true` for the errors that can go away on their own, such as a reboot or bad Wi-Fi: timeouts and network errors. */
 export function isTransientError(error: HomeWizardError): boolean {
