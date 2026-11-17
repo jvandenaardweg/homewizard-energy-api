@@ -1,6 +1,15 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const { author } = require('./package.json');
+
+// An introduction for a big release: .github/release-notes/<version>.md, rendered above the commit groups as the
+// preset's preamble. Releases without such a file get the generated notes only.
+const readReleaseIntroduction = version => {
+  const file = path.join(__dirname, '.github', 'release-notes', `${version}.md`);
+  return fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim() : undefined;
+};
 
 // Rendered after the commit groups by the preset's main template, which calls `footerPartial` last.
 // The preset renders with plain functions since v10, so this replaces the old Handlebars mainTemplate.
@@ -167,7 +176,11 @@ module.exports = {
           ) {
             context.linkCompare = true;
           }
+          // The chore(release) type is hidden, but its commits still arrive in a group without a title, which
+          // renders as a stray line under the breaking changes. Every other type has a section.
+          context.commitGroups = context.commitGroups.filter(group => group.title);
           context.contributors = await getContributors(context);
+          context.preamble = readReleaseIntroduction(context.version) ?? context.preamble;
           return context;
         },
       },
