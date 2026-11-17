@@ -384,7 +384,10 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     this.emitter.emit('error', error);
 
     // Reconnecting with the same token won't help
-    if (code === 'user:unauthorized') this.close();
+    if (code === 'user:unauthorized') {
+      this.fatalError = error;
+      this.close();
+    }
   }
 
   protected handleClose(code: number, reason: string): void {
