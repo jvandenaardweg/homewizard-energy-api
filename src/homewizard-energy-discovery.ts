@@ -169,10 +169,21 @@ export class HomeWizardEnergyDiscovery {
     );
   }
 
+  /**
+   * Returns the txt record of the response. Looks in the answers and in the additionals.
+   *
+   * A device that supports both API versions can answer both services in one response, so when a fqdn is given
+   * the txt record of that fqdn is used.
+   */
   protected getTxtRecordFromResponse(
     response: multicastDns.ResponsePacket,
+    fqdn?: string,
   ): MdnsTxtRecord | MdnsTxtRecordV2 | null {
-    const txt = response.answers.find(answer => answer.type === 'TXT');
+    const records = [...response.answers, ...(response.additionals || [])].filter(
+      record => record.type === 'TXT',
+    );
+
+    const txt = (fqdn && records.find(record => record.name === fqdn)) || records[0];
 
     // no txt record found
     if (!txt) return null;
@@ -255,6 +266,37 @@ export class HomeWizardEnergyDiscovery {
     );
   }
 
+  /**
+   * Returns the fqdn of each service of the response we are discovering.
+   *
+   * A device that supports both API versions can answer `_hwenergy._tcp` and `_homewizard._tcp` in one response.
+   */
+  protected getFqdnsFromResponse(response: multicastDns.ResponsePacket): string[] {
+    const fqdns: string[] = [];
+
+    for (const answer of response.answers || []) {
+      if (answer.type !== 'PTR' || !answer.name || !this.includesDiscoveryType(answer.name)) {
+        continue;
+      }
+
+      if ('data' in answer && typeof answer.data === 'string' && !fqdns.includes(answer.data)) {
+        fqdns.push(answer.data);
+      }
+    }
+
+    return fqdns;
+  }
+
+  protected isGoodbyeForFqdn(response: multicastDns.ResponsePacket, fqdn: string): boolean {
+    return response.answers.some(
+      answer =>
+        answer.type === MDNS_DISCOVERY_QUERY_TYPE &&
+        'ttl' in answer &&
+        answer.ttl === 0 &&
+        answer.data === fqdn,
+    );
+  }
+
   protected handleMdnsResponse(callback: (discoveryResponse: DiscoveryResponse) => void) {
     return (response: multicastDns.ResponsePacket) => {
       const isHomeWizardEnergyResponse = this.isHomeWizardEnergyResponse(response);
@@ -266,68 +308,62 @@ export class HomeWizardEnergyDiscovery {
         return;
       }
 
-      // Get the FQDN from the response, we use this as a unique identifier for the device
-      const fqdn = this.getFqdnFromResponse(response);
+      // Get the FQDN's from the response, we use this as a unique identifier for the device (and its API version)
+      const fqdns = this.getFqdnsFromResponse(response);
 
-      if (!fqdn) {
+      if (!fqdns.length) {
         this.log(`No fqdn found in mDNS response, ignoring: ${JSON.stringify(response)}`);
 
         return;
       }
 
-      if (this.isGoodbyeResponse(response)) {
-        this.log(`Response is a goodbye message, we'll send a down event.`);
+      for (const fqdn of fqdns) {
+        if (this.isGoodbyeForFqdn(response, fqdn)) {
+          this.log(`Response is a goodbye message for ${fqdn}.`);
 
-        const cachedResponse = this.getCachedResponseByFqdn(fqdn);
+          // Remove the response from cache by using the fqdn, which is specific enough
+          this.removeCachedResponseByFqdn(fqdn);
 
-        if (!cachedResponse) {
-          this.log(`No cached response found for ${fqdn}, ignoring.`);
+          continue;
         }
 
-        this.log('down!', cachedResponse);
+        const hostDetails = this.getHostDetailsFromResponse(response);
 
-        // this.emit('down', cachedResponse);
+        const txtRecord = this.getTxtRecordFromResponse(response, fqdn);
 
-        // Remove the response from cache by using the fqdn, which is specific enough
-        this.removeCachedResponseByFqdn(fqdn);
+        // An incomplete response must never throw: this handler runs inside the mDNS socket event, an error here
+        // would be an uncaught exception in the application. The device will be handled on its next (complete) response.
+        if (!hostDetails) {
+          this.log(`No host details found in mDNS response, ignoring: ${JSON.stringify(response)}`);
+          continue;
+        }
 
-        return;
+        if (!txtRecord) {
+          this.log(
+            `No txt record data found in mDNS response, ignoring: ${JSON.stringify(response)}`,
+          );
+          continue;
+        }
+
+        const discoveryResponse = {
+          ip: hostDetails.ip,
+          hostname: hostDetails.hostname,
+          fqdn,
+          txt: txtRecord,
+        } satisfies DiscoveryResponse;
+
+        const isDiscoveryResponseInCache = this.isDiscoveryResponseInCache(discoveryResponse);
+
+        if (isDiscoveryResponseInCache) {
+          this.log('Nothing changed. Response is already in cache, ignoring.');
+          continue;
+        }
+
+        // Store response in cache, so we don't send multiple events for the same device when not needed
+        this.cachedDiscoveryResponses.push(discoveryResponse);
+
+        callback(discoveryResponse);
       }
-
-      // Response is from hwenergy
-
-      const hostDetails = this.getHostDetailsFromResponse(response);
-
-      const txtRecord = this.getTxtRecordFromResponse(response);
-
-      // This should not happen, but just in case
-      if (!hostDetails) {
-        throw new Error(`No host details found in mDNS response: ${JSON.stringify(response)}`);
-      }
-
-      // This should not happen, but just in case
-      if (!txtRecord) {
-        throw new Error(`No txt record data found in mDNS response: ${JSON.stringify(response)}`);
-      }
-
-      const discoveryResponse = {
-        ip: hostDetails.ip,
-        hostname: hostDetails.hostname,
-        fqdn,
-        txt: txtRecord,
-      } satisfies DiscoveryResponse;
-
-      const isDiscoveryResponseInCache = this.isDiscoveryResponseInCache(discoveryResponse);
-
-      if (isDiscoveryResponseInCache) {
-        this.log('Nothing changed. Response is already in cache, ignoring.');
-        return;
-      }
-
-      // Store response in cache, so we don't send multiple events for the same device when not needed
-      this.cachedDiscoveryResponses.push(discoveryResponse);
-
-      return callback(discoveryResponse);
     };
   }
 
