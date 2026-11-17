@@ -10,21 +10,20 @@ import {
 import { BatteriesTopic, CommonTopics, DeviceSocket } from '../websocket';
 import { Device } from './device';
 
+type KwhMeterTopics<TMeasurement> = CommonTopics<TMeasurement, KwhMeterSystem> & BatteriesTopic;
+type KwhMeterUpdates = { system: KwhMeterSystemUpdate; batteries: BatteriesUpdate };
+
 /**
  * What both kWh meters have besides the common endpoints: reboot and the Plug-In Batteries. They have no identify
  * and no status LED setting.
  */
-abstract class KwhMeter<TMeasurement> extends Device<
-  TMeasurement,
-  KwhMeterSystem,
-  KwhMeterSystemUpdate,
-  CommonTopics<TMeasurement, KwhMeterSystem> & BatteriesTopic,
-  { system: KwhMeterSystemUpdate; batteries: BatteriesUpdate }
-> {
-  protected readonly socketClass = DeviceSocket<
-    CommonTopics<TMeasurement, KwhMeterSystem> & BatteriesTopic,
-    { system: KwhMeterSystemUpdate; batteries: BatteriesUpdate }
-  >;
+abstract class KwhMeter<TMeasurement> extends Device<{
+  measurement: TMeasurement;
+  system: KwhMeterSystem;
+  systemUpdate: KwhMeterSystemUpdate;
+  socket: DeviceSocket<KwhMeterTopics<TMeasurement>, KwhMeterUpdates>;
+}> {
+  protected readonly socketClass = DeviceSocket<KwhMeterTopics<TMeasurement>, KwhMeterUpdates>;
 
   /**
    * Reboots the device. Usually not needed: when the user needs it often, they should contact HomeWizard support.

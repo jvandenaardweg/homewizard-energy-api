@@ -26,14 +26,12 @@ type P1MeterUpdates = { system: P1MeterSystemUpdate; batteries: BatteriesUpdate 
  *
  * @link https://api-documentation.homewizard.com/docs/category/api-v2
  */
-export class P1Meter extends Device<
-  P1MeterMeasurement,
-  P1MeterSystem,
-  P1MeterSystemUpdate,
-  P1MeterTopics,
-  P1MeterUpdates,
-  IdentifiableDeviceSocket<P1MeterTopics, P1MeterUpdates>
-> {
+export class P1Meter extends Device<{
+  measurement: P1MeterMeasurement;
+  system: P1MeterSystem;
+  systemUpdate: P1MeterSystemUpdate;
+  socket: IdentifiableDeviceSocket<P1MeterTopics, P1MeterUpdates>;
+}> {
   protected readonly socketClass = IdentifiableDeviceSocket<P1MeterTopics, P1MeterUpdates>;
 
   /**

@@ -14,14 +14,12 @@ type PlugInBatteryUpdates = { system: PlugInBatterySystemUpdate };
  *
  * @link https://api-documentation.homewizard.com/docs/category/api-v2
  */
-export class PlugInBattery extends Device<
-  PlugInBatteryMeasurement,
-  PlugInBatterySystem,
-  PlugInBatterySystemUpdate,
-  PlugInBatteryTopics,
-  PlugInBatteryUpdates,
-  IdentifiableDeviceSocket<PlugInBatteryTopics, PlugInBatteryUpdates>
-> {
+export class PlugInBattery extends Device<{
+  measurement: PlugInBatteryMeasurement;
+  system: PlugInBatterySystem;
+  systemUpdate: PlugInBatterySystemUpdate;
+  socket: IdentifiableDeviceSocket<PlugInBatteryTopics, PlugInBatteryUpdates>;
+}> {
   protected readonly socketClass = IdentifiableDeviceSocket<
     PlugInBatteryTopics,
     PlugInBatteryUpdates

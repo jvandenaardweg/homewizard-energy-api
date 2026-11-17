@@ -2,7 +2,7 @@ import { Client, Credentials, ConnectionOptions } from '../client';
 import * as endpoints from '../endpoints';
 import { pair, PairOptions, splitPairOptions } from '../pairing';
 import { DeviceInformation, System, User } from '../types';
-import { CommonTopics, DeviceSocket, DeviceSocketConnection, WebSocketOptions } from '../websocket';
+import { DeviceSocketConnection, WebSocketOptions } from '../websocket';
 
 export interface Users {
   /**
@@ -27,25 +27,30 @@ export interface PairedDevice<TDevice> {
   device: TDevice;
 }
 
+/** What differs per device: its responses, the settings it lets you change, and its WebSocket. */
+export interface DeviceSpec {
+  /** The response of `getMeasurement()`. */
+  measurement: unknown;
+  /** The response of `getSystem()` and `updateSystem()`. */
+  system: Partial<System>;
+  /** The settings `updateSystem()` takes. */
+  systemUpdate: unknown;
+  /** The socket `openWebSocket()` returns, typed with the device's topics and writable settings. */
+  socket: { connect(): void };
+}
+
 /**
  * What every device with the API v2 has: device information, measurement, system, users and the WebSocket.
  *
  * @internal Use the device classes, such as `P1Meter`.
  */
-export abstract class Device<
-  TMeasurement,
-  TSystem extends Partial<System>,
-  TSystemUpdate,
-  TTopics extends CommonTopics<TMeasurement, TSystem> = CommonTopics<TMeasurement, TSystem>,
-  TUpdates extends object = { system: TSystemUpdate },
-  TSocket extends DeviceSocket<TTopics, TUpdates> = DeviceSocket<TTopics, TUpdates>,
-> {
+export abstract class Device<TSpec extends DeviceSpec> {
   protected readonly client: Client;
   /** The socket class `openWebSocket()` creates. Devices that can identify use `IdentifiableDeviceSocket`. */
   protected abstract readonly socketClass: new (
     connection: DeviceSocketConnection,
     options?: WebSocketOptions,
-  ) => TSocket;
+  ) => TSpec['socket'];
   /** The IP address or hostname this device connects to, as given in the credentials. */
   readonly host: string;
 
@@ -71,7 +76,7 @@ export abstract class Device<
    *
    * @link https://api-documentation.homewizard.com/docs/v2/websocket
    */
-  openWebSocket(options?: WebSocketOptions): TSocket {
+  openWebSocket(options?: WebSocketOptions): TSpec['socket'] {
     const socket = new this.socketClass(this.client.webSocketConnection(), options);
 
     socket.connect();
@@ -114,8 +119,8 @@ export abstract class Device<
    *
    * @link https://api-documentation.homewizard.com/docs/v2/measurement
    */
-  getMeasurement(): Promise<TMeasurement> {
-    return endpoints.getMeasurement<TMeasurement>(this.client);
+  getMeasurement(): Promise<TSpec['measurement']> {
+    return endpoints.getMeasurement<TSpec['measurement']>(this.client);
   }
 
   /**
@@ -123,8 +128,8 @@ export abstract class Device<
    *
    * @link https://api-documentation.homewizard.com/docs/v2/system
    */
-  getSystem(): Promise<TSystem> {
-    return endpoints.getSystem<TSystem>(this.client);
+  getSystem(): Promise<TSpec['system']> {
+    return endpoints.getSystem<TSpec['system']>(this.client);
   }
 
   /**
@@ -135,8 +140,8 @@ export abstract class Device<
    *
    * @link https://api-documentation.homewizard.com/docs/v2/system
    */
-  updateSystem(params: TSystemUpdate): Promise<TSystem> {
-    return endpoints.updateSystem<TSystem>(this.client, params as Partial<System>);
+  updateSystem(params: TSpec['systemUpdate']): Promise<TSpec['system']> {
+    return endpoints.updateSystem<TSpec['system']>(this.client, params as Partial<System>);
   }
 
   /** The users on the device. */
