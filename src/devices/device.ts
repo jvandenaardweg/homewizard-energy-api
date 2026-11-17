@@ -2,7 +2,7 @@ import { Client, Credentials, ConnectionOptions } from '../client';
 import * as endpoints from '../endpoints';
 import { pair, PairOptions, splitPairOptions } from '../pairing';
 import { DeviceInformation, System, User } from '../types';
-import { DeviceSocketConnection, WebSocketOptions } from '../websocket';
+import { SocketTarget, WebSocketOptions } from '../websocket';
 
 export interface Users {
   /**
@@ -48,7 +48,7 @@ export abstract class Device<TSpec extends DeviceSpec> {
   protected readonly client: Client;
   /** The socket class `openWebSocket()` creates. Devices that can identify use `IdentifiableDeviceSocket`. */
   protected abstract readonly socketClass: new (
-    connection: DeviceSocketConnection,
+    target: SocketTarget,
     options?: WebSocketOptions,
   ) => TSpec['socket'];
   /** The IP address or hostname this device connects to, as given in the credentials. */
@@ -77,7 +77,7 @@ export abstract class Device<TSpec extends DeviceSpec> {
    * @link https://api-documentation.homewizard.com/docs/v2/websocket
    */
   openWebSocket(options?: WebSocketOptions): TSpec['socket'] {
-    const socket = new this.socketClass(this.client.webSocketConnection(), options);
+    const socket = new this.socketClass(this.client.webSocketTarget(), options);
 
     socket.connect();
 

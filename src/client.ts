@@ -19,7 +19,7 @@ import {
 import { isNewerApiVersion } from './api-version';
 import { createCheckServerIdentity, HOMEWIZARD_CA_CERT } from './tls';
 import { API_MAJOR_VERSION, DOCUMENTED_API_VERSION } from './types';
-import type { DeviceSocketConnection } from './websocket';
+import type { SocketTarget } from './websocket';
 
 /**
  * What a device needs to connect: its address, the token and the identifier. `pair()` returns all three, so store
@@ -181,7 +181,7 @@ export class Client {
   }
 
   /** What the WebSocket needs to connect to this device: the same TLS agent, token and logger. */
-  webSocketConnection(): DeviceSocketConnection {
+  webSocketTarget(): SocketTarget {
     return {
       url: `${this.baseUrl.replace(/^https:/i, 'wss:')}/api/ws`,
       token: this.token,

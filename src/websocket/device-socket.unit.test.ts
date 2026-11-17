@@ -1,6 +1,6 @@
 import { mockApiAgent } from '@/mocks/api';
-import { HomeWizardError } from './errors';
-import { CommonTopics, DeviceSocket } from './websocket';
+import { HomeWizardError } from '../errors';
+import { CommonTopics, DeviceSocket } from '.';
 
 /*
  * The socket's handlers with a fake WebSocket and fake timers, for the cases a real connection can't produce on
@@ -44,7 +44,7 @@ vi.mock('undici', async importOriginal => ({
 
 type Topics = CommonTopics<{ power_w?: number }, object>;
 
-const connection = {
+const target = {
   url: 'wss://192.168.1.35/api/ws',
   token: 'TOKEN',
   dispatcher: mockApiAgent,
@@ -52,7 +52,7 @@ const connection = {
 };
 
 function connect(options = {}) {
-  const socket = new DeviceSocket<Topics>(connection, options);
+  const socket = new DeviceSocket<Topics>(target, options);
   socket.connect();
   const fake = FakeWebSocket.instances[FakeWebSocket.instances.length - 1];
   return { socket, fake };
@@ -69,11 +69,11 @@ describe('v2/DeviceSocket handlers', () => {
   });
 
   it('should connect with the dispatcher and the default options', () => {
-    const socket = new DeviceSocket<Topics>(connection);
+    const socket = new DeviceSocket<Topics>(target);
     socket.connect();
     const [fake] = FakeWebSocket.instances;
 
-    expect(fake.url).toBe(connection.url);
+    expect(fake.url).toBe(target.url);
     expect(fake.init).toStrictEqual({ dispatcher: mockApiAgent });
     socket.close();
   });
@@ -139,6 +139,25 @@ describe('v2/DeviceSocket handlers', () => {
     await vi.advanceTimersByTimeAsync(10);
     expect(FakeWebSocket.instances).toHaveLength(2);
     socket.close();
+  });
+
+  it('should stay closed when a listener closes it from the message of the authorization', async () => {
+    const { socket, fake } = connect({ heartbeatInterval: 1000 });
+    const onAuthorized = vi.fn();
+    socket.on('authorized', onAuthorized);
+    socket.on('message', message => {
+      if (message.type === 'authorized') socket.close();
+    });
+
+    authorize(fake);
+
+    expect(socket.isAuthorized).toBe(false);
+    expect(onAuthorized).not.toHaveBeenCalled();
+
+    // No heartbeat runs on the closed socket
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(fake.sent).not.toContainEqual({ type: 'device' });
+    expect(FakeWebSocket.instances).toHaveLength(1);
   });
 
   it('should reconnect after a close without having sent the token', async () => {
