@@ -2,7 +2,12 @@ import * as multicastDns from 'multicast-dns';
 import { HomeWizardEnergyDiscovery } from '@/v1/homewizard-energy-discovery';
 import { mockApiAgent } from '@/mocks/api';
 import { mockMdnsResponse } from '@/mocks/mdns';
-import { mockDiscoveryV2Response, mockMdnsV2Response } from '@/mocks/mdns-v2';
+import {
+  mockDiscoveryV2Response,
+  mockMdnsBothServicesResponse,
+  mockMdnsBothServicesV2FirstResponse,
+  mockMdnsV2Response,
+} from '@/mocks/mdns-v2';
 import { KwhMeter1Phase, KwhMeter3Phase } from './devices/kwh-meter';
 import { P1Meter } from './devices/p1-meter';
 import { PlugInBattery } from './devices/plug-in-battery';
@@ -138,6 +143,56 @@ describe('the service types', () => {
     await expect(next).resolves.toStrictEqual({ value: mockDiscoveryV2Response, done: false });
     expect(JSON.stringify(method.mock.calls)).toContain('is not for _homewizard._tcp.local');
     await devices.return?.();
+  });
+
+  it('should read the TXT record of _homewizard._tcp when a packet announces both services', async () => {
+    const devices = await startDiscover();
+    const next = devices.next();
+
+    lastHandler('response')(mockMdnsBothServicesResponse);
+
+    await expect(next).resolves.toStrictEqual({ value: mockDiscoveryV2Response, done: false });
+    await devices.return?.();
+  });
+
+  it('should read the TXT record of _hwenergy._tcp in the v1 discovery when a packet announces both services', () => {
+    const callback = vi.fn();
+    const handler = getResponseHandler(new HomeWizardEnergyDiscovery(), callback);
+
+    handler(mockMdnsBothServicesResponse);
+
+    expect(callback).toHaveBeenCalledWith({
+      ip: '192.168.1.35',
+      hostname: 'p1meter-AABB02.local',
+      fqdn: 'p1meter-AABB02._hwenergy._tcp.local',
+      txt: {
+        api_enabled: '1',
+        path: '/api/v1',
+        serial: '3c39e7aabb02',
+        product_name: 'P1 Meter',
+        product_type: 'HWE-P1',
+      },
+    });
+  });
+
+  it('should read the TXT record of _hwenergy._tcp in the v1 discovery when the API v2 records come first', () => {
+    const callback = vi.fn();
+    const handler = getResponseHandler(new HomeWizardEnergyDiscovery(), callback);
+
+    handler(mockMdnsBothServicesV2FirstResponse);
+
+    expect(callback).toHaveBeenCalledWith({
+      ip: '192.168.1.35',
+      hostname: 'p1meter-AABB02.local',
+      fqdn: 'p1meter-AABB02._hwenergy._tcp.local',
+      txt: {
+        api_enabled: '1',
+        path: '/api/v1',
+        serial: '3c39e7aabb02',
+        product_name: 'P1 Meter',
+        product_type: 'HWE-P1',
+      },
+    });
   });
 
   it('should leave _homewizard._tcp to the v2 discovery in the v1 discovery', () => {
