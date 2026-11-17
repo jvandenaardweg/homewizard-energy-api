@@ -345,6 +345,8 @@ import { P1MeterApi, HomeWizardEnergyDiscovery } from 'homewizard-energy-api/v1'
 
 The package is ESM now, and imports of files inside `dist/` no longer work. Use the three entry points above.
 
+The root has its own `DiscoveryResponse` and `MdnsTxtRecord` types now, for `_homewizard._tcp`, and no longer exports `MDNS_DISCOVERY_TYPE` and `MDNS_DISCOVERY_DOMAIN`. Import the v1 ones from `homewizard-energy-api/v1`.
+
 ### Moving from v1 to v2
 
 1. Pair with the device (see [Pairing](#pairing)), instead of enabling the Local API in the HomeWizard app.

@@ -19,8 +19,7 @@ export const DOCUMENTED_API_VERSION = '2.3.0';
  *
  * @link https://api-documentation.homewizard.com/docs/discovery
  */
-export const MDNS_DISCOVERY_TYPE = 'homewizard';
-export const MDNS_DISCOVERY_DOMAIN = `_${MDNS_DISCOVERY_TYPE}._tcp.local`; // _homewizard._tcp.local
+export const MDNS_DISCOVERY_TYPE = 'homewizard'; // _homewizard._tcp.local
 
 /**
  * The devices that have the API v2. The Energy Socket, Watermeter and Energy Display get it later.
