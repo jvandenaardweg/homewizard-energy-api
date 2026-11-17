@@ -1,6 +1,6 @@
 import { formatError } from '@/shared/errors';
 import { wait } from '@/shared/wait';
-import { Client, Credentials, DeviceOptions } from './client';
+import { Client, Credentials, ConnectionOptions } from './client';
 import { createUser, getDevice } from './endpoints';
 import { HomeWizardError, isTransientError } from './errors';
 import { getCertificateIdentifier } from './tls';
@@ -9,7 +9,7 @@ import { UserCreated } from './types';
 export const DEFAULT_PAIR_TIMEOUT = 120000;
 export const DEFAULT_PAIR_INTERVAL = 2000;
 
-export interface PairOptions extends DeviceOptions {
+export interface PairOptions extends ConnectionOptions {
   /**
    * The identifier of the device, when you have it, for example from an earlier pairing or built with
    * `getCertificateIdentifier()` from the serial on the label. Not from discovery: anyone on the network can announce
@@ -28,22 +28,10 @@ export interface PairOptions extends DeviceOptions {
 }
 
 /**
- * The credentials of the new user: pass them to the device classes. Store them, because the device can't return
- * the token again. Keep the token secret.
- */
-export interface PairResult extends Required<Credentials> {
-  /**
-   * The identifier the device's certificate is issued to. With `insecure`, it's empty for a product type whose
-   * identifier isn't known.
-   */
-  identifier: string;
-}
-
-/**
- * Splits the options that only pairing uses from the device options, which pairing and the device after it share.
+ * Splits the options that only pairing uses from the connection options, which pairing and the device after it share.
  */
 export function splitPairOptions(options: PairOptions) {
-  const { pairTimeout, interval, signal, onAttempt, identifier, ...deviceOptions } = options;
+  const { pairTimeout, interval, signal, onAttempt, identifier, ...connectionOptions } = options;
 
   return {
     pairTimeout,
@@ -51,12 +39,14 @@ export function splitPairOptions(options: PairOptions) {
     signal,
     onAttempt,
     identifier,
-    deviceOptions: deviceOptions as DeviceOptions,
+    connectionOptions: connectionOptions as ConnectionOptions,
   };
 }
 
 /**
  * Creates a user on the device and returns its credentials, once the user presses the button on the device.
+ * Store the credentials, because the device can't return the token again, and keep the token secret. With
+ * `insecure`, the identifier is empty for a product type whose identifier isn't known.
  *
  * It keeps sending `POST /api/user` until the device accepts it, the `pairTimeout` passes, or `signal` aborts.
  * After the button press there are 30 seconds to request the token. On the kWh meters, hold the button for 1 to 3
@@ -76,19 +66,19 @@ export async function pair(
   host: string,
   name: string,
   options: PairOptions = {},
-): Promise<PairResult> {
+): Promise<Credentials> {
   const {
     pairTimeout = DEFAULT_PAIR_TIMEOUT,
     interval = DEFAULT_PAIR_INTERVAL,
     signal,
     onAttempt,
     identifier,
-    deviceOptions,
+    connectionOptions,
   } = splitPairOptions(options);
 
   // Checked before the token is created: a token without an identifier can't be used, and the button would need
   // another press. Your own dispatcher doesn't run the certificate check that learns the identifier.
-  if (deviceOptions.dispatcher && !identifier && !deviceOptions.insecure) {
+  if (connectionOptions.dispatcher && !identifier && !connectionOptions.insecure) {
     throw new HomeWizardError(
       'invalid',
       'Pairing with your own "dispatcher" can\'t read the identifier from the certificate. Pass the "identifier" option, or set "insecure: true".',
@@ -101,7 +91,7 @@ export async function pair(
   // the device information after an insecure pairing does get the client's retries, so a Wi-Fi blip there doesn't
   // lose the new token.
   const client = new Client(host, {
-    ...deviceOptions,
+    ...connectionOptions,
     identifier,
     allowMissingIdentifier: true,
     onCertificate: commonName => seenIdentifiers.add(commonName),

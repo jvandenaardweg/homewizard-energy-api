@@ -50,8 +50,8 @@ export interface Credentials {
   identifier: string;
 }
 
-/** How a device connects. All optional. */
-export interface DeviceOptions {
+/** How to connect to a device. All optional. */
+export interface ConnectionOptions {
   /**
    * Skip all certificate checks, so any device at this address is accepted. Only use this for debugging.
    */
@@ -79,7 +79,7 @@ export interface DeviceOptions {
 }
 
 /** @internal */
-export interface ClientOptions extends DeviceOptions {
+export interface ClientOptions extends ConnectionOptions {
   /** Missing while pairing, which creates it. */
   token?: string;
   /** Missing while pairing, which learns it from the certificate. */

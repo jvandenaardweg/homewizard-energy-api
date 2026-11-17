@@ -1,7 +1,7 @@
 import { AsyncQueue } from '@/shared/async-queue';
 import { LoggerOptions } from '@/shared/logger';
 import { MdnsDiscovery, MdnsDiscoveryResponse } from '@/shared/mdns-discovery';
-import { Credentials, DeviceOptions } from './client';
+import { Credentials, ConnectionOptions } from './client';
 import { HomeWizardError } from './errors';
 import { isSameIdentifier } from './tls';
 import { KwhMeter1Phase, KwhMeter3Phase } from './devices/kwh-meter';
@@ -71,7 +71,7 @@ export type DiscoveredDevice = P1Meter | KwhMeter1Phase | KwhMeter3Phase | PlugI
 
 const DEVICE_CLASSES: Record<
   ProductType,
-  new (credentials: Credentials, options?: DeviceOptions) => DiscoveredDevice
+  new (credentials: Credentials, options?: ConnectionOptions) => DiscoveredDevice
 > = {
   'HWE-P1': P1Meter,
   'HWE-KWH1': KwhMeter1Phase,
@@ -104,7 +104,7 @@ const DEVICE_CLASSES: Record<
 export function connect(
   found: Pick<DiscoveryResponse, 'ip' | 'txt'>,
   credentials: Omit<Credentials, 'host'>,
-  options?: DeviceOptions,
+  options?: ConnectionOptions,
 ): DiscoveredDevice {
   const { txt } = found;
   // The txt record comes from the network, so a product type such as "constructor" must not reach the prototype
