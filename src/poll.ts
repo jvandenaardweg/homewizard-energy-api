@@ -1,6 +1,8 @@
 import { EventEmitter } from 'events';
+import { AsyncQueue } from '@/shared/async-queue';
 import { log, LoggerOptions } from '@/shared/logger';
 import { DEFAULT_POLL_INTERVAL, runPollLoop } from '@/shared/poller';
+import type { StreamOptions } from './websocket';
 
 export interface PollOptions {
   /**
@@ -27,6 +29,17 @@ export interface Poller<T> {
   on(event: 'error', listener: (error: Error) => void): this;
   off(event: 'response', listener: (response: T) => void): this;
   off(event: 'error', listener: (error: Error) => void): this;
+  /**
+   * Returns the results as an async iterator, for `for await`. It starts polling when it isn't already, and stops
+   * it again when the loop ends. The loop ends at `break`, when `signal` aborts or at `stop()`, and a failed call
+   * throws from it. A loop that falls behind gets the latest result, not a backlog.
+   *
+   * @example
+   * for await (const measurement of poll(() => p1.getMeasurement()).stream()) {
+   *   console.log(measurement.power_w);
+   * }
+   */
+  stream(options?: StreamOptions): AsyncIterableIterator<T>;
 }
 
 /**
@@ -42,6 +55,7 @@ export interface Poller<T> {
 export function poll<T>(fn: () => Promise<T>, options: PollOptions = {}): Poller<T> {
   const emitter = new EventEmitter();
   const name = fn.name || 'poll';
+  const streams = new Set<AsyncQueue<T>>();
   let activeRun: object | undefined;
 
   const poller = {
@@ -64,6 +78,8 @@ export function poll<T>(fn: () => Promise<T>, options: PollOptions = {}): Poller
     },
     stop() {
       activeRun = undefined;
+
+      for (const stream of [...streams]) stream.end();
     },
     get isPolling() {
       return !!activeRun;
@@ -77,6 +93,34 @@ export function poll<T>(fn: () => Promise<T>, options: PollOptions = {}): Poller
     off(event: 'response' | 'error', listener: (...args: any[]) => void) {
       emitter.off(event, listener);
       return poller;
+    },
+    stream({ signal }: StreamOptions = {}) {
+      // An aborted signal ends the stream before it starts
+      if (signal?.aborted) return new AsyncQueue<T>({ signal });
+
+      const startedHere = !activeRun;
+      const onResponse = (response: T) => queue.push(response);
+      const onError = (error: unknown) => queue.end(error);
+
+      const queue: AsyncQueue<T> = new AsyncQueue<T>({
+        signal,
+        // Each result replaces the one before: a slow loop only needs the latest
+        maxBuffered: 1,
+        onDone: () => {
+          streams.delete(queue);
+          emitter.off('response', onResponse);
+          emitter.off('error', onError);
+
+          if (startedHere) poller.stop();
+        },
+      });
+
+      streams.add(queue);
+      emitter.on('response', onResponse);
+      emitter.on('error', onError);
+      poller.start();
+
+      return queue;
     },
   };
 

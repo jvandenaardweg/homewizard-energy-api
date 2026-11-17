@@ -115,14 +115,12 @@ The stream subscribes for you, keeps going while the socket reconnects, and stop
 ```typescript
 import { poll } from 'homewizard-energy-api';
 
-const poller = poll(() => p1.getMeasurement(), { interval: 1000 });
-
-poller.on('response', measurement => console.log(measurement.power_w)); // -543, each second
-poller.on('error', error => console.error(error));
-poller.start();
+for await (const measurement of poll(() => p1.getMeasurement(), { interval: 1000 }).stream()) {
+  console.log(measurement.power_w); // -543, each second
+}
 ```
 
-HomeWizard advises not to request data more often than every 500ms.
+The loop stops polling at `break`, and a failed call throws from it. With events instead, `poller.on('response', …)`, `poller.on('error', …)` and `poller.start()` keep polling through errors. HomeWizard advises not to request data more often than every 500ms.
 
 ### Find a device after its IP address changed
 
