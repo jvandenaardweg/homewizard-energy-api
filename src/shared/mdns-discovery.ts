@@ -123,8 +123,11 @@ export class MdnsDiscovery<TTxtRecord extends object> {
     );
   }
 
-  protected getTxtRecordFromResponse(response: multicastDns.ResponsePacket): TTxtRecord | null {
-    const txt = response.answers.find(answer => answer.type === 'TXT');
+  protected getTxtRecordFromResponse(
+    response: multicastDns.ResponsePacket,
+    fqdn?: string,
+  ): TTxtRecord | null {
+    const txt = this.findTxtRecord(response, fqdn);
 
     // no txt record found
     if (!txt) return null;
@@ -138,6 +141,37 @@ export class MdnsDiscovery<TTxtRecord extends object> {
     // txt.data must be an Array of Buffers when we end up here
 
     return bufferArrayToJSON<TTxtRecord>(txt.data);
+  }
+
+  /**
+   * Finds the TXT record of the service in the answer or additional section.
+   *
+   * A device can announce both its services in one packet, `_hwenergy._tcp` (API v1) and `_homewizard._tcp`
+   * (API v2), each with its own TXT record. So the TXT record of the fqdn wins, then one of this service type. A
+   * TXT record of another service is never used, as it would mix the two services' data. A TXT record that names no
+   * service is still used, as before.
+   */
+  protected findTxtRecord(
+    response: multicastDns.ResponsePacket,
+    fqdn?: string,
+  ): multicastDns.ResponsePacket['answers'][number] | undefined {
+    const records = [...(response.answers ?? []), ...(response.additionals ?? [])].filter(
+      record => record.type === 'TXT',
+    );
+    // mDNS names compare without case, and with or without the trailing dot of the root
+    const normalize = (name: unknown) =>
+      typeof name === 'string' ? name.toLowerCase().replace(/\.$/, '') : '';
+    const service = `.${normalize(this.serviceDomain)}`;
+
+    if (fqdn) {
+      const own = records.find(record => normalize(record.name) === normalize(fqdn));
+      if (own) return own;
+    }
+
+    const ofService = records.find(record => normalize(record.name).endsWith(service));
+    if (ofService) return ofService;
+
+    return records.find(record => !/\._(tcp|udp)\.local$/.test(normalize(record.name)));
   }
 
   protected getHostDetailsFromAnswer(
@@ -241,7 +275,7 @@ export class MdnsDiscovery<TTxtRecord extends object> {
 
       const hostDetails = this.getHostDetailsFromResponse(response);
 
-      const txtRecord = this.getTxtRecordFromResponse(response);
+      const txtRecord = this.getTxtRecordFromResponse(response, fqdn);
 
       // Don't throw here: this runs inside an mDNS event listener, so a throw would be uncaught
       // and any host on the network could crash the consuming process with one malformed packet.
