@@ -128,7 +128,7 @@ describe('v2/pair', () => {
       insecure: true,
     });
 
-    expect(result.identifier).toBe('appliance/energymeter/5c2fafaabbce');
+    expect(result.identifier).toBe('appliance/energymeter/5c2fafaabbcc');
     expect(onRequest.mock.calls[0][0].headers.authorization).toBe(
       `Bearer ${mockV2UserCreated.token}`,
     );

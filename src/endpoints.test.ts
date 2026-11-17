@@ -1,13 +1,16 @@
 import { mockV2, mockV2DeviceOptions, mockV2Host } from '@/mocks/api-v2';
 import {
   mockV2Batteries,
+  mockV2BatteriesByApiVersion,
   mockV2DeviceInformation,
   mockV2P1MeterMeasurement,
+  mockV2P1MeterMeasurement1PhaseNoGas,
   mockV2P1MeterSystem,
   mockV2Telegram,
   mockV2UserCreated,
   mockV2Users,
 } from '@/mocks/data/v2';
+import { parseTelegram } from '@/telegram';
 import { Client } from './client';
 import * as endpoints from './endpoints';
 import { HomeWizardError } from './errors';
@@ -134,6 +137,33 @@ describe('v2/endpoints', () => {
       expect(error).toBeInstanceOf(HomeWizardError);
       expect(error.code).toBe('request:internal-server-error');
     });
+  });
+
+  it.each(Object.entries(mockV2BatteriesByApiVersion))(
+    'should return the batteries of a device with API %s',
+    async (_version, batteries) => {
+      mockV2('/api/batteries', 'GET', { response: batteries });
+
+      await expect(endpoints.getBatteries(client())).resolves.toStrictEqual(batteries);
+    },
+  );
+
+  it('should return a P1 measurement without the data points the meter leaves out', async () => {
+    mockV2('/api/measurement', 'GET', { response: mockV2P1MeterMeasurement1PhaseNoGas });
+
+    const measurement = await endpoints.getMeasurement(client());
+
+    expect(measurement).toStrictEqual(mockV2P1MeterMeasurement1PhaseNoGas);
+    expect(measurement).not.toHaveProperty('external');
+  });
+
+  it('should return a full telegram that parseTelegram() reads', async () => {
+    mockV2('/api/telegram', 'GET', { response: mockV2Telegram });
+
+    const telegram = parseTelegram(await endpoints.getTelegram(client()));
+
+    expect(telegram.power.import.t1).toStrictEqual({ value: 10830.511, unit: 'kWh' });
+    expect(telegram.power.export.t2).toStrictEqual({ value: 2876.514, unit: 'kWh' });
   });
 
   it('should throw the plain-text code when there is no telegram', async () => {
