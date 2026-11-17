@@ -2,6 +2,7 @@ import { mockParsedTelegramResponse, mockTelegramResponse } from '@/mocks/data/t
 import { mockP1MeterDataResponse } from '@/mocks/data/data';
 import {
   convertHexToAscii,
+  formatIsoLocal,
   parseHourlyReading,
   parseLine,
   parsePeakDemand,
@@ -13,7 +14,25 @@ import {
   TelegramPowerFailureLog,
 } from './telegram';
 
-describe('utils/telegram', () => {
+describe('telegram', () => {
+  describe('formatIsoLocal', () => {
+    it('should format in local time with the UTC offset', () => {
+      expect(formatIsoLocal(new Date('2019-09-18T17:00:52Z'))).toBe('2019-09-18T19:00:52+02:00');
+      expect(formatIsoLocal(new Date('2019-01-05T08:03:04Z'))).toBe('2019-01-05T09:03:04+01:00');
+    });
+
+    it('should write a zero offset as Z, and an offset behind UTC with a minus', () => {
+      const date = new Date(2019, 0, 5, 9, 3, 4);
+
+      expect(formatIsoLocal(date, 0)).toBe('2019-01-05T09:03:04Z');
+      expect(formatIsoLocal(date, 330)).toBe('2019-01-05T09:03:04-05:30');
+    });
+
+    it('should throw for an invalid date', () => {
+      expect(() => formatIsoLocal(new Date('nope'))).toThrow(RangeError);
+    });
+  });
+
   describe('parseLine', () => {
     it('should parse a line', () => {
       const parsedLine = parseLine('0-0:1.0.0(221219072214W)');
