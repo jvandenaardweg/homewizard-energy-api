@@ -209,7 +209,10 @@ export interface P1MeterMeasurement {
   meter_model?: string;
   /** When the smart meter sent this measurement to the P1 Meter. Available for: `HWE-P1` */
   timestamp?: Timestamp;
-  /** The active tariff, which matches one of the totals. Available for: `HWE-P1` */
+  /**
+   * The active tariff, which matches one of the totals. Usually 1 to 4, but some smart meters send other values,
+   * so don't use it as an index without checking. Available for: `HWE-P1`
+   */
   tariff?: number;
   /** The energy import meter reading for all tariffs in kWh. Available for: `HWE-P1` */
   energy_import_kwh?: number;
@@ -527,7 +530,7 @@ export type BatteriesPermission = 'charge_allowed' | 'discharge_allowed';
 export interface Batteries {
   /** The control mode. From API 2.1.0; `predictive` from API 2.3.0. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
   mode: BatteriesMode;
-  /** Whether the batteries may charge and discharge. Read-only in mode `to_full`. From API 2.2.0. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
+  /** Whether the batteries may charge and discharge. Read-only in mode `to_full`. From API 2.2.0, and left out when no batteries are connected. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
   permissions?: BatteriesPermission[];
   /** `true` while all batteries charge to 100%. Replaces mode `to_full`. From API 2.3.0. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi` */
   charge_to_full?: boolean;
