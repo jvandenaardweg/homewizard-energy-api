@@ -67,7 +67,7 @@ This is optional. Pull requests are verified by the test suite.
 
 ## How the code is organised
 
-- **The package root** is the API v2 (HTTPS with a token): `src/endpoints.ts` has one function per endpoint. The device classes in `src/devices/` extend a small `Device` base class with what every device has, and add only the endpoints their device supports. They take the credentials from `pair()`, and everything throws one `HomeWizardError`. The design is in [`docs/v2-design.md`](docs/v2-design.md).
+- **The package root** is the API v2 (HTTPS with a token): `src/endpoints.ts` has one function per endpoint. The device classes in `src/devices/` extend a small `Device` base class with what every device has, and add only the endpoints their device supports. They take the credentials from `pair()`, and everything throws one `HomeWizardError`. The design is in [`docs/architecture.md`](docs/architecture.md).
 - **`src/v1/`** is the API v1 (HTTP), frozen until HomeWizard removes it: it gets fixes, but no new endpoints or devices. `BaseApi` holds the request, error handling, logging and polling logic, and each device class (`P1MeterApi`, `EnergySocketApi` and so on) re-exposes the methods its device supports.
 - **`src/telegram/`** parses the P1 telegram, and **`src/shared/`** has the request, logging, polling and mDNS code both APIs use.
 
