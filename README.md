@@ -127,10 +127,10 @@ HomeWizard advises not to request data more often than every 500ms.
 ### Find a device after its IP address changed
 
 ```typescript
-import { connect, discover } from 'homewizard-energy-api';
+import { connect, discover, isSameIdentifier } from 'homewizard-energy-api';
 
 for await (const found of discover({ timeout: 10000 })) {
-  if (found.txt.id !== credentials.identifier) continue;
+  if (!isSameIdentifier(found.txt.id, credentials.identifier)) continue;
 
   const device = connect(found, credentials); // device.host is the new address: store it for next time
   break;

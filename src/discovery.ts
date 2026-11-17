@@ -109,11 +109,12 @@ const DEVICE_CLASSES: Record<
  * To pair with a discovered device, pass its IP to `pair()`, which reads the identifier from the certificate.
  *
  * @example
- * discovery.on('response', found => {
- *   if (found.txt.id !== credentials.identifier) return;
+ * for await (const found of discover()) {
+ *   if (!isSameIdentifier(found.txt.id, credentials.identifier)) continue;
  *
  *   const device = connect(found, credentials);
- * });
+ *   break;
+ * }
  */
 export function connect(
   found: Pick<DiscoveryResponse, 'ip' | 'txt'>,
