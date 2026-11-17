@@ -57,26 +57,30 @@ Use the API v2 where the device has it. HomeWizard [no longer develops the API v
 
 ## Quick start
 
-Pair once: run this, and press the button on the device when asked. On the kWh meters, hold the button for 1 to 3 seconds.
+Pair once: run this, and press the button on the device within 2 minutes. On the kWh meters, hold the button for 1 to 3 seconds.
 
 ```typescript
 import { pair } from 'homewizard-energy-api';
 
-const credentials = await pair('192.168.1.35', 'my-app', {
-  onAttempt: remainingMs =>
-    console.log(`Press the button on the device (${Math.round(remainingMs / 1000)}s left)`),
-});
-
-// Store the credentials: { host, token, identifier, name }. The token is a secret: it gives full access to the device.
-await storage.save(JSON.stringify(credentials));
+const credentials = await pair('192.168.1.35', 'my-app');
+// {
+//   host: '192.168.1.35',
+//   token: '0123456789ABCDEF0123456789ABCDEF',
+//   identifier: 'appliance/p1dongle/5c2fafaabbcc',
+//   name: 'local/my-app'
+// }
 ```
 
-Then create the device from the stored credentials:
+Store the credentials, and keep the token secret: it gives full access to the device (see [Storing the credentials](#storing-the-credentials)). Then create the device with them:
 
 ```typescript
 import { P1Meter } from 'homewizard-energy-api';
 
-const p1 = new P1Meter(JSON.parse(await storage.load()));
+const p1 = new P1Meter({
+  host: '192.168.1.35',
+  token: '0123456789ABCDEF0123456789ABCDEF',
+  identifier: 'appliance/p1dongle/5c2fafaabbcc',
+});
 
 const measurement = await p1.getMeasurement();
 console.log(`${measurement.power_w} W`); // -543 W
