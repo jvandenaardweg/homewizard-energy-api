@@ -56,7 +56,7 @@ This is optional. Pull requests are verified by the test suite.
 
 ## Compatibility
 
-- **Node.js:** the library supports Node `>=22.19.0`, and CI tests on Node 22, 24 and 26. Only use APIs that Node 22.19 has. The only dependencies are `undici` and `multicast-dns`. Please discuss new runtime dependencies in an issue first.
+- **Node.js:** the library supports Node `>=22.19.0`, and CI tests on Node 22, 24 and 26. Only use APIs that Node 22.19 has. The runtime dependencies are `undici` and `multicast-dns`, plus `@types/multicast-dns` for the shipped declarations. Please discuss new runtime dependencies in an issue first.
 - **Public API:** everything exported from the three entry points is public: the root (`src/index.ts`), `homewizard-energy-api/v1` (`src/v1/index.ts`) and `homewizard-energy-api/telegram` (`src/telegram/index.ts`). The package follows semver. Renaming or removing an export, a method or a response field is a breaking change.
 
 ## How the code is organised

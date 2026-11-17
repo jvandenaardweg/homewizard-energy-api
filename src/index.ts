@@ -1,7 +1,9 @@
 /*
- * The API v2, exported from the package root as the `v2` namespace:
+ * The package root: the API v2.
  *
- *   import { v2 } from 'homewizard-energy-api';
+ *   import { pair, P1Meter } from 'homewizard-energy-api';
+ *
+ * The API v1 is in `./v1` and the telegram parser in `./telegram`, each with its own entry point.
  *
  * Everything exported here is public API. Keep helpers and constants that users don't need out of it: adding an
  * export later is a feature, removing one is a breaking change.
