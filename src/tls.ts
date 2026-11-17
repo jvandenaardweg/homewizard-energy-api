@@ -1,5 +1,5 @@
 import { PeerCertificate } from 'tls';
-import { ProductType } from './types';
+import { isProductType, ProductType } from './types';
 
 /**
  * The HomeWizard "Appliance Access CA" certificate, which signs the certificates of devices with the API v2.
@@ -50,13 +50,9 @@ export const CERTIFICATE_PRODUCT_TYPES: Record<ProductType, string> = {
  * getCertificateIdentifier('HWE-P1', '5c2fafaabbcc'); // 'appliance/p1dongle/5c2fafaabbcc'
  */
 export function getCertificateIdentifier(productType: string, serial: string): string | undefined {
-  const certificateProductType = Object.hasOwn(CERTIFICATE_PRODUCT_TYPES, productType)
-    ? CERTIFICATE_PRODUCT_TYPES[productType as ProductType]
-    : undefined;
+  if (!isProductType(productType)) return undefined;
 
-  if (!certificateProductType) return undefined;
-
-  return `appliance/${certificateProductType}/${serial.toLowerCase()}`;
+  return `appliance/${CERTIFICATE_PRODUCT_TYPES[productType]}/${serial.toLowerCase()}`;
 }
 
 /** The `code` of the error when the certificate isn't issued to the expected identifier. */

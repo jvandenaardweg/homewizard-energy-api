@@ -23,8 +23,8 @@ describe('shared/AsyncQueue', () => {
     const queue = new AsyncQueue<number>();
     const error = new Error('failed');
     queue.push(1);
-    queue.fail(error);
-    queue.fail(new Error('ignored'));
+    queue.end(error);
+    queue.end(new Error('ignored'));
 
     await expect(queue.next()).resolves.toStrictEqual({ value: 1, done: false });
     await expect(queue.next()).rejects.toBe(error);
@@ -36,7 +36,7 @@ describe('shared/AsyncQueue', () => {
     const next = queue.next();
     const error = new Error('failed');
 
-    queue.fail(error);
+    queue.end(error);
 
     await expect(next).rejects.toBe(error);
   });

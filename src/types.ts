@@ -38,6 +38,14 @@ export const ProductTypeList = [
 export type ProductType = (typeof ProductTypeList)[number];
 
 /**
+ * Returns `true` for a product type that has the API v2. Use it before looking up a value from the network, such
+ * as a discovered `product_type`, in a record keyed by product type: `constructor` is not one.
+ */
+export function isProductType(value: unknown): value is ProductType {
+  return (ProductTypeList as readonly unknown[]).includes(value);
+}
+
+/**
  * The txt record of a device on `_homewizard._tcp`.
  *
  * @link https://api-documentation.homewizard.com/docs/discovery#_homewizard_tcp

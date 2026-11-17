@@ -1,4 +1,5 @@
 import { formatError } from './errors';
+import { wait } from './wait';
 
 /** The default time between polls, in milliseconds. */
 export const DEFAULT_POLL_INTERVAL = 1000;
@@ -57,6 +58,6 @@ export async function runPollLoop(options: PollLoopOptions): Promise<void> {
     if (!isActive()) return;
 
     log(`Waiting for next polling interval for "${name}"...`);
-    await new Promise(resolve => setTimeout(resolve, interval));
+    await wait(interval);
   }
 }
