@@ -1,4 +1,5 @@
 import { Agent, Dispatcher } from 'undici';
+import { Backoff } from '@/shared/backoff';
 import { log, LoggerOptions, redact } from '@/shared/logger';
 import { wait } from '@/shared/wait';
 import {
@@ -205,6 +206,7 @@ export class Client {
     read: (url: string, response: Dispatcher.ResponseData<unknown>) => Promise<T>,
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
+    const backoff = new Backoff(RETRY_DELAY);
 
     for (let attempt = 0; ; attempt++) {
       try {
@@ -219,7 +221,7 @@ export class Client {
 
         if (!canRetry) throw wrapped;
 
-        const delay = RETRY_DELAY * 2 ** attempt;
+        const delay = backoff.next();
         this.log(`${method} ${url} failed (${wrapped.kind}), retrying in ${delay}ms`);
         await wait(delay, this.closing.signal);
 
