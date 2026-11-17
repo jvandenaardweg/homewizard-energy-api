@@ -1,5 +1,4 @@
 import { Dispatcher, request as undiciRequest } from 'undici';
-import { HomeWizardEnergyApiResponseError, HomeWizardEnergyApiTimeoutError } from './errors';
 
 export type RequestParameters = Parameters<typeof undiciRequest>;
 
@@ -40,16 +39,14 @@ export type InvalidJsonErrorFactory = (
 ) => Error;
 
 /**
- * Sends a request with undici. When `timeout` is set, the call throws the error from `createTimeoutError` (a
- * `HomeWizardEnergyApiTimeoutError` by default) once it passes before the response headers arrive. A `signal` in
- * `options` takes precedence over the timeout.
+ * Sends a request with undici. When `timeout` is set, the call throws the error from `createTimeoutError` once it
+ * passes before the response headers arrive. A `signal` in `options` takes precedence over the timeout.
  */
 export async function requestWithTimeout(
   url: RequestParameters[0],
   options: RequestParameters[1],
   timeout: number,
-  createTimeoutError: TimeoutErrorFactory = (message, errorUrl, ms) =>
-    new HomeWizardEnergyApiTimeoutError(message, errorUrl, ms),
+  createTimeoutError: TimeoutErrorFactory,
 ): Promise<Dispatcher.ResponseData<unknown>> {
   // A signal from the user takes precedence over the timeout
   if (!timeout || options?.signal) {
@@ -101,15 +98,14 @@ export function isResponseOk(response: Dispatcher.ResponseData<unknown>): boolea
 }
 
 /**
- * Reads the response body as JSON. A body that isn't valid JSON throws the error from `createError` (a
- * `HomeWizardEnergyApiResponseError` by default) instead of a bare `SyntaxError`, so it has the URL and the raw body.
+ * Reads the response body as JSON. A body that isn't valid JSON throws the error from `createError` instead of a
+ * bare `SyntaxError`, so it has the URL and the raw body.
  */
 export async function parseJsonResponse<T>(
   url: string,
   method: string,
   response: Dispatcher.ResponseData<unknown>,
-  createError: InvalidJsonErrorFactory = (message, errorUrl, statusCode, body) =>
-    new HomeWizardEnergyApiResponseError(message, errorUrl, statusCode, body),
+  createError: InvalidJsonErrorFactory,
 ): Promise<T> {
   const text = await response.body.text();
 
