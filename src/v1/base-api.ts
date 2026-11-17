@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events';
 import { Dispatcher } from 'undici';
-import { HomeWizardEnergyApiResponseError } from '../shared/errors';
 import { log, LoggerOptions } from '../shared/logger';
 import { DEFAULT_POLL_INTERVAL, runPollLoop } from '../shared/poller';
 import {
@@ -11,6 +10,11 @@ import {
   RequestParameters,
   requestWithTimeout,
 } from '../shared/request';
+import {
+  createInvalidJsonError,
+  createTimeoutError,
+  HomeWizardEnergyApiResponseError,
+} from './errors';
 import {
   BasicInformationResponse,
   BaseDataResponse,
@@ -23,7 +27,7 @@ export {
   HomeWizardEnergyApiError,
   HomeWizardEnergyApiResponseError,
   HomeWizardEnergyApiTimeoutError,
-} from '../shared/errors';
+} from './errors';
 export type { LoggerOptions } from '../shared/logger';
 export type { RequestParameters } from '../shared/request';
 
@@ -184,7 +188,12 @@ export class BaseApi {
     url: RequestParameters[0],
     options: RequestParameters[1],
   ): Promise<Dispatcher.ResponseData<unknown>> {
-    return requestWithTimeout(url, { ...this.requestOptions, ...options }, this.timeout);
+    return requestWithTimeout(
+      url,
+      { ...this.requestOptions, ...options },
+      this.timeout,
+      createTimeoutError,
+    );
   }
 
   protected log(...args: unknown[]): void {
@@ -220,7 +229,7 @@ export class BaseApi {
     method: string,
     response: Dispatcher.ResponseData<unknown>,
   ): Promise<T> {
-    return parseJsonResponse<T>(url, method, response);
+    return parseJsonResponse<T>(url, method, response, createInvalidJsonError);
   }
 
   /**
