@@ -20,7 +20,7 @@ export interface P1MeterPolling<
 /**
  * The P1 Meter (`HWE-P1`) over the API v1.
  *
- * @deprecated Use `v2.P1Meter`, over the API v2. HomeWizard no longer develops the API v1 and plans to remove it.
+ * @deprecated Use `P1Meter` from `homewizard-energy-api`, over the API v2. HomeWizard no longer develops the API v1 and plans to remove it.
  * This class keeps working while the device has the API v1 enabled.
  *
  * @link https://api-documentation.homewizard.com/docs/changelog

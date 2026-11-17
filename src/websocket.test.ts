@@ -484,6 +484,37 @@ describe('v2/DeviceSocket', () => {
       await expect(stream.next()).resolves.toStrictEqual({ value: undefined, done: true });
     });
 
+    it('should end straight away on a socket that closed for good', async () => {
+      const closed = open();
+      closed.close();
+      const dropped = open({ reconnect: false });
+      await waitFor(() => dropped.isAuthorized);
+      server.connections.at(-1)?.destroy();
+      await waitFor(() => !dropped.isAuthorized);
+      await sleep(20);
+
+      await expect(closed.stream('measurement').next()).resolves.toStrictEqual({
+        value: undefined,
+        done: true,
+      });
+      await expect(dropped.stream('measurement').next()).resolves.toStrictEqual({
+        value: undefined,
+        done: true,
+      });
+    });
+
+    it('should throw straight away on a socket that stopped for a rejected token', async () => {
+      const socket = open({}, 'WRONG');
+      const errors: HomeWizardError[] = [];
+      socket.on('error', error => errors.push(error as HomeWizardError));
+      await waitFor(() => errors.some(error => error.code === 'user:unauthorized'));
+      await sleep(20);
+
+      await expect(socket.stream('measurement').next()).rejects.toMatchObject({
+        code: 'user:unauthorized',
+      });
+    });
+
     it('should throw for a missing or rejected token', async () => {
       const missing = open({}, '').stream('measurement');
       const rejected = open({}, 'WRONG').stream('measurement');

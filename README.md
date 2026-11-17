@@ -28,7 +28,7 @@ Full type-safe implementation of the HomeWizard Energy local API in Node. Read a
 
 ## Installation
 
-This library requires Node 22.19 or higher. TypeScript is only required for type-safety, the library also works without it.
+This library requires Node 22.19 or higher. Version 1.x supports Node 14.18 and higher. TypeScript is only required for type-safety, the library also works without it.
 
 ```bash
 npm install homewizard-energy-api
@@ -305,7 +305,7 @@ Anyone on the network can announce a device, so `connect()` takes the identifier
 
 ### Errors
 
-Everything throws a `HomeWizardError`, and the WebSocket emits one. Its `kind` says what went wrong, and `code` has the error code the device sent, such as `user:unauthorized` or `json:parameter-invalid-type:status_led_brightness_pct`. See the [official docs](https://api-documentation.homewizard.com/docs/v2/error-handling) for the codes.
+The device classes, `pair()`, `connect()` and `discover()` throw a `HomeWizardError`, and the WebSocket emits one. Its `kind` says what went wrong, and `code` has the error code the device sent, such as `user:unauthorized` or `json:parameter-invalid-type:status_led_brightness_pct`. See the [official docs](https://api-documentation.homewizard.com/docs/v2/error-handling) for the codes.
 
 ```typescript
 import { HomeWizardError } from 'homewizard-energy-api';

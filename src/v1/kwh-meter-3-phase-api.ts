@@ -12,7 +12,7 @@ export type KwhMeter3PhasePolling = BasePolling<KwhMeter3PhaseDataResponse>;
 /**
  * The 3-phase kWh meter (`HWE-KWH3`, `SDM630-wifi`) over the API v1.
  *
- * @deprecated Use `v2.KwhMeter3Phase`, over the API v2. HomeWizard no longer develops the API v1 and plans to remove it.
+ * @deprecated Use `KwhMeter3Phase` from `homewizard-energy-api`, over the API v2. HomeWizard no longer develops the API v1 and plans to remove it.
  * This class keeps working while the device has the API v1 enabled.
  *
  * @link https://api-documentation.homewizard.com/docs/changelog

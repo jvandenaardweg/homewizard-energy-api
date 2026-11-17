@@ -8,6 +8,11 @@ import { HOMEWIZARD_CA_CERT } from './tls';
 
 describe('v2/Client', () => {
   describe('toBaseUrl', () => {
+    it('should refuse a missing host, as credentials from JSON can have', () => {
+      expect(() => toBaseUrl(undefined as unknown as string)).toThrow(HomeWizardError);
+      expect(() => toBaseUrl(' ')).toThrow('The "host" of the credentials is missing');
+    });
+
     it('should turn a host into its HTTPS origin', () => {
       expect(toBaseUrl('192.168.1.35')).toBe('https://192.168.1.35');
       expect(toBaseUrl(' https://192.168.1.35/ ')).toBe('https://192.168.1.35');
