@@ -1,5 +1,5 @@
 import { Agent, Dispatcher } from 'undici';
-import { log, LoggerOptions } from '@/shared/logger';
+import { log, LoggerOptions, redact } from '@/shared/logger';
 import {
   DEFAULT_TIMEOUT,
   isResponseOk,
@@ -131,11 +131,6 @@ export function isNewerApiVersion(version: string, than: string): boolean {
  */
 export function isApiVersionAtLeast(version: string, minimum: string): boolean {
   return (compareApiVersions(version, minimum) ?? -1) >= 0;
-}
-
-/** Formats a value for a log line, with every `token` field replaced, so a token never ends up in a log. */
-export function redact(value: unknown): string {
-  return JSON.stringify(value, (key, field) => (key === 'token' ? '[redacted]' : field));
 }
 
 /**
