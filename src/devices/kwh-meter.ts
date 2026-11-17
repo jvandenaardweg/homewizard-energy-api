@@ -33,6 +33,9 @@ abstract class KwhMeter<TMeasurement> extends Device<
   /**
    * Returns the control system of the Plug-In Batteries that this kWh meter controls.
    *
+   * Firmware before API 2.1.0 has no batteries endpoint, and answers with a `response` error with status 404. Check
+   * `isApiVersionAtLeast(device.api_version, '2.1.0')` first when you support older firmware.
+   *
    * @link https://api-documentation.homewizard.com/docs/v2/batteries
    */
   getBatteries(): Promise<Batteries> {
