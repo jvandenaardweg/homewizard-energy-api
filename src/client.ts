@@ -57,6 +57,12 @@ export interface DeviceOptions {
    * connecting. Defaults to `5000`. Set to `0` to disable it.
    */
   timeout?: number;
+  /**
+   * How many times to retry a read (a `GET` request) that fails with a `timeout` or `network` error, for example
+   * on a weak Wi-Fi connection. Each retry waits twice as long as the one before, starting at 500 milliseconds.
+   * Defaults to `2`. Set to `0` to disable it. Requests that change something are never retried.
+   */
+  retries?: number;
   /** Logging options. The token is never logged. */
   logger?: LoggerOptions;
   /**
@@ -78,22 +84,53 @@ export interface ClientOptions extends DeviceOptions, Omit<Credentials, 'host'> 
 
 export type HttpMethod = 'GET' | 'PUT' | 'POST' | 'DELETE';
 
+/** The retries of a failed read, and the first delay before one. */
+export const DEFAULT_RETRIES = 2;
+export const RETRY_DELAY = 500;
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Compares two API versions such as `2.4.0`: negative when `a` is older, `0` when equal, positive when newer.
+ * Returns `undefined` when `a` can't be read.
+ */
+function compareApiVersions(a: string, b: string): number | undefined {
+  const parse = (value: string) => value.trim().split('.').map(Number);
+  const left = parse(a);
+  const right = parse(b);
+
+  if (left.some(Number.isNaN)) return undefined;
+
+  for (let i = 0; i < Math.max(left.length, right.length); i++) {
+    const difference = (left[i] ?? 0) - (right[i] ?? 0);
+    if (difference !== 0) return difference;
+  }
+
+  return 0;
+}
+
 /**
  * Returns `true` when `version` (such as `2.4.0`) is newer than `than`. A version it can't read counts as not newer.
  */
 export function isNewerApiVersion(version: string, than: string): boolean {
-  const parse = (value: string) => value.trim().split('.').map(Number);
-  const a = parse(version);
-  const b = parse(than);
+  return (compareApiVersions(version, than) ?? 0) > 0;
+}
 
-  if (a.some(Number.isNaN)) return false;
-
-  for (let i = 0; i < Math.max(a.length, b.length); i++) {
-    const difference = (a[i] ?? 0) - (b[i] ?? 0);
-    if (difference !== 0) return difference > 0;
-  }
-
-  return false;
+/**
+ * Returns `true` when the device's API version is `minimum` or newer, for the fields and endpoints that need a
+ * newer firmware. A version it can't read counts as too old.
+ *
+ * @example
+ * const { api_version } = await p1.getDevice();
+ *
+ * if (isApiVersionAtLeast(api_version, '2.3.0')) {
+ *   await p1.updateBatteries({ charge_to_full: true });
+ * }
+ *
+ * @link https://api-documentation.homewizard.com/docs/versioning
+ */
+export function isApiVersionAtLeast(version: string, minimum: string): boolean {
+  return (compareApiVersions(version, minimum) ?? -1) >= 0;
 }
 
 /** Formats a value for a log line, with every `token` field replaced, so a token never ends up in a log. */
@@ -139,6 +176,7 @@ export class Client {
   readonly options: ClientOptions;
   token: string | undefined;
   protected readonly timeout: number;
+  protected readonly retries: number;
   protected readonly ownsDispatcher: boolean;
   protected warnedAboutApiVersion = false;
 
@@ -155,6 +193,7 @@ export class Client {
     this.token = options.token;
     this.loggerOptions = options.logger;
     this.timeout = options.timeout ?? DEFAULT_TIMEOUT;
+    this.retries = options.retries ?? DEFAULT_RETRIES;
     this.ownsDispatcher = !options.dispatcher;
     this.dispatcher = options.dispatcher ?? new Agent({ connect: this.tlsOptions });
   }
@@ -191,7 +230,7 @@ export class Client {
   /**
    * Sends a request and returns what `read` makes of the response. Throws a `HomeWizardError`: a `response`
    * error for an error status or a body that isn't valid JSON, and a `timeout`, `network` or `certificate` error
-   * when there is no response.
+   * when there is no response. A `GET` that times out or fails on the network is retried, see `retries`.
    */
   async send<T>(
     method: HttpMethod,
@@ -201,10 +240,22 @@ export class Client {
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
 
-    try {
-      return await read(url, await this.request(method, url, options));
-    } catch (error) {
-      throw toHomeWizardError(error, method, url);
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await read(url, await this.request(method, url, options));
+      } catch (error) {
+        const wrapped = toHomeWizardError(error, method, url);
+        const canRetry =
+          method === 'GET' &&
+          attempt < this.retries &&
+          (wrapped.kind === 'timeout' || wrapped.kind === 'network');
+
+        if (!canRetry) throw wrapped;
+
+        const delay = RETRY_DELAY * 2 ** attempt;
+        this.log(`${method} ${url} failed (${wrapped.kind}), retrying in ${delay}ms`);
+        await sleep(delay);
+      }
     }
   }
 
