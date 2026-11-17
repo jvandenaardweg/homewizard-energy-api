@@ -99,7 +99,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
   /** The error the socket stopped for: a missing or rejected token. */
   protected stopError: HomeWizardError | undefined;
   /** The running `stream()` iterators, which end when the socket stops. */
-  protected readonly streams = new Set<Pick<AsyncQueue<unknown>, 'close'>>();
+  protected readonly streams = new Set<Pick<AsyncQueue<unknown>, 'end'>>();
   /** The topics a `stream()` subscribed to, which it unsubscribes when the last listener stops. */
   protected readonly streamSubscriptions = new Set<string>();
   protected reconnectAttempt = 0;
@@ -214,7 +214,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     }
 
     for (const stream of [...this.streams]) {
-      stream.close(error);
+      stream.end(error);
     }
   }
 
@@ -259,7 +259,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
 
     // A socket that stopped emits no more events, so the stream ends straight away
     if (this.stopped) {
-      queue.close(this.stopError);
+      queue.end(this.stopError);
       return queue;
     }
 

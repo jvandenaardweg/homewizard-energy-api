@@ -156,13 +156,7 @@ export async function pair(
       return {
         host,
         token: user.token,
-        identifier: await learnIdentifier(
-          client,
-          user,
-          identifier,
-          deviceOptions.insecure,
-          seenIdentifiers,
-        ),
+        identifier: await learnIdentifier(client, user, seenIdentifiers),
       };
     }
   } finally {
@@ -178,10 +172,10 @@ export async function pair(
 async function learnIdentifier(
   client: Client,
   user: UserCreated,
-  identifier: string | undefined,
-  insecure: boolean | undefined,
   seen: Set<string>,
 ): Promise<string> {
+  const { identifier, insecure } = client.options;
+
   if (identifier || !insecure) {
     return getIdentifier(identifier, seen);
   }

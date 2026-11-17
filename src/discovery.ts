@@ -7,7 +7,7 @@ import { isSameIdentifier } from './tls';
 import { KwhMeter1Phase, KwhMeter3Phase } from './devices/kwh-meter';
 import { P1Meter } from './devices/p1-meter';
 import { PlugInBattery } from './devices/plug-in-battery';
-import { MDNS_DISCOVERY_TYPE, MdnsTxtRecord, ProductType } from './types';
+import { isProductType, MDNS_DISCOVERY_TYPE, MdnsTxtRecord, ProductType } from './types';
 
 /**
  * A device found on `_homewizard._tcp`. Pass it to `connect()` to get its device class.
@@ -72,7 +72,7 @@ export function discover(options: DiscoverOptions = {}): AsyncIterableIterator<D
   discovery.start();
   discovery.on('response', found => queue.push(found));
   discovery.on('error', error =>
-    queue.fail(
+    queue.end(
       new HomeWizardError('network', `mDNS discovery failed: ${error.message}`, { cause: error }),
     ),
   );
@@ -123,16 +123,14 @@ export function connect(
 ): DiscoveredDevice {
   const { txt } = found;
   // The txt record comes from the network, so a product type such as "constructor" must not reach the prototype
-  const DeviceClass = Object.hasOwn(DEVICE_CLASSES, txt.product_type)
-    ? DEVICE_CLASSES[txt.product_type as ProductType]
-    : undefined;
-
-  if (!DeviceClass) {
+  if (!isProductType(txt.product_type)) {
     throw new HomeWizardError(
       'invalid',
       `There is no device class for product type "${txt.product_type}"`,
     );
   }
+
+  const DeviceClass = DEVICE_CLASSES[txt.product_type];
 
   if (credentials.identifier && !isSameIdentifier(credentials.identifier, txt.id)) {
     throw new HomeWizardError(

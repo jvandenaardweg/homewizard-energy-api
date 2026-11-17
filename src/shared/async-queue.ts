@@ -12,7 +12,7 @@ export interface AsyncQueueOptions {
 
 /**
  * Turns pushed values into an async iterator, for `for await`. Values pushed while nobody waits are buffered.
- * `end()` finishes the iteration once the buffer is read, and `fail()` throws an error after it.
+ * `end()` finishes the iteration once the buffer is read, and `end(error)` throws the error after it.
  */
 export class AsyncQueue<T> implements AsyncIterableIterator<T> {
   protected readonly buffer: T[] = [];
@@ -46,20 +46,6 @@ export class AsyncQueue<T> implements AsyncIterableIterator<T> {
     this.buffer.push(value);
   }
 
-  /** Finishes the iteration, or throws `error` from it when there is one, after the buffered values. */
-  close(error?: unknown): void {
-    if (error === undefined) this.end();
-    else this.fail(error);
-  }
-
-  /** Throws `error` from the iteration after the buffered values. */
-  fail(error: unknown): void {
-    if (this.done) return;
-
-    this.error = { value: error };
-    this.end();
-  }
-
   next(): Promise<IteratorResult<T, undefined>> {
     if (this.buffer.length) {
       return Promise.resolve({ value: this.buffer.shift() as T, done: false });
@@ -90,10 +76,11 @@ export class AsyncQueue<T> implements AsyncIterableIterator<T> {
     return this;
   }
 
-  /** Finishes the iteration after the buffered values. */
-  end(): void {
+  /** Finishes the iteration after the buffered values, or throws `error` from it when one is given. */
+  end(error?: unknown): void {
     if (this.done) return;
 
+    if (error !== undefined) this.error = { value: error };
     this.done = true;
     this.options.signal?.removeEventListener('abort', this.onAbort);
     this.options.onDone?.();

@@ -42,10 +42,10 @@ export abstract class Device<
 > {
   protected readonly client: Client;
   /** The socket class `openWebSocket()` creates. Devices that can identify use `IdentifiableDeviceSocket`. */
-  protected readonly socketClass: new (
+  protected abstract readonly socketClass: new (
     connection: DeviceSocketConnection,
     options?: WebSocketOptions,
-  ) => TSocket = DeviceSocket as never;
+  ) => TSocket;
   /** The IP address or hostname this device connects to, as given in the credentials. */
   readonly host: string;
 
