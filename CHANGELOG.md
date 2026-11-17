@@ -1,5 +1,121 @@
 # Changelog
 
+## [3.0.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/2.0.0...3.0.0) (2026-11-17)
+
+**3.0 adds the HomeWizard API v2, and makes it the default.**
+
+- **API v2 at the root:** `P1Meter`, `KwhMeter1Phase`, `KwhMeter3Phase` and `PlugInBattery`, over HTTPS with certificate checks. Pair once with `pair()`, and store the credentials it returns.
+- **Live updates:** a WebSocket that reconnects on its own, readable with `for await`.
+- **One error type:** `HomeWizardError`, with a `kind` and the device's error code.
+- **The API v1 moves to `homewizard-energy-api/v1`,** unchanged.
+- **ESM only,** with three entry points: the root, `/v1` and `/telegram`. Node 22.19 or higher.
+
+**Devices**
+
+- **On the API v2:** the P1 meter (`HWE-P1`), the kWh meters (`HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`) and the Plug-In Battery (`HWE-BAT`).
+- **On the API v1 only, until HomeWizard adds the API v2:** the Energy Socket (`HWE-SKT`) and the Watermeter (`HWE-WTR`).
+
+Upgrading from 2.x? Change your imports to `homewizard-energy-api/v1`; the rest of your code keeps working. See [the upgrade guide](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/docs/upgrading.md).
+
+### ⚠ BREAKING CHANGES
+
+* the API v1 classes (`P1MeterApi`, `EnergySocketApi`,
+  `WaterMeterApi`, `KwhMeter1PhaseApi`, `KwhMeter3PhaseApi`, `BaseApi`,
+  `HomeWizardEnergyDiscovery`, their types, errors and the telegram types) are no
+  longer exported from the package root. Import them from
+  `homewizard-energy-api/v1`, with the same names.
+* the package is ESM. CommonJS code can still `require()` it,
+  because Node 22.12 and later load ESM from `require()`, and the package needs
+  Node 22.19 or later. Imports of files inside `dist/` no longer work: use the
+  root, `homewizard-energy-api/v1` or `homewizard-energy-api/telegram`.
+
+### Features
+
+* add discover() and socket.stream(), async iterators for discovery and the WebSocket ([47d976d](https://github.com/jvandenaardweg/homewizard-energy-api/commit/47d976d9085ce83569a6cf91738bfc4d6310ab0e))
+* add the API v2 device classes for the P1 Meter, kWh meters and Plug-In Battery ([7970769](https://github.com/jvandenaardweg/homewizard-energy-api/commit/7970769f9c397c197670aef171da534d250ad7c5))
+* add the API v2 discovery ([b9e11c1](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b9e11c1c312e0f385b2af6a65452992a0f7b7f8f))
+* add the API v2 foundation: pairing, certificate checks, errors and polling ([5d8fd6f](https://github.com/jvandenaardweg/homewizard-energy-api/commit/5d8fd6fbe14b23051499f9fcafac860ec672ac44))
+* add the API v2 WebSocket ([8bb506d](https://github.com/jvandenaardweg/homewizard-energy-api/commit/8bb506d0654069282e140828a62c587c0ffc0cdc))
+* export isSameIdentifier(), and use it in the discovery examples ([5e5f56b](https://github.com/jvandenaardweg/homewizard-energy-api/commit/5e5f56b10adca01da8badcb88af0050b7c44b17a))
+* export parseTelegram() ([b1b7d1e](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b1b7d1e1b4616afd8669209753c323607251455a))
+* log when a device answers with a newer API version ([80f3791](https://github.com/jvandenaardweg/homewizard-energy-api/commit/80f37919c246f21b3b575e8716ac070ab1fb0b7c))
+* parse the capacity tariff lines of Belgian telegrams ([21c5284](https://github.com/jvandenaardweg/homewizard-energy-api/commit/21c528489587e9446ef284f6f116020bee520453)), closes [#100](https://github.com/jvandenaardweg/homewizard-energy-api/issues/100)
+* read a poller with for await, through poller.stream() ([1571fa5](https://github.com/jvandenaardweg/homewizard-energy-api/commit/1571fa55c2a4a8a029463a71652369d030f198b9))
+* retry reads after a timeout or network error, and export isApiVersionAtLeast() ([fef5ee1](https://github.com/jvandenaardweg/homewizard-energy-api/commit/fef5ee1bb7f3a68a2e98cf2cb19d9079d860c7c7))
+* store the host, token and identifier as one credentials object, and connect() a discovered device ([acca33d](https://github.com/jvandenaardweg/homewizard-energy-api/commit/acca33da9d6cd8c96619f2586715a28d69e2f1a4))
+* throw one HomeWizardError, with a kind and the device's error code ([250b1da](https://github.com/jvandenaardweg/homewizard-energy-api/commit/250b1dadba528864f6342bfe021b2155f7fe9bd8))
+
+### Documentation
+
+* add API v1 recipes to the README, led by the Energy Socket ([47c4a77](https://github.com/jvandenaardweg/homewizard-energy-api/commit/47c4a7758e7138976518d9b0ce31f73ab7dc624a))
+* add the API v2 design and implementation plan ([69f0aad](https://github.com/jvandenaardweg/homewizard-energy-api/commit/69f0aadb3a7dbcafaa544a92ec533c37af0f172d))
+* add the research on showing example output in the README ([045f3f6](https://github.com/jvandenaardweg/homewizard-energy-api/commit/045f3f6943eb1da34a78ce153a6154233b79dcf0))
+* correct the errors description, the kWh deprecation decision and the ErrorResponse JSDoc ([1b8c463](https://github.com/jvandenaardweg/homewizard-energy-api/commit/1b8c463d80364d678502309377b05190bd6bafc5))
+* deprecate P1MeterApi, KwhMeter1PhaseApi and KwhMeter3PhaseApi in favour of the API v2 ([c843124](https://github.com/jvandenaardweg/homewizard-energy-api/commit/c843124d6030cb0e04bfd87fdd312540da552fa4))
+* describe the root API, its errors and dependencies as they are ([9b2cc88](https://github.com/jvandenaardweg/homewizard-energy-api/commit/9b2cc888d9df4a92834e83f4ef83d1a042b5c682))
+* document the 3.0 API in the README, AGENTS.md, CONTRIBUTING and the design ([19a4b43](https://github.com/jvandenaardweg/homewizard-energy-api/commit/19a4b43068e37ada2549529fe0fd30dd895d22ef))
+* document the API v2 in the README, examples and AGENTS.md ([148c2f0](https://github.com/jvandenaardweg/homewizard-energy-api/commit/148c2f0faf39a40e5d2c5b81a81a70072d81c3d9))
+* document the batteries 404 on old firmware, unusual tariffs and the missing permissions ([a16ee1d](https://github.com/jvandenaardweg/homewizard-energy-api/commit/a16ee1dfe48f63b78382d17404f76b5a82c8b397))
+* explain how to store the API v2 token ([3344842](https://github.com/jvandenaardweg/homewizard-energy-api/commit/3344842cbdee8f7e9a57b360cf6193e4ae33cee1))
+* fix README inconsistencies ([86ed91e](https://github.com/jvandenaardweg/homewizard-energy-api/commit/86ed91ee8b67aa0ebdf0a4461e5654fcc42ee44b))
+* keep the quick start to the minimal code ([9ad0c73](https://github.com/jvandenaardweg/homewizard-energy-api/commit/9ad0c735d10b6acf0b17acd92beb5cf6b72061c8))
+* lead the README with the API v2 ([490a906](https://github.com/jvandenaardweg/homewizard-energy-api/commit/490a9066491649cde95a22941dbb75d839419692))
+* lead the README with what the library does for you ([6dc1f27](https://github.com/jvandenaardweg/homewizard-energy-api/commit/6dc1f2750ece347abdf6f1619e4581e356f828fe))
+* only show npm install in the README ([a2a39b4](https://github.com/jvandenaardweg/homewizard-energy-api/commit/a2a39b4270cd463219da643c46b07171cececa54))
+* replace the design and plan documents with one architecture document ([10fd728](https://github.com/jvandenaardweg/homewizard-energy-api/commit/10fd728b5ddd6aacdf43b87aedb38e17f7669247))
+* rewrite the README as a quick start, recipes and a reference ([9392b09](https://github.com/jvandenaardweg/homewizard-energy-api/commit/9392b09dfcba5454db54eeedc03eb7ea2c0c2266))
+* say which credentials to store, and why ([9ed3975](https://github.com/jvandenaardweg/homewizard-energy-api/commit/9ed3975f3aa1c44d37ede10e5126cd906add7455))
+* show what the README examples return ([834572c](https://github.com/jvandenaardweg/homewizard-energy-api/commit/834572c78f75373c3d57502d5273bcb7b63656dc))
+
+### Other Changes
+
+* add an introduction to the 3.0 release notes ([d00039e](https://github.com/jvandenaardweg/homewizard-energy-api/commit/d00039e7b01e08e974bab622defeb68bf4dd6e16))
+* apply the code and spec review fixes to the API v2 ([eedbd26](https://github.com/jvandenaardweg/homewizard-energy-api/commit/eedbd26e8c46bc6fdfdf8111298cd1f8df758aea))
+* check the full list of exports of each entry point ([f3919c6](https://github.com/jvandenaardweg/homewizard-energy-api/commit/f3919c688a3ba80b6d1386d955dc8d727538a699))
+* check the packed package and the README examples ([583fabf](https://github.com/jvandenaardweg/homewizard-energy-api/commit/583fabf2d88631e7b5e9bc8eceb28c2179036dd9))
+* check the untrusted mDNS txt record in connect() ([d35c16b](https://github.com/jvandenaardweg/homewizard-energy-api/commit/d35c16b15b6a3351a5b1a302c7ac15c01903d9bb))
+* compare device identifiers without case ([f4806d1](https://github.com/jvandenaardweg/homewizard-energy-api/commit/f4806d14fa1aced1d8dd8dd6aa418a18139a1fc5))
+* describe each device with one spec type instead of six type parameters ([b462390](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b46239047ba443d516879fdce894c130b6c95db8))
+* discover devices with discover() only, without the Discovery class ([7fe6d41](https://github.com/jvandenaardweg/homewizard-energy-api/commit/7fe6d41a8e23c98c305f082ec1dc637381f6be6f))
+* end an AsyncQueue on an abort signal in one place ([3104b55](https://github.com/jvandenaardweg/homewizard-energy-api/commit/3104b55444f7d051d48dd33b3eade98420d07e10))
+* extract the heartbeat and the reconnect backoff from the WebSocket ([52a396a](https://github.com/jvandenaardweg/homewizard-energy-api/commit/52a396aaac6f865294e0634fa504ed8464381fb5))
+* format telegram timestamps with the date's own UTC offset only ([9114936](https://github.com/jvandenaardweg/homewizard-energy-api/commit/9114936c42cb7e9fb5d33fee771aaaf791fd19cd))
+* format the telegram timestamps without date-fns ([997a74d](https://github.com/jvandenaardweg/homewizard-energy-api/commit/997a74d96e4e53aa5a01170a4fcb3b853ea5389f))
+* hide the release commits from the changelog with the preset's own setting ([08a0843](https://github.com/jvandenaardweg/homewizard-energy-api/commit/08a08435a8cabbf315402c96439b53376d0cab11))
+* keep the 2.x mDNS constant names out of the root ([677ee91](https://github.com/jvandenaardweg/homewizard-energy-api/commit/677ee91c43a68bf70df94e74c2502d0d96ba48a1))
+* keep the test TLS key out of secret scanning ([abde303](https://github.com/jvandenaardweg/homewizard-energy-api/commit/abde30370b53dd7dffd4407b7c53ddcbfb3fc72b))
+* let an insecure pairing retry the device information request ([936ee90](https://github.com/jvandenaardweg/homewizard-energy-api/commit/936ee9017e4f2222b0a039d2b2c9a3792ef47ae7))
+* let the shared request code create the root API's errors ([95628f2](https://github.com/jvandenaardweg/homewizard-energy-api/commit/95628f225d50044a772801ec47e6a6447cf4bde3))
+* load multicast-dns when discover() is first used ([4def7ff](https://github.com/jvandenaardweg/homewizard-energy-api/commit/4def7ffe82f05e96c8fd96036d6e66446ac77762))
+* match the package description and keywords to the README and GitHub ([50dd841](https://github.com/jvandenaardweg/homewizard-energy-api/commit/50dd84184876c253bdda3bc136983db922a1d80f))
+* move the API v1 error classes from shared to v1 ([9f2a138](https://github.com/jvandenaardweg/homewizard-energy-api/commit/9f2a138f5b823ebc85109f85848e5574867042d4))
+* move the API v2 to the package root, the API v1 to v1/ and the telegram parser to telegram/ ([1b3c4a2](https://github.com/jvandenaardweg/homewizard-energy-api/commit/1b3c4a2f0d0af1ee6d028e05bb3200daf91c7034))
+* move the request, error, logger, polling and mDNS code into shared modules ([c1c7bc0](https://github.com/jvandenaardweg/homewizard-energy-api/commit/c1c7bc0f80b7e3636a106f633ecf6d110d8dd6bc))
+* narrow a HomeWizardError's fields by its kind ([67227aa](https://github.com/jvandenaardweg/homewizard-energy-api/commit/67227aa2e098b9031bc5904c7731276dacc51ef7))
+* one product type guard, one way to end a stream, and an explicit socket class per device ([857c223](https://github.com/jvandenaardweg/homewizard-energy-api/commit/857c2233515f1f34e8f0390af15b39ee29fa8d32))
+* pick each device's socket class with one field, instead of two overrides ([19696af](https://github.com/jvandenaardweg/homewizard-energy-api/commit/19696af271631aff2ae0136e3e941e55148adb60))
+* point the watch:polling script at the moved v1 example ([47334fb](https://github.com/jvandenaardweg/homewizard-energy-api/commit/47334fb245c8bcbca2da3a2d6d66a04561b46ce5))
+* publish the package as ESM, with an exports map for the root, /v1 and /telegram ([2433ca0](https://github.com/jvandenaardweg/homewizard-energy-api/commit/2433ca0922a20993576e03b355bda2668f4ec1fc))
+* redact the WebSocket's outgoing messages, and type its error event as HomeWizardError ([6b26067](https://github.com/jvandenaardweg/homewizard-energy-api/commit/6b260676dda891eab3bfe151537590e3bd27c024))
+* refuse credentials without a host, and end a stream on a socket that closed for good ([0bbe6c3](https://github.com/jvandenaardweg/homewizard-energy-api/commit/0bbe6c34f3d5fdf1504afb66ade372fb02b1e769))
+* rename DeviceOptions to ConnectionOptions, and return Credentials from pair() ([ea81952](https://github.com/jvandenaardweg/homewizard-energy-api/commit/ea819522aa6d796e1a2d2b891ad2ded18e90e492))
+* require the token and identifier in the Credentials type ([44e43e8](https://github.com/jvandenaardweg/homewizard-energy-api/commit/44e43e8e2a71cb0e5fb90bcae677d5284ba8f73f))
+* return only the credentials from pair(), without the user name ([46090ce](https://github.com/jvandenaardweg/homewizard-energy-api/commit/46090ce7d78622fcbca0544e9bf164f336f3892c))
+* reuse the shared error formatter and one set of test fixtures ([4d6bb81](https://github.com/jvandenaardweg/homewizard-energy-api/commit/4d6bb8176ce05df0eb9b5e94d0ec92abc3a94a5c))
+* share the transient error check, the wait helper and the request options type ([54b0475](https://github.com/jvandenaardweg/homewizard-energy-api/commit/54b0475ee524da0e62fa176d209e1e4c9bafec30))
+* split the identifier from the device options when pairing ([97f79c2](https://github.com/jvandenaardweg/homewizard-energy-api/commit/97f79c2931909b51e506d218fdf9ae51fdc90c62))
+* split the WebSocket into a connection, a heartbeat and the device socket ([fc15ce5](https://github.com/jvandenaardweg/homewizard-energy-api/commit/fc15ce51d08845d1914ff5589651f7e5e8b02d17))
+* stop a read's retries on close(), and move the API version helpers to their own module ([9deb5d4](https://github.com/jvandenaardweg/homewizard-energy-api/commit/9deb5d4b229850ccdc3cf21bb7b6f3c4b806e1e7))
+* stop the WebSocket in one place, and keep only the latest data in a stream ([bff7850](https://github.com/jvandenaardweg/homewizard-energy-api/commit/bff785040a8b076a3bfdcee006c4a0f98fd66d1e))
+* throw from socket.stream() when the device rejects the token with an error message ([891c4b3](https://github.com/jvandenaardweg/homewizard-energy-api/commit/891c4b34ed373ad16d6fc1153eb074d85bd5fdc8))
+* throw kind certificate when connect() finds a device announced with another identifier ([7f98274](https://github.com/jvandenaardweg/homewizard-energy-api/commit/7f98274cdb85190e9ad717f2898d57c91da89084))
+* use Home Assistant's fixtures for the API v1 mocks ([067f90f](https://github.com/jvandenaardweg/homewizard-energy-api/commit/067f90fb82a1b98902b2e8ec98729d7e900c8515))
+* use the API v2 fixtures from HomeWizard's Python library ([45daf05](https://github.com/jvandenaardweg/homewizard-energy-api/commit/45daf0566b5d0beb29f0db1c033c7af3d5745a27))
+
+### Contributors
+
+* [@NebzHB](https://github.com/NebzHB)
+
 ## [2.0.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/1.7.0...2.0.0) (2026-11-16)
 
 ### ⚠ BREAKING CHANGES
