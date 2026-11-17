@@ -1,5 +1,3 @@
-import { formatISO } from 'date-fns';
-
 export type TelegramParsedLine = { obisCode: string; value: string; unit: TelegramUnit };
 
 export type TelegramUnit = 'kWh' | 'kW' | 'A' | 'V' | 's' | 'm3';
@@ -742,7 +740,7 @@ export function parseTimestamp(timestamp: string | null | undefined): string | n
     ? UTC_OFFSET_IN_HOURS_BY_DST_MARKER[dstMarker]
     : getEuropeanUtcOffsetInHours(localTimeAsUtc, year);
 
-  return formatISO(new Date(localTimeAsUtc - offsetInHours * HOUR_IN_MS));
+  return formatIsoLocal(new Date(localTimeAsUtc - offsetInHours * HOUR_IN_MS));
 }
 
 /**
@@ -859,7 +857,7 @@ export function subtractNumberOfSecondsFromDate(
   const output = new Date(date);
   output.setSeconds(output.getSeconds() - seconds);
 
-  return formatISO(output);
+  return formatIsoLocal(output);
 }
 
 /**
@@ -888,3 +886,28 @@ export function convertHexToAscii(hex: string): string {
 
 // Credits to https://github.com/ruudverheijden/node-p1-reader for the initial idea.
 // This code is based on that code, but has been heavily modified to support Typescript and to be more readable.
+
+const pad = (value: number, length = 2) => String(value).padStart(length, '0');
+
+/**
+ * Formats a date in local time with its UTC offset, for example `2019-09-18T19:00:52+02:00`, or with `Z` when the
+ * offset is zero. Throws a `RangeError` for an invalid date.
+ *
+ * @param offsetMinutes The offset as `Date.getTimezoneOffset()` returns it: positive behind UTC.
+ */
+export function formatIsoLocal(date: Date, offsetMinutes = date.getTimezoneOffset()): string {
+  if (Number.isNaN(date.getTime())) {
+    throw new RangeError('Invalid time value');
+  }
+
+  const absolute = Math.abs(offsetMinutes);
+  const offset =
+    offsetMinutes === 0
+      ? 'Z'
+      : `${offsetMinutes < 0 ? '+' : '-'}${pad(Math.trunc(absolute / 60))}:${pad(absolute % 60)}`;
+
+  return (
+    `${pad(date.getFullYear(), 4)}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}${offset}`
+  );
+}
