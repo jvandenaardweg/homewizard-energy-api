@@ -6,6 +6,7 @@ This is a typed Node client for the HomeWizard Energy local API: API v2 over HTT
 
 - `npm test` is the full gate: lint (including Prettier formatting), type-check, then vitest with coverage. Aim for 100% coverage, so new code comes with tests for each branch. It's a target, and the config doesn't enforce a threshold. The husky pre-commit hook runs lint-staged to format staged files, then `npm test`, whose `prettier --check .` also reads unstaged files, so format those first or the commit fails.
 - To run a single test file: `TZ=Europe/Amsterdam npx vitest run src/telegram/telegram.test.ts`. Always set `TZ=Europe/Amsterdam`, because telegram timestamps are formatted in local time and the expected test values are hard-coded to Amsterdam offsets.
+- `npm run test:package` checks what `npm test` can't, because the tests run from `src`: it builds and packs the package, installs the tarball into an empty project, loads each entry point with `import` and `require()`, type-checks them with `nodenext` and `bundler` resolution, and type-checks the TypeScript examples in `README.md` (`scripts/check-package.mjs`). Run it after changing `package.json` exports, the build, an export or a README example. CI runs it.
 - Scripts in `src/examples/` call hard-coded LAN IPs and need a real device, so tests are the way to verify behaviour.
 
 ## Compatibility

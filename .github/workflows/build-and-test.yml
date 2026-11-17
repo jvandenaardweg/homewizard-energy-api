@@ -32,3 +32,5 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
+      # Packs and installs the package, loads each entry point, and type-checks the README examples
+      - run: npm run test:package

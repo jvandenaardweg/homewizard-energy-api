@@ -40,6 +40,12 @@ Always set `TZ=Europe/Amsterdam` when you call vitest directly. P1 telegram time
 
 Tests never touch the network. A global undici `MockAgent` answers every request, so mock each new request with `mockV2()` from `src/mocks/api-v2.ts` and fixture data in `src/mocks/data/v2.ts`. Each interceptor answers once, so a test that makes two requests needs two `mockV2()` calls.
 
+When you change the exports, the build or a code example in the README, also run the package check. It installs the built package into an empty project, loads each entry point and type-checks the README examples:
+
+```bash
+npm run test:package
+```
+
 The goal is 100% coverage, so new code should come with a test for each branch. CI doesn't enforce a threshold, but please don't lower coverage.
 
 ### Trying it against a real device

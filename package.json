@@ -69,6 +69,7 @@
     "update": "npx npm-check-updates --interactive",
     "test": "TZ=Europe/Amsterdam vitest run --coverage",
     "test:watch": "TZ=Europe/Amsterdam vitest",
+    "test:package": "npm run build && node scripts/check-package.mjs",
     "release": "dotenv npx release-it",
     "type-check": "tsc --noEmit",
     "prepare": "is-ci || husky",
