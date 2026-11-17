@@ -65,7 +65,6 @@ export function mockV2(path: string, method: string, options: MockV2Options = {}
   });
 }
 
-/** The options for a device in the tests: the mock agent, an identifier and a token. */
 /** The credentials of the mocked device, as `pair()` returns them. */
 export const mockV2Credentials = {
   host: mockV2Host,
