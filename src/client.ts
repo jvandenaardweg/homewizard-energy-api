@@ -6,7 +6,13 @@ import {
   parseJsonResponse,
   requestWithTimeout,
 } from '@/shared/request';
-import { createResponseError, HomeWizardError, toHomeWizardError } from './errors';
+import {
+  createInvalidJsonError,
+  createResponseError,
+  createTimeoutError,
+  HomeWizardError,
+  toHomeWizardError,
+} from './errors';
 import { createCheckServerIdentity, HOMEWIZARD_CA_CERT } from './tls';
 import { API_MAJOR_VERSION, DOCUMENTED_API_VERSION } from './types';
 import type { DeviceSocketConnection } from './websocket';
@@ -230,6 +236,7 @@ export class Client {
         bodyTimeout: this.timeout || undefined,
       },
       this.timeout,
+      createTimeoutError,
     );
 
     this.checkApiVersion(response.headers['x-api-version']);
@@ -262,7 +269,7 @@ export class Client {
   /** Sends a request and returns the JSON body. */
   async json<T>(method: HttpMethod, path: string, body?: unknown): Promise<T> {
     return this.send(method, path, { body }, async (url, response) => {
-      const data = await parseJsonResponse<T>(url, method, response);
+      const data = await parseJsonResponse<T>(url, method, response, createInvalidJsonError);
 
       this.log(`Received ${redact(data)} from ${url}`);
 

@@ -1,5 +1,11 @@
-import { HomeWizardEnergyApiResponseError, HomeWizardEnergyApiTimeoutError } from '@/shared/errors';
-import { createResponseError, HomeWizardError, parseErrorCode, toHomeWizardError } from './errors';
+import {
+  createInvalidJsonError,
+  createResponseError,
+  createTimeoutError,
+  HomeWizardError,
+  parseErrorCode,
+  toHomeWizardError,
+} from './errors';
 
 describe('errors', () => {
   describe('parseErrorCode', () => {
@@ -55,6 +61,20 @@ describe('errors', () => {
     });
   });
 
+  it('should create the timeout and invalid JSON errors for the shared request code', () => {
+    expect(createTimeoutError('timed out after 5ms', 'https://x/api', 5)).toMatchObject({
+      kind: 'timeout',
+      message: 'timed out after 5ms',
+      url: 'https://x/api',
+      timeout: 5,
+    });
+    expect(createInvalidJsonError('not JSON', 'https://x/api', 200, '<html>')).toMatchObject({
+      kind: 'response',
+      statusCode: 200,
+      response: '<html>',
+    });
+  });
+
   describe('toHomeWizardError', () => {
     const url = 'https://x/api';
 
@@ -62,31 +82,6 @@ describe('errors', () => {
       const error = new HomeWizardError('invalid', 'bad');
 
       expect(toHomeWizardError(error, 'GET', url)).toBe(error);
-    });
-
-    it('should turn a timeout into a timeout error', () => {
-      const error = toHomeWizardError(
-        new HomeWizardEnergyApiTimeoutError('timed out after 5ms', url, 5),
-        'GET',
-        url,
-      );
-
-      expect(error).toMatchObject({
-        kind: 'timeout',
-        message: 'timed out after 5ms',
-        url,
-        timeout: 5,
-      });
-    });
-
-    it('should turn a body that is not JSON into a response error', () => {
-      const error = toHomeWizardError(
-        new HomeWizardEnergyApiResponseError('not JSON', url, 200, '<html>'),
-        'GET',
-        url,
-      );
-
-      expect(error).toMatchObject({ kind: 'response', statusCode: 200, response: '<html>' });
     });
 
     it('should turn a refused certificate into a certificate error', () => {

@@ -1,5 +1,9 @@
-import { HomeWizardEnergyApiResponseError, HomeWizardEnergyApiTimeoutError } from '@/shared/errors';
-import { describeCall } from '@/shared/request';
+import {
+  describeCall,
+  describeFailure,
+  InvalidJsonErrorFactory,
+  TimeoutErrorFactory,
+} from '@/shared/request';
 import { isCertificateError } from './tls';
 import { ErrorCode, ErrorResponse } from './types';
 
@@ -21,15 +25,9 @@ import { ErrorCode, ErrorResponse } from './types';
 export type HomeWizardErrorKind =
   'response' | 'timeout' | 'network' | 'certificate' | 'pairing' | 'socket' | 'invalid';
 
-export interface HomeWizardErrorDetails {
-  code?: ErrorCode;
-  url?: string;
-  statusCode?: number;
-  response?: string;
-  timeout?: number;
-  reason?: 'timeout' | 'aborted';
-  cause?: unknown;
-}
+export type HomeWizardErrorDetails = Partial<
+  Pick<HomeWizardError, 'code' | 'url' | 'statusCode' | 'response' | 'timeout' | 'reason'>
+> & { cause?: unknown };
 
 /** Reads the error code from a JSON body (`{"error": "user:unauthorized"}`) or a plain-text body. */
 export function parseErrorCode(body: string): ErrorCode | undefined {
@@ -97,28 +95,29 @@ export function createResponseError(
   statusCode: number,
   body: string,
 ): HomeWizardError {
-  return new HomeWizardError(
-    'response',
-    `${describeCall(method, url)} failed with status ${statusCode} and response data: ${body}`,
-    { url, statusCode, response: body, code: parseErrorCode(body) },
-  );
+  return new HomeWizardError('response', describeFailure(method, url, statusCode, body), {
+    url,
+    statusCode,
+    response: body,
+    code: parseErrorCode(body),
+  });
 }
 
-/** Wraps an error from a request in a `HomeWizardError`, so every error the library throws is one. */
+/** Creates the `timeout` error for `requestWithTimeout()`. */
+export const createTimeoutError: TimeoutErrorFactory = (message, url, timeout) =>
+  new HomeWizardError('timeout', message, { url, timeout });
+
+/** Creates the `response` error for a body that isn't valid JSON, for `parseJsonResponse()`. */
+export const createInvalidJsonError: InvalidJsonErrorFactory = (
+  message,
+  url,
+  statusCode,
+  response,
+) => new HomeWizardError('response', message, { url, statusCode, response });
+
+/** Wraps a network or certificate error from a request in a `HomeWizardError`, and keeps a `HomeWizardError`. */
 export function toHomeWizardError(error: unknown, method: string, url: string): HomeWizardError {
   if (error instanceof HomeWizardError) return error;
-
-  if (error instanceof HomeWizardEnergyApiTimeoutError) {
-    return new HomeWizardError('timeout', error.message, { url, timeout: error.timeout });
-  }
-
-  if (error instanceof HomeWizardEnergyApiResponseError) {
-    return new HomeWizardError('response', error.message, {
-      url,
-      statusCode: error.statusCode,
-      response: error.response,
-    });
-  }
 
   const detail = error instanceof Error ? error.message : String(error);
 
