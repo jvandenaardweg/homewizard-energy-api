@@ -11,15 +11,28 @@ import { connect, discover } from './discovery';
 const querySpy = vi.fn();
 const onSpy = vi.fn();
 const destroySpy = vi.fn();
+let mdnsFailsToStart = false;
 
 vi.mock('multicast-dns', () => ({
-  default: () => ({
-    query: querySpy,
-    on: onSpy,
-    removeAllListeners: vi.fn(),
-    destroy: destroySpy,
-  }),
+  default: () => {
+    if (mdnsFailsToStart) throw new Error('bind EACCES');
+
+    return {
+      query: querySpy,
+      on: onSpy,
+      removeAllListeners: vi.fn(),
+      destroy: destroySpy,
+    };
+  },
 }));
+
+/** Starts a discovery, and waits until it has loaded and started mDNS. */
+async function startDiscover(options?: Parameters<typeof discover>[0]) {
+  const devices = discover(options);
+  await vi.dynamicImportSettled();
+
+  return devices;
+}
 
 /** Starts a discovery and returns its mDNS response handler. */
 function getResponseHandler(
@@ -41,7 +54,7 @@ function lastHandler(event: string) {
 
 describe('discover', () => {
   it('should yield the discovered devices, and stop mDNS after a break', async () => {
-    const devices = discover();
+    const devices = await startDiscover();
     const next = devices.next();
 
     lastHandler('response')(mockMdnsV2Response);
@@ -51,8 +64,29 @@ describe('discover', () => {
     expect(destroySpy).toHaveBeenCalledTimes(1);
   });
 
+  it('should not start mDNS when the loop ended while it was loading', async () => {
+    const devices = discover();
+    await devices.return?.();
+    await vi.dynamicImportSettled();
+
+    expect(querySpy).not.toHaveBeenCalled();
+  });
+
+  it('should throw a network error when mDNS fails to start', async () => {
+    mdnsFailsToStart = true;
+
+    try {
+      await expect(discover().next()).rejects.toMatchObject({
+        kind: 'network',
+        message: 'mDNS discovery failed: Error: bind EACCES',
+      });
+    } finally {
+      mdnsFailsToStart = false;
+    }
+  });
+
   it('should end after the timeout', async () => {
-    const devices = discover({ timeout: 10000 });
+    const devices = await startDiscover({ timeout: 10000 });
     const next = devices.next();
 
     await vi.advanceTimersByTimeAsync(10000);
@@ -63,7 +97,7 @@ describe('discover', () => {
 
   it('should end when the signal aborts, and not start when it was aborted already', async () => {
     const controller = new AbortController();
-    const next = discover({ signal: controller.signal }).next();
+    const next = (await startDiscover({ signal: controller.signal })).next();
 
     controller.abort();
     await expect(next).resolves.toStrictEqual({ value: undefined, done: true });
@@ -77,14 +111,14 @@ describe('discover', () => {
   });
 
   it('should throw a network error when mDNS fails', async () => {
-    const next = discover().next();
+    const next = (await startDiscover()).next();
     const cause = new Error('EADDRINUSE');
 
     lastHandler('error')(cause);
 
     await expect(next).rejects.toMatchObject({
       kind: 'network',
-      message: 'mDNS discovery failed: EADDRINUSE',
+      message: 'mDNS discovery failed: Error: EADDRINUSE',
       cause,
     });
   });
@@ -93,7 +127,7 @@ describe('discover', () => {
 describe('the service types', () => {
   it('should query _homewizard._tcp, and ignore a device on _hwenergy._tcp', async () => {
     const method = vi.fn();
-    const devices = discover({ logger: { method } });
+    const devices = await startDiscover({ logger: { method } });
     const next = devices.next();
 
     expect(querySpy).toHaveBeenCalledWith('_homewizard._tcp.local', 'PTR');
