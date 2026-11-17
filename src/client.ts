@@ -1,14 +1,12 @@
 import { Agent, Dispatcher } from 'undici';
-import { HomeWizardEnergyApiError } from '@/shared/errors';
 import { log, LoggerOptions } from '@/shared/logger';
 import {
   DEFAULT_TIMEOUT,
-  describeFailure,
   isResponseOk,
   parseJsonResponse,
   requestWithTimeout,
 } from '@/shared/request';
-import { HomeWizardApiV2Error } from './errors';
+import { createResponseError, HomeWizardError, toHomeWizardError } from './errors';
 import { createCheckServerIdentity, HOMEWIZARD_CA_CERT } from './tls';
 import { API_MAJOR_VERSION, DOCUMENTED_API_VERSION } from './types';
 import type { DeviceSocketConnection } from './websocket';
@@ -105,7 +103,8 @@ export function toBaseUrl(host: string): string {
   const trimmed = host.trim().replace(/\/+$/, '');
 
   if (/^http:\/\//i.test(trimmed)) {
-    throw new HomeWizardEnergyApiError(
+    throw new HomeWizardError(
+      'invalid',
       `The API v2 only works over HTTPS, use "${trimmed.replace(/^http:/i, 'https:')}" or just the IP address`,
     );
   }
@@ -131,8 +130,9 @@ export class Client {
 
   constructor(host: string, options: ClientOptions = {}) {
     if (!options.identifier && !options.insecure && !options.allowMissingIdentifier) {
-      throw new HomeWizardEnergyApiError(
-        'The "identifier" option is required to check the certificate of the device. Use the identifier that pair() returned, or getCertificateIdentifier() with the serial on the device label. Set "insecure: true" to skip the check.',
+      throw new HomeWizardError(
+        'invalid',
+        'The "identifier" of the credentials is required to check the certificate of the device. Use the identifier that pair() returned, or getCertificateIdentifier() with the serial on the device label. Set "insecure: true" to skip the check.',
       );
     }
 
@@ -175,14 +175,31 @@ export class Client {
   }
 
   /**
-   * Sends a request and returns the raw response. Throws a `HomeWizardApiV2Error` for an error status.
+   * Sends a request and returns what `read` makes of the response. Throws a `HomeWizardError`: a `response`
+   * error for an error status or a body that isn't valid JSON, and a `timeout`, `network` or `certificate` error
+   * when there is no response.
    */
-  async send(
+  async send<T>(
     method: HttpMethod,
     path: string,
     options: { body?: unknown; accept?: string },
-  ): Promise<{ url: string; response: Dispatcher.ResponseData<unknown> }> {
+    read: (url: string, response: Dispatcher.ResponseData<unknown>) => Promise<T>,
+  ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
+
+    try {
+      return await read(url, await this.request(method, url, options));
+    } catch (error) {
+      throw toHomeWizardError(error, method, url);
+    }
+  }
+
+  /** Sends a request, and throws for an error status. */
+  protected async request(
+    method: HttpMethod,
+    url: string,
+    options: { body?: unknown; accept?: string },
+  ): Promise<Dispatcher.ResponseData<unknown>> {
     const hasBody = options.body !== undefined;
 
     const headers: Record<string, string> = {
@@ -212,15 +229,10 @@ export class Client {
     if (!isResponseOk(response)) {
       const text = await response.body.text();
 
-      throw new HomeWizardApiV2Error(
-        describeFailure(method, url, response.statusCode, text),
-        url,
-        response.statusCode,
-        text,
-      );
+      throw createResponseError(method, url, response.statusCode, text);
     }
 
-    return { url, response };
+    return response;
   }
 
   /**
@@ -241,30 +253,32 @@ export class Client {
 
   /** Sends a request and returns the JSON body. */
   async json<T>(method: HttpMethod, path: string, body?: unknown): Promise<T> {
-    const { url, response } = await this.send(method, path, { body });
-    const data = await parseJsonResponse<T>(url, method, response);
+    return this.send(method, path, { body }, async (url, response) => {
+      const data = await parseJsonResponse<T>(url, method, response);
 
-    this.log(`Received ${redact(data)} from ${url}`);
+      this.log(`Received ${redact(data)} from ${url}`);
 
-    return data;
+      return data;
+    });
   }
 
   /** Sends a request that answers `204 No Content`. */
   async empty(method: HttpMethod, path: string, body?: unknown): Promise<void> {
-    const { response } = await this.send(method, path, { body });
-
-    // Consume the body, so the connection can be reused
-    await response.body.text();
+    await this.send(method, path, { body }, async (_url, response) => {
+      // Consume the body, so the connection can be reused
+      await response.body.text();
+    });
   }
 
   /** Sends a request and returns the plain-text body. */
   async text(method: HttpMethod, path: string): Promise<string> {
-    const { url, response } = await this.send(method, path, { accept: 'text/plain' });
-    const text = await response.body.text();
+    return this.send(method, path, { accept: 'text/plain' }, async (url, response) => {
+      const text = await response.body.text();
 
-    this.log(`Received ${JSON.stringify(text)} from ${url}`);
+      this.log(`Received ${JSON.stringify(text)} from ${url}`);
 
-    return text;
+      return text;
+    });
   }
 
   /** Closes the connections, when this client created the dispatcher. */

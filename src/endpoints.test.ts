@@ -1,4 +1,3 @@
-import { HomeWizardEnergyApiError } from '@/shared/errors';
 import { mockV2, mockV2DeviceOptions, mockV2Host } from '@/mocks/api-v2';
 import {
   mockV2Batteries,
@@ -11,7 +10,7 @@ import {
 } from '@/mocks/data/v2';
 import { Client } from './client';
 import * as endpoints from './endpoints';
-import { HomeWizardApiV2Error } from './errors';
+import { HomeWizardError } from './errors';
 
 const client = () => new Client(mockV2Host, mockV2DeviceOptions);
 
@@ -124,15 +123,15 @@ describe('v2/endpoints', () => {
       expect(onRequest.mock.calls[0][0].body).toStrictEqual(body);
     });
 
-    it('should throw a HomeWizardApiV2Error for a 500', async () => {
+    it('should throw a HomeWizardError for a 500', async () => {
       mockV2(path, method, {
         statusCode: 500,
         response: { error: 'request:internal-server-error' },
       });
 
-      const error = (await call(client()).catch(error => error)) as HomeWizardApiV2Error;
+      const error = (await call(client()).catch(error => error)) as HomeWizardError;
 
-      expect(error).toBeInstanceOf(HomeWizardApiV2Error);
+      expect(error).toBeInstanceOf(HomeWizardError);
       expect(error.code).toBe('request:internal-server-error');
     });
   });
@@ -169,7 +168,7 @@ describe('v2/endpoints', () => {
     });
 
     it('should refuse names the device refuses', () => {
-      expect(() => endpoints.toLocalUserName('')).toThrow(HomeWizardEnergyApiError);
+      expect(() => endpoints.toLocalUserName('')).toThrow(HomeWizardError);
       expect(() => endpoints.toLocalUserName('local/')).toThrow(/is invalid/);
       expect(() => endpoints.toLocalUserName('a'.repeat(41))).toThrow(/is invalid/);
       expect(() => endpoints.toLocalUserName('my.app')).toThrow(/is invalid/);

@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { Dispatcher, WebSocket } from 'undici';
 import { log, LoggerOptions } from '@/shared/logger';
-import { HomeWizardApiV2WebSocketError } from './errors';
+import { HomeWizardError } from './errors';
 import { Batteries, DeviceInformation, User } from './types';
 
 /**
@@ -157,10 +157,10 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
 
       const cause = (event as unknown as { error?: unknown }).error;
       const detail = cause instanceof Error && cause.message ? `: ${cause.message}` : '';
-      const error = new HomeWizardApiV2WebSocketError(`The WebSocket connection failed${detail}`);
-
-      error.cause = cause;
-      this.emitter.emit('error', error);
+      this.emitter.emit(
+        'error',
+        new HomeWizardError('socket', `The WebSocket connection failed${detail}`, { cause }),
+      );
     };
     socket.onclose = event => {
       if (this.socket === socket) this.handleClose(event.code, event.reason);
@@ -235,7 +235,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     } catch {
       this.emitter.emit(
         'error',
-        new HomeWizardApiV2WebSocketError(`Received a message that is not JSON: ${String(raw)}`),
+        new HomeWizardError('socket', `Received a message that is not JSON: ${String(raw)}`),
       );
       return;
     }
@@ -270,9 +270,10 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     if (!token) {
       this.emitter.emit(
         'error',
-        new HomeWizardApiV2WebSocketError(
+        new HomeWizardError(
+          'socket',
           'The device asks for a token, but there is none. Pair first, and pass the token.',
-          'user:unauthorized',
+          { code: 'user:unauthorized' },
         ),
       );
       this.close();
@@ -302,9 +303,10 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
 
   protected handleDeviceError(data: unknown): void {
     const code = (data as { message?: string } | undefined)?.message;
-    const error = new HomeWizardApiV2WebSocketError(
+    const error = new HomeWizardError(
+      'socket',
       `The device sent an error: ${code ?? JSON.stringify(data)}`,
-      code,
+      { code },
     );
 
     this.emitter.emit('error', error);
@@ -332,9 +334,10 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
       this.closedByUser = true;
       this.emitter.emit(
         'error',
-        new HomeWizardApiV2WebSocketError(
+        new HomeWizardError(
+          'socket',
           'The device closed the connection after the token was sent, so the token is probably invalid',
-          'user:unauthorized',
+          { code: 'user:unauthorized' },
         ),
       );
     }

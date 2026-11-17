@@ -1,7 +1,7 @@
-import { HomeWizardEnergyApiError } from '@/shared/errors';
 import { LoggerOptions } from '@/shared/logger';
 import { MdnsDiscovery, MdnsDiscoveryResponse } from '@/shared/mdns-discovery';
 import { Credentials, DeviceOptions } from './client';
+import { HomeWizardError } from './errors';
 import { KwhMeter1Phase, KwhMeter3Phase } from './devices/kwh-meter';
 import { P1Meter } from './devices/p1-meter';
 import { PlugInBattery } from './devices/plug-in-battery';
@@ -77,13 +77,15 @@ export function connect(
   const DeviceClass = DEVICE_CLASSES[txt.product_type as ProductType];
 
   if (!DeviceClass) {
-    throw new HomeWizardEnergyApiError(
+    throw new HomeWizardError(
+      'invalid',
       `There is no device class for product type "${txt.product_type}"`,
     );
   }
 
   if (credentials.identifier && credentials.identifier !== txt.id) {
-    throw new HomeWizardEnergyApiError(
+    throw new HomeWizardError(
+      'invalid',
       `The discovered device is "${txt.id}", not "${credentials.identifier}"`,
     );
   }

@@ -1,5 +1,5 @@
 import { mockApiAgent } from '@/mocks/api';
-import { HomeWizardApiV2WebSocketError } from './errors';
+import { HomeWizardError } from './errors';
 import { CommonTopics, DeviceSocket } from './websocket';
 
 /*
@@ -92,7 +92,7 @@ describe('v2/DeviceSocket handlers', () => {
       'The WebSocket connection failed',
       'The WebSocket connection failed',
     ]);
-    expect(onError.mock.calls[0][0]).toBeInstanceOf(HomeWizardApiV2WebSocketError);
+    expect(onError.mock.calls[0][0]).toBeInstanceOf(HomeWizardError);
     expect(onError.mock.calls[0][0].cause).toStrictEqual(new Error('ECONNREFUSED'));
   });
 

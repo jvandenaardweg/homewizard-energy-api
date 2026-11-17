@@ -10,6 +10,8 @@ describe('entry points', () => {
     expect(library.PlugInBattery).toBeTypeOf('function');
     expect(library.pair).toBeTypeOf('function');
     expect(library.Discovery).toBeTypeOf('function');
+    expect(library.connect).toBeTypeOf('function');
+    expect(library.HomeWizardError).toBeTypeOf('function');
   });
 
   it('should export the frozen API v1 from /v1', () => {
