@@ -11,6 +11,7 @@ describe('entry points', () => {
     expect(library.pair).toBeTypeOf('function');
     expect(library.Discovery).toBeTypeOf('function');
     expect(library.connect).toBeTypeOf('function');
+    expect(library.discover).toBeTypeOf('function');
     expect(library.HomeWizardError).toBeTypeOf('function');
   });
 

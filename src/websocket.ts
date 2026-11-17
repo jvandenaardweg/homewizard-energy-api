@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { Dispatcher, WebSocket } from 'undici';
+import { AsyncQueue } from '@/shared/async-queue';
 import { log, LoggerOptions } from '@/shared/logger';
 import { HomeWizardError } from './errors';
 import { Batteries, DeviceInformation, User } from './types';
@@ -37,6 +38,11 @@ export interface WebSocketOptions {
   heartbeatInterval?: number;
 }
 
+export interface StreamOptions {
+  /** Ends the stream, like a `break` in the loop. */
+  signal?: AbortSignal;
+}
+
 /** @internal */
 export interface DeviceSocketConnection {
   url: string;
@@ -69,6 +75,12 @@ interface Message {
  * socket.on('error', error => console.error(error));
  * socket.subscribe('measurement');
  *
+ * @example
+ * // Or as an async iterator, which subscribes for you
+ * for await (const measurement of p1.openWebSocket().stream('measurement')) {
+ *   console.log(measurement.power_w);
+ * }
+ *
  * `TUpdates` holds the writable settings per topic, so `set()` only takes what the device lets you change.
  *
  * @link https://api-documentation.homewizard.com/docs/v2/websocket
@@ -83,6 +95,10 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
   /** Connections in a row that the device dropped after the token was sent, before it authorized. */
   protected droppedAfterToken = 0;
   protected closedByUser = false;
+  /** The error the socket stopped for, without reconnecting: a missing or rejected token. */
+  protected fatalError: HomeWizardError | undefined;
+  /** The topics a `stream()` subscribed to, which it unsubscribes when the last listener stops. */
+  protected readonly streamSubscriptions = new Set<string>();
   protected reconnectAttempt = 0;
   protected reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   protected heartbeatTimer: ReturnType<typeof setInterval> | undefined;
@@ -141,6 +157,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     if (this.socket) return;
 
     this.closedByUser = false;
+    this.fatalError = undefined;
     this.authorizationSent = false;
     clearTimeout(this.reconnectTimer);
 
@@ -181,6 +198,57 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
       socket.close(1000);
       this.emitter.emit('close', 1000, 'closed');
     }
+  }
+
+  /**
+   * Returns the data of a topic as an async iterator, for `for await`. It subscribes to the topic when you
+   * haven't, and unsubscribes when the loop ends and nothing else listens to it.
+   *
+   * The stream keeps going while the socket reconnects. It ends when you `break` the loop, `signal` aborts, or
+   * the socket closes for good (`close()`, or a drop with `reconnect: false`). It throws a `HomeWizardError`
+   * when the token is missing or rejected.
+   *
+   * @example
+   * for await (const measurement of socket.stream('measurement')) {
+   *   console.log(measurement.power_w);
+   * }
+   */
+  stream<K extends keyof TTopics & string>(
+    topic: K,
+    options: StreamOptions = {},
+  ): AsyncIterableIterator<TTopics[K]> {
+    const { signal } = options;
+
+    const onData = (data: TTopics[K]) => queue.push(data);
+    const onClose = () => {
+      if (this.fatalError) queue.fail(this.fatalError);
+      else if (this.closedByUser || !this.options.reconnect) queue.end();
+    };
+    const onAbort = () => queue.end();
+
+    const queue = new AsyncQueue<TTopics[K]>(() => {
+      this.off(topic, onData);
+      this.off('close', onClose);
+      signal?.removeEventListener('abort', onAbort);
+
+      if (this.streamSubscriptions.has(topic) && this.emitter.listenerCount(topic) === 0) {
+        this.streamSubscriptions.delete(topic);
+        this.unsubscribe(topic);
+      }
+    });
+
+    this.on(topic, onData);
+    this.on('close', onClose);
+
+    if (!this.subscriptions.has(topic) && !this.subscriptions.has('*')) {
+      this.streamSubscriptions.add(topic);
+      this.subscribe(topic);
+    }
+
+    if (signal?.aborted) queue.end();
+    else signal?.addEventListener('abort', onAbort, { once: true });
+
+    return queue;
   }
 
   /** Subscribes to a topic, or to all with `*`. The device sends the current data, then each change. */
@@ -268,14 +336,12 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     const { token } = this.connection;
 
     if (!token) {
-      this.emitter.emit(
-        'error',
-        new HomeWizardError(
-          'socket',
-          'The device asks for a token, but there is none. Pair first, and pass the token.',
-          { code: 'user:unauthorized' },
-        ),
+      this.fatalError = new HomeWizardError(
+        'socket',
+        'The device asks for a token, but there is none. Pair first, and pass the token.',
+        { code: 'user:unauthorized' },
       );
+      this.emitter.emit('error', this.fatalError);
       this.close();
       return;
     }
@@ -332,14 +398,12 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
 
     if (this.droppedAfterToken >= REJECTED_TOKEN_DROPS) {
       this.closedByUser = true;
-      this.emitter.emit(
-        'error',
-        new HomeWizardError(
-          'socket',
-          'The device closed the connection after the token was sent, so the token is probably invalid',
-          { code: 'user:unauthorized' },
-        ),
+      this.fatalError = new HomeWizardError(
+        'socket',
+        'The device closed the connection after the token was sent, so the token is probably invalid',
+        { code: 'user:unauthorized' },
       );
+      this.emitter.emit('error', this.fatalError);
     }
 
     this.emitter.emit('close', code, reason);

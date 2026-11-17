@@ -383,4 +383,121 @@ describe('v2/DeviceSocket', () => {
 
     expect(onMessage).not.toHaveBeenCalled();
   });
+
+  describe('stream()', () => {
+    it('should subscribe, yield the data of the topic, and unsubscribe after a break', async () => {
+      const socket = open();
+      const stream = socket.stream('measurement');
+
+      await waitFor(() => socket.isAuthorized);
+      const [connection] = server.connections;
+      await waitFor(() => connection.received.length === 2);
+
+      expect(connection.received[1]).toStrictEqual({ type: 'subscribe', data: 'measurement' });
+
+      connection.send({ type: 'measurement', data: mockV2P1MeterMeasurement });
+
+      for await (const measurement of stream) {
+        expect(measurement).toStrictEqual(mockV2P1MeterMeasurement);
+        break;
+      }
+
+      await waitFor(() => connection.received.length === 3);
+      expect(connection.received[2]).toStrictEqual({ type: 'unsubscribe', data: 'measurement' });
+    });
+
+    it('should keep a subscription it did not make, and one another listener still uses', async () => {
+      const socket = open();
+      socket.subscribe('system');
+      const own = socket.stream('system');
+      const first = socket.stream('measurement');
+      const second = socket.stream('measurement');
+
+      await waitFor(() => socket.isAuthorized);
+      const [connection] = server.connections;
+      await waitFor(() => connection.received.length === 3);
+
+      await own.return?.();
+      await first.return?.();
+      await sleep(20);
+
+      expect(connection.received.slice(1)).toStrictEqual([
+        { type: 'subscribe', data: 'system' },
+        { type: 'subscribe', data: 'measurement' },
+      ]);
+
+      await second.return?.();
+      await waitFor(() => connection.received.length === 4);
+      expect(connection.received[3]).toStrictEqual({ type: 'unsubscribe', data: 'measurement' });
+    });
+
+    it('should not subscribe again when subscribed to everything', async () => {
+      const socket = open();
+      socket.subscribe('*');
+      const stream = socket.stream('measurement');
+
+      await waitFor(() => socket.isAuthorized);
+      await sleep(20);
+
+      expect(server.connections[0].received.slice(1)).toStrictEqual([
+        { type: 'subscribe', data: '*' },
+      ]);
+      await stream.return?.();
+    });
+
+    it('should end when the signal aborts, or was aborted already', async () => {
+      const socket = open();
+      const controller = new AbortController();
+      const next = socket.stream('measurement', { signal: controller.signal }).next();
+
+      controller.abort();
+
+      await expect(next).resolves.toStrictEqual({ value: undefined, done: true });
+      await expect(
+        socket.stream('system', { signal: AbortSignal.abort() }).next(),
+      ).resolves.toStrictEqual({ value: undefined, done: true });
+    });
+
+    it('should end on close(), and keep going while the socket reconnects', async () => {
+      const socket = open();
+      const stream = socket.stream('measurement');
+      const next = stream.next();
+
+      await waitFor(() => socket.isAuthorized);
+      server.connections[0].destroy();
+      await waitFor(() => server.connections.length === 2 && socket.isAuthorized);
+
+      server.connections[1].send({ type: 'measurement', data: mockV2P1MeterMeasurement });
+      await expect(next).resolves.toStrictEqual({ value: mockV2P1MeterMeasurement, done: false });
+
+      socket.close();
+      await expect(stream.next()).resolves.toStrictEqual({ value: undefined, done: true });
+    });
+
+    it('should end when the connection drops without reconnect', async () => {
+      const socket = open({ reconnect: false });
+      const stream = socket.stream('measurement');
+
+      await waitFor(() => socket.isAuthorized);
+      server.connections[0].destroy();
+
+      await expect(stream.next()).resolves.toStrictEqual({ value: undefined, done: true });
+    });
+
+    it('should throw for a missing or rejected token', async () => {
+      const missing = open({}, '').stream('measurement');
+      const rejected = open({}, 'WRONG').stream('measurement');
+
+      await expect(missing.next()).rejects.toMatchObject({
+        kind: 'socket',
+        code: 'user:unauthorized',
+        message: expect.stringMatching(/there is none/),
+      });
+      await expect(rejected.next()).rejects.toMatchObject({
+        kind: 'socket',
+        code: 'user:unauthorized',
+        message: expect.stringMatching(/probably invalid/),
+      });
+    });
+  });
 });
