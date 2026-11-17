@@ -1,8 +1,10 @@
 import { EventEmitter } from 'events';
 import { Dispatcher, WebSocket } from 'undici';
 import { AsyncQueue } from '@/shared/async-queue';
+import { Backoff } from '@/shared/backoff';
 import { log, LoggerOptions, redact } from '@/shared/logger';
 import { HomeWizardError } from './errors';
+import { Heartbeat } from './heartbeat';
 import { Batteries, DeviceInformation, User } from './types';
 
 /**
@@ -102,11 +104,9 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
   protected readonly streams = new Set<Pick<AsyncQueue<unknown>, 'end'>>();
   /** The topics a `stream()` subscribed to, which it unsubscribes when the last listener stops. */
   protected readonly streamSubscriptions = new Set<string>();
-  protected reconnectAttempt = 0;
   protected reconnectTimer: ReturnType<typeof setTimeout> | undefined;
-  protected heartbeatTimer: ReturnType<typeof setInterval> | undefined;
-  protected lastMessageAt = 0;
-  protected heartbeatPending = false;
+  protected readonly reconnectBackoff: Backoff;
+  protected readonly heartbeat: Heartbeat;
   protected readonly options: Required<WebSocketOptions>;
 
   constructor(
@@ -119,6 +119,18 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
       maxReconnectDelay: options.maxReconnectDelay ?? DEFAULT_MAX_RECONNECT_DELAY,
       heartbeatInterval: options.heartbeatInterval ?? DEFAULT_HEARTBEAT_INTERVAL,
     };
+
+    this.reconnectBackoff = new Backoff(
+      this.options.reconnectDelay,
+      this.options.maxReconnectDelay,
+    );
+    this.heartbeat = new Heartbeat(this.options.heartbeatInterval, {
+      ping: () => this.write({ type: 'device' }),
+      onDead: silentForMs => {
+        this.log(`Nothing received for ${silentForMs}ms, reconnecting`);
+        this.dropConnection();
+      },
+    });
 
     // An "error" event without a listener would throw, and crash the process from a socket callback
     this.emitter.on('error', () => undefined);
@@ -200,7 +212,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     this.stopped = true;
     this.stopError = error;
     clearTimeout(this.reconnectTimer);
-    this.stopHeartbeat();
+    this.heartbeat.stop();
 
     const { socket } = this;
     this.socket = null;
@@ -317,7 +329,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
   }
 
   protected handleMessage(raw: unknown): void {
-    this.lastMessageAt = Date.now();
+    this.heartbeat.touch();
 
     let message: Message;
 
@@ -342,9 +354,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
       case 'error':
         return this.handleDeviceError(message.data);
       default:
-        if (message.type === 'device' && this.heartbeatPending) {
-          this.heartbeatPending = false;
-
+        if (message.type === 'device' && this.heartbeat.takeAnswer()) {
           // The answer to a heartbeat, which the user didn't ask for
           if (!this.subscriptions.has('device' as keyof TTopics) && !this.subscriptions.has('*')) {
             return;
@@ -376,7 +386,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
 
   protected handleAuthorized(): void {
     this.authorized = true;
-    this.reconnectAttempt = 0;
+    this.reconnectBackoff.reset();
 
     for (const topic of this.subscriptions) {
       this.write({ type: 'subscribe', data: topic });
@@ -386,7 +396,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
       this.write(message);
     }
 
-    this.startHeartbeat();
+    this.heartbeat.start();
     this.emitter.emit('authorized');
   }
 
@@ -416,7 +426,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
 
     this.socket = null;
     this.authorized = false;
-    this.stopHeartbeat();
+    this.heartbeat.stop();
 
     if (this.droppedAfterToken >= REJECTED_TOKEN_DROPS) {
       this.stop(
@@ -433,45 +443,10 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     if (!this.stopped && !this.options.reconnect) this.stop();
     if (this.stopped) return;
 
-    const delay = Math.min(
-      this.options.maxReconnectDelay,
-      this.options.reconnectDelay * 2 ** this.reconnectAttempt,
-    );
-    this.reconnectAttempt++;
+    const delay = this.reconnectBackoff.next();
 
     this.log(`Reconnecting in ${delay}ms`);
     this.reconnectTimer = setTimeout(() => this.connect(), delay);
-  }
-
-  protected startHeartbeat(): void {
-    const { heartbeatInterval } = this.options;
-
-    if (!heartbeatInterval) return;
-
-    this.stopHeartbeat();
-    this.lastMessageAt = Date.now();
-
-    this.heartbeatTimer = setInterval(() => {
-      const silentFor = Date.now() - this.lastMessageAt;
-
-      if (silentFor >= heartbeatInterval * 2) {
-        this.log(`Nothing received for ${silentFor}ms, reconnecting`);
-        this.dropConnection();
-        return;
-      }
-
-      if (silentFor >= heartbeatInterval && !this.heartbeatPending) {
-        this.heartbeatPending = true;
-        this.write({ type: 'device' });
-      }
-      // Checking twice per interval sends the heartbeat well before the connection counts as dead
-    }, heartbeatInterval / 2);
-  }
-
-  protected stopHeartbeat(): void {
-    clearInterval(this.heartbeatTimer);
-    this.heartbeatTimer = undefined;
-    this.heartbeatPending = false;
   }
 
   /** Treats the connection as dead: closes it and reconnects, without waiting for a close handshake. */
