@@ -56,6 +56,12 @@ describe('v2/tls', () => {
       expect(onCertificate).toHaveBeenCalledWith('appliance/p1dongle/aa');
     });
 
+    it('should accept the identifier in another case, as typed from the device label', () => {
+      const check = createCheckServerIdentity('appliance/p1dongle/5C2FAFAABBCC');
+
+      expect(check('192.168.1.35', certificate('appliance/p1dongle/5c2fafaabbcc'))).toBeUndefined();
+    });
+
     it('should reject a different Common Name', () => {
       const onCertificate = vi.fn();
       const error = createCheckServerIdentity('appliance/p1dongle/aa', onCertificate)(

@@ -164,6 +164,12 @@ describe('connect', () => {
     expect(client.options.identifier).toBe('appliance/p1dongle/3c39e7aabb02');
   });
 
+  it('should accept the stored identifier in another case', () => {
+    const upper = { ...credentials, identifier: mockDiscoveryV2Response.txt.id.toUpperCase() };
+
+    expect(connect(mockDiscoveryV2Response, upper, options)).toBeInstanceOf(P1Meter);
+  });
+
   it('should refuse a device announced with another identifier, so the token is not sent to it', () => {
     expect(() =>
       connect(

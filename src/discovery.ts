@@ -3,6 +3,7 @@ import { LoggerOptions } from '@/shared/logger';
 import { MdnsDiscovery, MdnsDiscoveryResponse } from '@/shared/mdns-discovery';
 import { Credentials, DeviceOptions } from './client';
 import { HomeWizardError } from './errors';
+import { isSameIdentifier } from './tls';
 import { KwhMeter1Phase, KwhMeter3Phase } from './devices/kwh-meter';
 import { P1Meter } from './devices/p1-meter';
 import { PlugInBattery } from './devices/plug-in-battery';
@@ -129,7 +130,7 @@ export function connect(
     );
   }
 
-  if (credentials.identifier && credentials.identifier !== txt.id) {
+  if (credentials.identifier && !isSameIdentifier(credentials.identifier, txt.id)) {
     throw new HomeWizardError(
       'certificate',
       `The discovered device is "${txt.id}", not "${credentials.identifier}"`,

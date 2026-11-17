@@ -70,6 +70,14 @@ export function isCertificateError(error: unknown): boolean {
   return typeof code === 'string' && /CERT|SIGNATURE|ISSUER/.test(code);
 }
 
+/**
+ * Returns `true` when two identifiers name the same device. Case doesn't matter, like in a certificate's name, so
+ * an identifier typed from the serial on the device label, in capitals, still matches.
+ */
+export function isSameIdentifier(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
 function createCertificateIdentityError(message: string): Error {
   return Object.assign(new Error(message), { code: CERTIFICATE_IDENTITY_ERROR_CODE });
 }
@@ -106,7 +114,7 @@ export function createCheckServerIdentity(
       return createCertificateIdentityError('The certificate of the device has no Common Name');
     }
 
-    if (identifier && commonName !== identifier) {
+    if (identifier && !isSameIdentifier(commonName, identifier)) {
       return createCertificateIdentityError(
         `The certificate of the device is issued to "${commonName}", but "${identifier}" was expected`,
       );
