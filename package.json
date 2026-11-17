@@ -74,7 +74,7 @@
     "prepare": "is-ci || husky",
     "lint-staged": "lint-staged",
     "watch": "nodemon ./src/examples/**",
-    "watch:polling": "nodemon ./src/examples/polling-p1-meter-telegram.ts"
+    "watch:polling": "nodemon ./src/examples/v1/polling-p1-meter-telegram.ts"
   },
   "keywords": [
     "homewizard",
