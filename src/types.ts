@@ -97,6 +97,7 @@ export type ErrorCode =
  * @link https://api-documentation.homewizard.com/docs/v2/error-handling
  */
 export interface ErrorResponse {
+  /** The error code, such as `user:unauthorized`. Available for: `HWE-P1`, `HWE-KWH1`, `HWE-KWH3`, `SDM230-wifi`, `SDM630-wifi`, `HWE-BAT` */
   error: ErrorCode;
 }
 
