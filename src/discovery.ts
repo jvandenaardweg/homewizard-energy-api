@@ -1,6 +1,7 @@
 import { AsyncQueue } from '@/shared/async-queue';
+import { formatError } from '@/shared/errors';
 import { LoggerOptions } from '@/shared/logger';
-import { MdnsDiscovery, MdnsDiscoveryResponse } from '@/shared/mdns-discovery';
+import type { MdnsDiscovery, MdnsDiscoveryResponse } from '@/shared/mdns-discovery';
 import { Credentials, ConnectionOptions } from './client';
 import { HomeWizardError } from './errors';
 import { isSameIdentifier } from './tls';
@@ -41,26 +42,40 @@ export interface DiscoverOptions {
  */
 export function discover(options: DiscoverOptions = {}): AsyncIterableIterator<DiscoveryResponse> {
   const { timeout, signal, logger } = options;
-  const discovery = new MdnsDiscovery<MdnsTxtRecord>(MDNS_DISCOVERY_TYPE, logger);
+  let discovery: MdnsDiscovery<MdnsTxtRecord> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let ended = false;
 
   const queue = new AsyncQueue<DiscoveryResponse>({
     signal,
     onDone: () => {
+      ended = true;
       clearTimeout(timer);
-      discovery.stop();
+      discovery?.stop();
     },
   });
 
   if (signal?.aborted) return queue;
 
-  discovery.start();
-  discovery.on('response', found => queue.push(found));
-  discovery.on('error', error =>
+  const fail = (error: unknown) =>
     queue.end(
-      new HomeWizardError('network', `mDNS discovery failed: ${error.message}`, { cause: error }),
-    ),
-  );
+      new HomeWizardError('network', `mDNS discovery failed: ${formatError(error)}`, {
+        cause: error,
+      }),
+    );
+
+  // Loaded here, so importing the package doesn't load multicast-dns for apps that never discover
+  import('./shared/mdns-discovery')
+    .then(({ MdnsDiscovery }) => {
+      // The loop can end while the module loads
+      if (ended) return;
+
+      discovery = new MdnsDiscovery<MdnsTxtRecord>(MDNS_DISCOVERY_TYPE, logger);
+      discovery.start();
+      discovery.on('response', found => queue.push(found));
+      discovery.on('error', fail);
+    })
+    .catch(fail);
 
   if (timeout) timer = setTimeout(() => queue.end(), timeout);
 
