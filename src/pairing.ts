@@ -109,10 +109,11 @@ export async function pair(
 
   const seenIdentifiers = new Set<string>();
 
+  // createUser() is a POST, which the client never retries: pair() retries it until the pair timeout. The GET for
+  // the device information after an insecure pairing does get the client's retries, so a Wi-Fi blip there doesn't
+  // lose the new token.
   const client = new Client(host, {
     ...deviceOptions,
-    // pair() retries on its own, until the pair timeout
-    retries: 0,
     identifier,
     allowMissingIdentifier: true,
     onCertificate: commonName => seenIdentifiers.add(commonName),
