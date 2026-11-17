@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This is a typed Node client for the HomeWizard Energy local API: API v2 over HTTPS (P1 meter, kWh meters, Plug-In Battery) at the package root, and the frozen API v1 over HTTP (P1 meter, Energy Socket, water meter, kWh meters) under `homewizard-energy-api/v1`, with mDNS device discovery. The upstream docs are at https://api-documentation.homewizard.com, with their source in the `homewizard/api-documentation` GitHub repo. It is published to npm as `homewizard-energy-api`, and usage docs live in `README.md`.
+This is a typed Node client for the HomeWizard Energy local API: API v2 over HTTPS (P1 meter, kWh meters, Plug-In Battery) at the package root, and the frozen API v1 over HTTP (P1 meter, Energy Socket, water meter, kWh meters) under `homewizard-energy-api/v1`, with mDNS device discovery. The upstream docs are at https://api-documentation.homewizard.com, with their source in the `homewizard/api-documentation` GitHub repo. It is published to npm as `homewizard-energy-api`, and usage docs live in `README.md`, with the frozen API v1 in `docs/v1.md` and the upgrade guide in `docs/upgrading.md`.
 
 ## Verifying changes
 
