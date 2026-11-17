@@ -136,7 +136,8 @@ module.exports = {
           { type: 'perf', section: 'Performance Improvements' },
           { type: 'revert', section: 'Reverts' },
           { type: 'docs', section: 'Documentation' },
-          { type: 'chore', scope: 'release', hidden: true },
+          // The preset reads `effect`, not the older `hidden: true`, which it ignores
+          { type: 'chore', scope: 'release', effect: 'hidden' },
           { type: 'refactor', section: 'Other Changes' },
           { type: 'test', section: 'Other Changes' },
           { type: 'chore', section: 'Other Changes' },
@@ -176,9 +177,6 @@ module.exports = {
           ) {
             context.linkCompare = true;
           }
-          // The chore(release) type is hidden, but its commits still arrive in a group without a title, which
-          // renders as a stray line under the breaking changes. Every other type has a section.
-          context.commitGroups = context.commitGroups.filter(group => group.title);
           context.contributors = await getContributors(context);
           context.preamble = readReleaseIntroduction(context.version) ?? context.preamble;
           return context;
