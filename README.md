@@ -113,7 +113,8 @@ The name, `my-app` here, is 1 to 40 characters of `a-z`, `A-Z`, `0-9`, `-`, `_`,
 - **`host`** is the address you paired with.
 - **`token`** is a secret that gives full access to the device. Store it: the device can't return it again.
 - **`identifier`**, such as `appliance/p1dongle/5c2fafaabbcc`, is what the device's certificate is issued to. `pair()` reads it from the certificate, after checking that HomeWizard signed it. The device classes require it, and refuse a device whose certificate is issued to another identifier. `getCertificateIdentifier(productType, serial)` builds it from the serial on the device label.
-  When the button isn't pressed in time, or the pairing is aborted, `pair()` throws a `HomeWizardError` with kind `pairing` and a `reason` of `'timeout'` or `'aborted'`.
+
+When the button isn't pressed in time, or the pairing is aborted, `pair()` throws a `HomeWizardError` with kind `pairing` and a `reason` of `'timeout'` or `'aborted'`.
 
 ### Storing the credentials
 
@@ -187,6 +188,7 @@ const p1 = new P1Meter(credentials, { timeout: 3000, logger: { method: console.l
 | `logger`     | `{ method, prefix }`, for example `{ method: console.log }`. The token is never logged.                                 |
 | `insecure`   | Skips all certificate checks, so any device at this address is accepted, without an identifier. For debugging only.     |
 | `dispatcher` | Your own undici dispatcher, for example a `MockAgent` in tests. It replaces the certificate checks.                     |
+| `ca`         | The CA certificate (PEM) the device's certificate must be signed by. Defaults to the HomeWizard CA.                     |
 
 The [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) show each device.
 
@@ -314,11 +316,10 @@ for await (const found of discover({ timeout: 10000 })) {
   // { ip: '192.168.1.35', txt: { product_type: 'HWE-P1', id: 'appliance/p1dongle/5c2fafaabbcc', api_version: '2.2.0', ... }, ... }
   if (found.txt.id !== credentials.identifier) continue;
 
-  const device = connect(found, credentials);
+  const device = connect(found, credentials); // device.host is '192.168.1.35': store it as the host for next time
 
   if (device instanceof P1Meter) {
-    // Store the new address for next time
-    await storage.save(JSON.stringify({ ...credentials, host: device.host }));
+    console.log(await device.getTelegram());
   }
   break;
 }
@@ -353,7 +354,7 @@ try {
 | `certificate` | The certificate isn't from HomeWizard, or is issued to another identifier, so the token wasn't sent. `connect()` throws it for a device announced with another identifier | `url`, `cause`                          |
 | `pairing`     | The button wasn't pressed in time, or the pairing was aborted                                                                                                             | `reason`                                |
 | `socket`      | The WebSocket failed, or the device sent an error over it                                                                                                                 | `code`, `cause`                         |
-| `invalid`     | The arguments or options can't work, for example a missing identifier or an `http://` host                                                                                |                                         |
+| `invalid`     | The arguments or options can't work, for example a missing host or identifier, or an `http://` host                                                                       |                                         |
 
 With a `logger`, a device logs once when it answers with a newer API version than the 2.3.0 these types follow. It keeps working, because HomeWizard keeps each major version backward compatible, but the fields it added since aren't typed yet.
 
@@ -433,7 +434,7 @@ const data = await p1Meter.getData();
 
 #### Data polling
 
-A simple polling interface for the P1 Meter (and all other devices) is exposed via `api.polling.getData`, `api.polling.getTelegram` and `api.polling.getParsedTelegram`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
+A simple polling interface for the P1 Meter (and all other devices) is exposed via `api.polling.getData`, `api.polling.getTelegram` and `api.polling.getParsedTelegram`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples/v1) for more information.
 
 ```typescript
 import { P1MeterApi } from 'homewizard-energy-api/v1';
@@ -493,7 +494,7 @@ const updatedState = await energySocket.updateState({ power_on: true });
 
 #### Data polling
 
-A simple polling interface for the Energy Sockets is exposed via `api.polling.getData` and `api.polling.getState`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
+A simple polling interface for the Energy Sockets is exposed via `api.polling.getData` and `api.polling.getState`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples/v1) for more information.
 
 ### Watermeter
 
@@ -518,7 +519,7 @@ const data = await waterMeter.getData();
 
 #### Data polling
 
-A simple polling interface for the Watermeter is exposed via `api.polling.getData`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
+A simple polling interface for the Watermeter is exposed via `api.polling.getData`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples/v1) for more information.
 
 ### kWh Meter 1-phase
 
@@ -546,7 +547,7 @@ const data = await kwhMeter1Phase.getData();
 
 #### Data polling
 
-A simple polling interface for the kWh Meter 1-phase is exposed via `api.polling.getData`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
+A simple polling interface for the kWh Meter 1-phase is exposed via `api.polling.getData`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples/v1) for more information.
 
 ### kWh Meter 3-phase
 
@@ -574,7 +575,7 @@ const data = await kwhMeter3Phase.getData();
 
 #### Data polling
 
-A simple polling interface for the kWh Meter 3-phase is exposed via `api.polling.getData`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
+A simple polling interface for the kWh Meter 3-phase is exposed via `api.polling.getData`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples/v1) for more information.
 
 ### Error handling
 
