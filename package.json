@@ -2,7 +2,7 @@
   "displayName": "HomeWizard Energy API",
   "name": "homewizard-energy-api",
   "version": "2.0.0",
-  "description": "Typesafe Node implementation of the HomeWizard Energy API",
+  "description": "A typed Node client for the HomeWizard Energy local API. It handles pairing, certificate checks and a live connection that stays up.",
   "license": "MIT",
   "author": {
     "name": "Jordy van den Aardweg",
@@ -79,13 +79,12 @@
   "keywords": [
     "homewizard",
     "homewizard-energy",
-    "homewizard energy",
-    "homewizard-energy-socket",
-    "homewizard energy socket",
-    "homewizard-api",
-    "homewizard api",
-    "homewizard-energy-api",
-    "homewizard energy api"
+    "p1-meter",
+    "energy-monitoring",
+    "home-automation",
+    "smart-home",
+    "typescript",
+    "nodejs"
   ],
   "devDependencies": {
     "@release-it/conventional-changelog": "^12.0.2",
