@@ -5,7 +5,9 @@ import { mockErrorNotFound } from '@/mocks/errors';
 import { HomeWizardEnergyApiResponseError } from '@/v1/base-api';
 import {
   mockP1MeterDataResponse,
+  mockP1MeterDataResponseUnusedExports,
   mockP1MeterDataResponseWithExternalPower,
+  mockP1MeterDataResponseZeroValues,
 } from '@/mocks/data/data';
 import { mockParsedTelegramResponse, mockTelegramResponse } from '@/mocks/data/telegram';
 import { P1MeterApi } from '@/v1/p1-meter-api';
@@ -94,6 +96,15 @@ describe('P1MeterApi', () => {
       expect(data).toStrictEqual(mockP1MeterDataResponseWithExternalPower);
       expect(data.active_power_average_w).toBe(123);
       expect(data.montly_power_peak_w).toBe(1111);
+    });
+
+    it.each([
+      ['a meter that reports 0 for almost everything', mockP1MeterDataResponseZeroValues],
+      ['all four tariffs and no export', mockP1MeterDataResponseUnusedExports],
+    ])('should return the data response of %s', async (_name, response) => {
+      apiMocks.getData({ response });
+
+      await expect(p1MeterApi.getData()).resolves.toStrictEqual(response);
     });
 
     it('should throw an error when GET the "data" endpoint returns a server error', async () => {
