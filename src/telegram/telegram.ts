@@ -892,14 +892,14 @@ const pad = (value: number, length = 2) => String(value).padStart(length, '0');
 /**
  * Formats a date in local time with its UTC offset, for example `2019-09-18T19:00:52+02:00`, or with `Z` when the
  * offset is zero. Throws a `RangeError` for an invalid date.
- *
- * @param offsetMinutes The offset as `Date.getTimezoneOffset()` returns it: positive behind UTC.
  */
-export function formatIsoLocal(date: Date, offsetMinutes = date.getTimezoneOffset()): string {
+export function formatIsoLocal(date: Date): string {
   if (Number.isNaN(date.getTime())) {
     throw new RangeError('Invalid time value');
   }
 
+  // Positive behind UTC, as Date.getTimezoneOffset() returns it
+  const offsetMinutes = date.getTimezoneOffset();
   const absolute = Math.abs(offsetMinutes);
   const offset =
     offsetMinutes === 0
