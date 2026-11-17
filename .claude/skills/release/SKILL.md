@@ -64,7 +64,7 @@ npm view homewizard-energy-api@X.Y.Z version dist.fileCount dist-tags.latest
 
 The registry can lag several minutes behind a successful publish, so an E404 right after the job finishes is normal. Retry a few minutes apart.
 
-**Done:** the version resolves, `dist-tags.latest` is the new version, and `dist.fileCount` is in the high 40s. Many more files means something outside `dist/` was packed; check the `files` allowlist in `package.json`.
+**Done:** the version resolves, `dist-tags.latest` is the new version, and the package holds only `dist/` plus `README.md`, `LICENSE`, `CHANGELOG.md` and `package.json`. `dist.fileCount` was 168 for 3.0.0, and grows with each new module, so a jump without new modules is the sign to look. To see what's packed, run `npm pack --dry-run` after `npm run build`; anything outside that list means the `files` allowlist in `package.json` needs a fix.
 
 ## 6. Report
 
