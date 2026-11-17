@@ -79,8 +79,10 @@ import { P1Meter } from 'homewizard-energy-api';
 const p1 = new P1Meter(JSON.parse(await storage.load()));
 
 const measurement = await p1.getMeasurement();
-console.log(`${measurement.power_w} W`);
+console.log(`${measurement.power_w} W`); // -543 W
 ```
+
+A negative `power_w` means the home delivers more power to the grid than it uses, for example from solar panels.
 
 ## API v2
 
@@ -130,8 +132,17 @@ import { P1Meter } from 'homewizard-energy-api';
 const p1 = new P1Meter(credentials);
 
 const measurement = await p1.getMeasurement();
-console.log(measurement.power_w, measurement.energy_import_kwh);
+// {
+//   energy_import_kwh: 13779.338,
+//   energy_export_kwh: 0,
+//   power_w: -543,
+//   power_l1_w: -676,
+//   external: [{ type: 'gas_meter', value: 2569.646, unit: 'm3', ... }],
+//   ...
+// }
 ```
+
+The fields depend on the device and the smart meter: see the [full P1 meter example](https://api-documentation.homewizard.com/docs/v2/measurement#hwe-p1-full) in the HomeWizard docs, and `P1MeterMeasurement` in your editor.
 
 Each class has only the methods its device supports:
 
@@ -186,7 +197,7 @@ The P1 meter or kWh meter controls the Plug-In Batteries, so `getBatteries()` an
 
 ```typescript
 const batteries = await p1.getBatteries();
-console.log(batteries.mode, batteries.power_w, batteries.battery_count);
+console.log(batteries.mode, batteries.power_w, batteries.battery_count); // zero -404 2
 
 // Charge, but don't discharge
 await p1.updateBatteries({ permissions: ['charge_allowed'] });
@@ -203,7 +214,7 @@ Some fields depend on the API version of the device: `permissions` and `battery_
 ```typescript
 const battery = new PlugInBattery(batteryCredentials);
 
-const { state_of_charge_pct, power_w } = await battery.getMeasurement();
+const { state_of_charge_pct, power_w } = await battery.getMeasurement(); // 50, 123
 ```
 
 ### WebSocket
@@ -218,6 +229,9 @@ const socket = p1.openWebSocket();
 for await (const measurement of socket.stream('measurement')) {
   console.log(measurement.power_w);
 }
+// Prints a line each time the device pushes a measurement:
+//   -543
+//   -678
 ```
 
 The stream keeps going while the socket reconnects. It ends when you `break` the loop, its `signal` aborts (`socket.stream('measurement', { signal })`), or the socket closes for good. It throws a `HomeWizardError` with code `user:unauthorized` when the token is missing or rejected.
@@ -227,7 +241,7 @@ The events work too:
 ```typescript
 const socket = p1.openWebSocket();
 
-socket.on('measurement', measurement => console.log(measurement.power_w));
+socket.on('measurement', measurement => console.log(measurement.power_w)); // -543
 socket.on('error', error => console.error(error));
 socket.subscribe('measurement');
 
@@ -260,7 +274,7 @@ import { poll } from 'homewizard-energy-api';
 
 const poller = poll(() => p1.getMeasurement(), { interval: 1000 });
 
-poller.on('response', measurement => console.log(measurement.power_w));
+poller.on('response', measurement => console.log(measurement.power_w)); // -543, each second
 poller.on('error', error => console.error(error));
 poller.start();
 ```
@@ -275,7 +289,7 @@ On the P1 meter, `getTelegram()` returns the raw telegram from the smart meter. 
 import { parseTelegram } from 'homewizard-energy-api/telegram';
 
 const telegram = parseTelegram(await p1.getTelegram());
-console.log(telegram.power.import.t1, telegram.power.demand);
+console.log(telegram.power.import.t1); // { value: 10830.511, unit: 'kWh' }
 ```
 
 ### Discovery
@@ -314,6 +328,7 @@ try {
   await p1.getMeasurement();
 } catch (error) {
   if (error instanceof HomeWizardError && error.code === 'user:unauthorized') {
+    // error.kind is 'response', and error.statusCode is 401
     // The token was deleted, pair again
   }
 }
@@ -425,19 +440,15 @@ p1Meter.polling.getData.on('response', response => {
   // Receive the latest data of this P1 Meter from the /api/v1/data endpoint each second:
   // {
   //   smr_version: 50,
-  //   meter_model: 'ISKRA 2M550T-1012',
-  //   wifi_ssid: 'SOME_WIFI_SSID',
+  //   meter_model: 'ISKRA  2M550T-101',
+  //   wifi_ssid: 'My Wi-Fi',
   //   wifi_strength: 100,
-  //   total_power_import_t1_kwh: 19055.287,
-  //   total_power_import_t2_kwh: 19505.815,
-  //   total_power_export_t1_kwh: 0.002,
-  //   total_power_export_t2_kwh: 0.007,
-  //   active_power_w: 997,
-  //   active_power_l1_w: 66,
-  //   active_power_l2_w: 88,
-  //   active_power_l3_w: 852,
-  //   total_gas_m3: 6789.488,
-  //   gas_timestamp: 221217223003
+  //   total_power_import_t1_kwh: 10830.511,
+  //   total_power_import_t2_kwh: 2948.827,
+  //   total_power_export_t1_kwh: 1285.951,
+  //   total_power_export_t2_kwh: 2876.51,
+  //   active_power_w: -678,
+  //   active_power_l1_w: -676
   // }
 });
 
@@ -623,12 +634,12 @@ discovery.on('response', response => {
   // Example response:
   // {
   //   ip: '192.168.1.34',
-  //   hostname: 'energysocket-25FF1A.local',
-  //   fqdn: 'energysocket-25FF1A._hwenergy._tcp.local',
+  //   hostname: 'energysocket-AABBCC.local',
+  //   fqdn: 'energysocket-AABBCC._hwenergy._tcp.local',
   //   txt: {
   //     api_enabled: '1',
   //     path: '/api/v1',
-  //     serial: '3c39e725ff1a',
+  //     serial: '3c39e7aabbcc',
   //     product_name: 'Energy Socket',
   //     product_type: 'HWE-SKT'
   //   }
