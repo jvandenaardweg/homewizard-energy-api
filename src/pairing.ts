@@ -31,8 +31,6 @@ export interface PairOptions extends DeviceOptions {
  * the token again. Keep the token secret.
  */
 export interface PairResult extends Required<Credentials> {
-  /** The name of the user, prefixed with `local/`. */
-  name: string;
   /**
    * The identifier the device's certificate is issued to. With `insecure`, it's empty for a product type whose
    * identifier isn't known.
@@ -167,7 +165,6 @@ export async function pair(
       return {
         host,
         token: user.token,
-        name: user.name,
         identifier: await learnIdentifier(client, user, options, seenIdentifiers),
       };
     }

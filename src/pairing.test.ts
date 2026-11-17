@@ -31,7 +31,7 @@ describe('v2/pair', () => {
 
     await expect(pairing).resolves.toStrictEqual({
       host: mockV2Host,
-      ...mockV2UserCreated,
+      token: mockV2UserCreated.token,
       identifier,
     });
     expect(onAttempt).toHaveBeenCalledTimes(3);
@@ -142,7 +142,7 @@ describe('v2/pair', () => {
 
     await expect(
       pair(mockV2Host, 'new_user', { dispatcher: mockApiAgent, insecure: true }),
-    ).resolves.toStrictEqual({ host: mockV2Host, ...mockV2UserCreated, identifier: '' });
+    ).resolves.toStrictEqual({ host: mockV2Host, token: mockV2UserCreated.token, identifier: '' });
   });
 
   it('should never log the token', async () => {
@@ -222,7 +222,7 @@ describe('v2/pair', () => {
 
       expect(result).toStrictEqual({
         host: server.host,
-        ...mockV2UserCreated,
+        token: mockV2UserCreated.token,
         identifier: mockTlsIdentifier,
       });
       expect(attempts).toBe(2);

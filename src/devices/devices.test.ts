@@ -192,7 +192,6 @@ describe.each(devices)('v2.$name', ({ create, Class, cases, missing }) => {
     expect(credentials).toStrictEqual({
       host: mockV2Host,
       token: mockV2UserCreated.token,
-      name: mockV2UserCreated.name,
       identifier: mockV2Credentials.identifier,
     });
 

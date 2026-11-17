@@ -66,8 +66,7 @@ const credentials = await pair('192.168.1.35', 'my-app');
 // {
 //   host: '192.168.1.35',
 //   token: '0123456789ABCDEF0123456789ABCDEF',
-//   identifier: 'appliance/p1dongle/5c2fafaabbcc',
-//   name: 'local/my-app'
+//   identifier: 'appliance/p1dongle/5c2fafaabbcc'
 // }
 ```
 
@@ -107,14 +106,14 @@ const credentials = await pair('192.168.1.35', 'my-app', {
 });
 ```
 
+The name, `my-app` here, is 1 to 40 characters of `a-z`, `A-Z`, `0-9`, `-`, `_`, `\`, `/`, `#` and spaces. `pair()` adds the `local/` prefix the device needs, so the user on the device is `local/my-app`. Pairing again with the same name gives a new token, and the old one stops working.
+
 `pair()` returns the credentials:
 
 - **`host`** is the address you paired with.
 - **`token`** is a secret that gives full access to the device. Store it: the device can't return it again.
 - **`identifier`**, such as `appliance/p1dongle/5c2fafaabbcc`, is what the device's certificate is issued to. `pair()` reads it from the certificate, after checking that HomeWizard signed it. The device classes require it, and refuse a device whose certificate is issued to another identifier. `getCertificateIdentifier(productType, serial)` builds it from the serial on the device label.
-- **`name`** is the user name on the device, with the `local/` prefix. The name you pass is 1 to 40 characters of `a-z`, `A-Z`, `0-9`, `-`, `_`, `\`, `/`, `#` and spaces. Pairing again with the same name gives a new token, and the old one stops working.
-
-When the button isn't pressed in time, or the pairing is aborted, `pair()` throws a `HomeWizardError` with kind `pairing` and a `reason` of `'timeout'` or `'aborted'`.
+  When the button isn't pressed in time, or the pairing is aborted, `pair()` throws a `HomeWizardError` with kind `pairing` and a `reason` of `'timeout'` or `'aborted'`.
 
 ### Storing the credentials
 
