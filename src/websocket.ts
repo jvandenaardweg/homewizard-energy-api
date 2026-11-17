@@ -240,6 +240,12 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     this.on(topic, onData);
     this.on('close', onClose);
 
+    // A socket that closed for good emits no more events, so the stream ends straight away
+    if (!this.socket && (this.closedByUser || !this.options.reconnect)) {
+      onClose();
+      return queue;
+    }
+
     if (!this.subscriptions.has(topic) && !this.subscriptions.has('*')) {
       this.streamSubscriptions.add(topic);
       this.subscribe(topic);

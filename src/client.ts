@@ -100,6 +100,14 @@ export function redact(value: unknown): string {
  * all become `https://192.168.1.35`.
  */
 export function toBaseUrl(host: string): string {
+  // The credentials often come from JSON.parse(), so the type doesn't guarantee a host
+  if (typeof host !== 'string' || !host.trim()) {
+    throw new HomeWizardError(
+      'invalid',
+      'The "host" of the credentials is missing: pass the address of the device, as pair() returns it',
+    );
+  }
+
   const trimmed = host.trim().replace(/\/+$/, '');
 
   if (/^http:\/\//i.test(trimmed)) {

@@ -9,8 +9,10 @@ export const DEFAULT_PAIR_INTERVAL = 2000;
 
 export interface PairOptions extends DeviceOptions {
   /**
-   * The identifier of the device, when you have it, for example from discovery. The certificate must match it.
-   * Without it, any genuine HomeWizard device at this address is accepted, and its identifier is returned.
+   * The identifier of the device, when you have it, for example from an earlier pairing or built with
+   * `getCertificateIdentifier()` from the serial on the label. Not from discovery: anyone on the network can announce
+   * a device. The certificate must match it. Without it, any genuine HomeWizard device at this address is accepted,
+   * and its identifier is returned.
    */
   identifier?: string;
   /** How long to wait for the button press, in milliseconds. Defaults to `120000` (2 minutes). */
