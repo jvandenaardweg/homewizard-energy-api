@@ -92,9 +92,8 @@ export abstract class Device<
     options: PairOptions = {},
   ): Promise<PairedDevice<TDevice>> {
     const credentials = await pair(host, name, options);
-    const { identifier: _identifier, ...deviceOptions } = splitPairOptions(options).deviceOptions;
 
-    return { credentials, device: new this(credentials, deviceOptions) };
+    return { credentials, device: new this(credentials, splitPairOptions(options).deviceOptions) };
   }
 
   /**
