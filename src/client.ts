@@ -15,6 +15,7 @@ import {
   isTransientError,
   toHomeWizardError,
 } from './errors';
+import { isNewerApiVersion } from './api-version';
 import { createCheckServerIdentity, HOMEWIZARD_CA_CERT } from './tls';
 import { API_MAJOR_VERSION, DOCUMENTED_API_VERSION } from './types';
 import type { DeviceSocketConnection } from './websocket';
@@ -97,49 +98,6 @@ export const DEFAULT_RETRIES = 2;
 export const RETRY_DELAY = 500;
 
 /**
- * Compares two API versions such as `2.4.0`: negative when `a` is older, `0` when equal, positive when newer.
- * Returns `undefined` when `a` can't be read.
- */
-function compareApiVersions(a: string, b: string): number | undefined {
-  const parse = (value: string) => value.trim().split('.').map(Number);
-  const left = parse(a);
-  const right = parse(b);
-
-  if (left.some(Number.isNaN)) return undefined;
-
-  for (let i = 0; i < Math.max(left.length, right.length); i++) {
-    const difference = (left[i] ?? 0) - (right[i] ?? 0);
-    if (difference !== 0) return difference;
-  }
-
-  return 0;
-}
-
-/**
- * Returns `true` when `version` (such as `2.4.0`) is newer than `than`. A version it can't read counts as not newer.
- */
-export function isNewerApiVersion(version: string, than: string): boolean {
-  return (compareApiVersions(version, than) ?? 0) > 0;
-}
-
-/**
- * Returns `true` when the device's API version is `minimum` or newer, for the fields and endpoints that need a
- * newer firmware. A version it can't read counts as too old.
- *
- * @example
- * const { api_version } = await p1.getDevice();
- *
- * if (isApiVersionAtLeast(api_version, '2.3.0')) {
- *   await p1.updateBatteries({ charge_to_full: true });
- * }
- *
- * @link https://api-documentation.homewizard.com/docs/versioning
- */
-export function isApiVersionAtLeast(version: string, minimum: string): boolean {
-  return (compareApiVersions(version, minimum) ?? -1) >= 0;
-}
-
-/**
  * Normalises a host to its HTTPS origin: `192.168.1.35`, `https://192.168.1.35` and `https://192.168.1.35/`
  * all become `https://192.168.1.35`.
  */
@@ -178,6 +136,8 @@ export class Client {
   token: string | undefined;
   protected readonly timeout: number;
   protected readonly retries: number;
+  /** Aborted by `close()`, so a read that waits to retry stops instead. */
+  protected readonly closing = new AbortController();
   protected readonly ownsDispatcher: boolean;
   protected warnedAboutApiVersion = false;
 
@@ -246,13 +206,19 @@ export class Client {
         return await read(url, await this.request(method, url, options));
       } catch (error) {
         const wrapped = toHomeWizardError(error, method, url);
-        const canRetry = method === 'GET' && attempt < this.retries && isTransientError(wrapped);
+        const canRetry =
+          method === 'GET' &&
+          attempt < this.retries &&
+          isTransientError(wrapped) &&
+          !this.closing.signal.aborted;
 
         if (!canRetry) throw wrapped;
 
         const delay = RETRY_DELAY * 2 ** attempt;
         this.log(`${method} ${url} failed (${wrapped.kind}), retrying in ${delay}ms`);
-        await wait(delay);
+        await wait(delay, this.closing.signal);
+
+        if (this.closing.signal.aborted) throw wrapped;
       }
     }
   }
@@ -345,8 +311,10 @@ export class Client {
     });
   }
 
-  /** Closes the connections, when this client created the dispatcher. */
+  /** Stops the retries, and closes the connections when this client created the dispatcher. */
   async close(): Promise<void> {
+    this.closing.abort();
+
     if (this.ownsDispatcher) {
       await this.dispatcher.close();
     }
