@@ -363,7 +363,7 @@ Commands sent before the connection is authorized wait until it is. A rejected t
 | `socket`      | The WebSocket failed, or the device sent an error over it                                                                                                                 | `code`, `cause`                         |
 | `invalid`     | The arguments or options can't work, for example a missing host or identifier, or an `http://` host                                                                       |                                         |
 
-See the [HomeWizard docs](https://api-documentation.homewizard.com/docs/v2/error-handling) for the error codes.
+In TypeScript, checking `kind` narrows the fields: after `error.kind === 'response'`, `error.statusCode` is a number. See the [HomeWizard docs](https://api-documentation.homewizard.com/docs/v2/error-handling) for the error codes.
 
 ### Entry points
 

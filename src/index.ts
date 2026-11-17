@@ -16,7 +16,7 @@ export * from './devices';
 export { connect, discover } from './discovery';
 export type { DiscoveredDevice, DiscoverOptions, DiscoveryResponse } from './discovery';
 export { HomeWizardError } from './errors';
-export type { HomeWizardErrorKind } from './errors';
+export type { HomeWizardErrorFields, HomeWizardErrorKind, HomeWizardErrorOf } from './errors';
 export { pair } from './pairing';
 export type { PairOptions } from './pairing';
 export { poll } from './poll';

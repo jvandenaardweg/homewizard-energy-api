@@ -75,6 +75,27 @@ describe('errors', () => {
     });
   });
 
+  it('should narrow the fields by kind', () => {
+    const error: HomeWizardError = createResponseError('GET', 'https://x/api', 401, '{}');
+
+    // Readable on any error, without narrowing
+    const code: string | undefined = error.code;
+    expect(code).toBeUndefined();
+
+    expect(error.kind).toBe('response');
+    if (error.kind === 'response') {
+      // Only compiles when the kind narrows statusCode from `number | undefined` to `number`
+      const statusCode: number = error.statusCode;
+      expect(statusCode).toBe(401);
+    }
+
+    // @ts-expect-error a timeout error needs its url and timeout
+    expect(new HomeWizardError('timeout', 'slow').timeout).toBeUndefined();
+    // @ts-expect-error a pairing error has no statusCode to set
+    const pairing = new HomeWizardError('pairing', 'x', { reason: 'aborted', statusCode: 1 });
+    expect(pairing.reason).toBe('aborted');
+  });
+
   describe('toHomeWizardError', () => {
     const url = 'https://x/api';
 

@@ -173,9 +173,19 @@ describe('v2/pair', () => {
     it('should retry network errors and timeouts only', () => {
       expect(isRetryable(new Error('ECONNRESET'))).toBe(true);
       expect(isRetryable(new HomeWizardError('network', 'ECONNRESET'))).toBe(true);
-      expect(isRetryable(new HomeWizardError('timeout', 'slow'))).toBe(true);
+      expect(
+        isRetryable(new HomeWizardError('timeout', 'slow', { url: 'https://x', timeout: 5000 })),
+      ).toBe(true);
       expect(isRetryable(new HomeWizardError('invalid', 'invalid name'))).toBe(false);
-      expect(isRetryable(new HomeWizardError('response', 'no storage'))).toBe(false);
+      expect(
+        isRetryable(
+          new HomeWizardError('response', 'no storage', {
+            url: 'https://x',
+            statusCode: 507,
+            response: '',
+          }),
+        ),
+      ).toBe(false);
       expect(isRetryable(new HomeWizardError('certificate', 'another device'))).toBe(false);
     });
   });
