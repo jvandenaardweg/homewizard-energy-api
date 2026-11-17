@@ -121,7 +121,10 @@ export function connect(
   options?: DeviceOptions,
 ): DiscoveredDevice {
   const { txt } = found;
-  const DeviceClass = DEVICE_CLASSES[txt.product_type as ProductType];
+  // The txt record comes from the network, so a product type such as "constructor" must not reach the prototype
+  const DeviceClass = Object.hasOwn(DEVICE_CLASSES, txt.product_type)
+    ? DEVICE_CLASSES[txt.product_type as ProductType]
+    : undefined;
 
   if (!DeviceClass) {
     throw new HomeWizardError(
@@ -133,7 +136,9 @@ export function connect(
   if (credentials.identifier && !isSameIdentifier(credentials.identifier, txt.id)) {
     throw new HomeWizardError(
       'certificate',
-      `The discovered device is "${txt.id}", not "${credentials.identifier}"`,
+      typeof txt.id === 'string'
+        ? `The discovered device is "${txt.id}", not "${credentials.identifier}"`
+        : `The discovered device announces no identifier, so it can't be checked against "${credentials.identifier}"`,
     );
   }
 
