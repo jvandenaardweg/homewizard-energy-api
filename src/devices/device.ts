@@ -1,6 +1,6 @@
-import { Client, Credentials, DeviceOptions } from '../client';
+import { Client, Credentials, ConnectionOptions } from '../client';
 import * as endpoints from '../endpoints';
-import { pair, PairOptions, PairResult, splitPairOptions } from '../pairing';
+import { pair, PairOptions, splitPairOptions } from '../pairing';
 import { DeviceInformation, System, User } from '../types';
 import { CommonTopics, DeviceSocket, DeviceSocketConnection, WebSocketOptions } from '../websocket';
 
@@ -22,7 +22,7 @@ export interface Users {
 
 export interface PairedDevice<TDevice> {
   /** The host, token and identifier. Store them, to create the device next time without pairing again. */
-  credentials: PairResult;
+  credentials: Credentials;
   /** The device, set up with the credentials. */
   device: TDevice;
 }
@@ -53,7 +53,7 @@ export abstract class Device<
    * @param credentials The host, token and identifier, as `pair()` returns them.
    * @param options How to connect, for example a `timeout` or a `logger`.
    */
-  constructor(credentials: Credentials, options: DeviceOptions = {}) {
+  constructor(credentials: Credentials, options: ConnectionOptions = {}) {
     const { host, token, identifier } = credentials;
 
     this.host = host;
@@ -87,14 +87,17 @@ export abstract class Device<
    * const { device, credentials } = await P1Meter.pair('192.168.1.35', 'my-app');
    */
   static async pair<TDevice>(
-    this: new (credentials: Credentials, options?: DeviceOptions) => TDevice,
+    this: new (credentials: Credentials, options?: ConnectionOptions) => TDevice,
     host: string,
     name: string,
     options: PairOptions = {},
   ): Promise<PairedDevice<TDevice>> {
     const credentials = await pair(host, name, options);
 
-    return { credentials, device: new this(credentials, splitPairOptions(options).deviceOptions) };
+    return {
+      credentials,
+      device: new this(credentials, splitPairOptions(options).connectionOptions),
+    };
   }
 
   /**

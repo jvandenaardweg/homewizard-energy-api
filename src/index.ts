@@ -11,14 +11,14 @@
  * @link https://api-documentation.homewizard.com/docs/category/api-v2
  */
 export { isApiVersionAtLeast } from './api-version';
-export type { Credentials, DeviceOptions } from './client';
+export type { Credentials, ConnectionOptions } from './client';
 export * from './devices';
 export { connect, discover } from './discovery';
 export type { DiscoveredDevice, DiscoverOptions, DiscoveryResponse } from './discovery';
 export { HomeWizardError } from './errors';
 export type { HomeWizardErrorKind } from './errors';
 export { pair } from './pairing';
-export type { PairOptions, PairResult } from './pairing';
+export type { PairOptions } from './pairing';
 export { poll } from './poll';
 export type { Poller, PollOptions } from './poll';
 export { getCertificateIdentifier, isSameIdentifier } from './tls';
