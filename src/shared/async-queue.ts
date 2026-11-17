@@ -11,8 +11,31 @@ export class AsyncQueue<T> implements AsyncIterableIterator<T> {
   }[] = [];
   protected done = false;
   protected error: { value: unknown } | undefined;
+  protected removeAbortListener: (() => void) | undefined;
 
   constructor(protected readonly onDone: () => void = () => undefined) {}
+
+  /** `true` once the iteration ended, or will end after the buffered values. */
+  get isDone(): boolean {
+    return this.done;
+  }
+
+  /** Ends the iteration when `signal` aborts, or straight away when it already has. */
+  endOn(signal: AbortSignal | undefined): this {
+    if (!signal) return this;
+
+    if (signal.aborted) {
+      this.end();
+      return this;
+    }
+
+    const onAbort = () => this.end();
+
+    signal.addEventListener('abort', onAbort, { once: true });
+    this.removeAbortListener = () => signal.removeEventListener('abort', onAbort);
+
+    return this;
+  }
 
   push(value: T): void {
     if (this.done) return;
@@ -70,6 +93,7 @@ export class AsyncQueue<T> implements AsyncIterableIterator<T> {
     if (this.done) return;
 
     this.done = true;
+    this.removeAbortListener?.();
     this.onDone();
 
     // Nothing is buffered while someone waits, so the waiters get the end or the error
