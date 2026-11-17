@@ -6,17 +6,18 @@ import { mockMdnsV2Response } from '@/mocks/mdns-v2';
 import { KwhMeter1Phase, KwhMeter3Phase } from './devices/kwh-meter';
 import { P1Meter } from './devices/p1-meter';
 import { PlugInBattery } from './devices/plug-in-battery';
-import { connect, Discovery, DiscoveryResponse } from './discovery';
+import { connect, discover, Discovery, DiscoveryResponse } from './discovery';
 
 const querySpy = vi.fn();
 const onSpy = vi.fn();
+const destroySpy = vi.fn();
 
 vi.mock('multicast-dns', () => ({
   default: () => ({
     query: querySpy,
     on: onSpy,
     removeAllListeners: vi.fn(),
-    destroy: vi.fn(),
+    destroy: destroySpy,
   }),
 }));
 
@@ -44,7 +45,65 @@ const discovered: DiscoveryResponse = {
   },
 };
 
-describe('v2.Discovery', () => {
+/** Returns the last mDNS handler registered for `event`. */
+function lastHandler(event: string) {
+  return onSpy.mock.calls.filter(([name]) => name === event).at(-1)?.[1] as (
+    value: unknown,
+  ) => void;
+}
+
+describe('discover', () => {
+  it('should yield the discovered devices, and stop mDNS after a break', async () => {
+    const devices = discover();
+    const next = devices.next();
+
+    lastHandler('response')(mockMdnsV2Response);
+
+    await expect(next).resolves.toStrictEqual({ value: discovered, done: false });
+    await devices.return?.();
+    expect(destroySpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should end after the timeout', async () => {
+    const devices = discover({ timeout: 10000 });
+    const next = devices.next();
+
+    await vi.advanceTimersByTimeAsync(10000);
+
+    await expect(next).resolves.toStrictEqual({ value: undefined, done: true });
+    expect(destroySpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should end when the signal aborts, and not start when it was aborted already', async () => {
+    const controller = new AbortController();
+    const next = discover({ signal: controller.signal }).next();
+
+    controller.abort();
+    await expect(next).resolves.toStrictEqual({ value: undefined, done: true });
+
+    querySpy.mockClear();
+    await expect(discover({ signal: AbortSignal.abort() }).next()).resolves.toStrictEqual({
+      value: undefined,
+      done: true,
+    });
+    expect(querySpy).not.toHaveBeenCalled();
+  });
+
+  it('should throw a network error when mDNS fails', async () => {
+    const next = discover().next();
+    const cause = new Error('EADDRINUSE');
+
+    lastHandler('error')(cause);
+
+    await expect(next).rejects.toMatchObject({
+      kind: 'network',
+      message: 'mDNS discovery failed: EADDRINUSE',
+      cause,
+    });
+  });
+});
+
+describe('Discovery', () => {
   it('should query _homewizard._tcp', () => {
     new Discovery().start();
 

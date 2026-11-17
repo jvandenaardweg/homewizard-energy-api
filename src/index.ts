@@ -10,8 +10,13 @@
  */
 export type { Credentials, DeviceOptions } from './client';
 export * from './devices';
-export { Discovery, connect } from './discovery';
-export type { DiscoveredDevice, DiscoveryOptions, DiscoveryResponse } from './discovery';
+export { connect, discover, Discovery } from './discovery';
+export type {
+  DiscoveredDevice,
+  DiscoverOptions,
+  DiscoveryOptions,
+  DiscoveryResponse,
+} from './discovery';
 export { HomeWizardError } from './errors';
 export type { HomeWizardErrorKind } from './errors';
 export { pair } from './pairing';
@@ -50,5 +55,6 @@ export type {
   CommonTopics,
   DeviceSocket,
   IdentifiableDeviceSocket,
+  StreamOptions,
   WebSocketOptions,
 } from './websocket';

@@ -1,3 +1,4 @@
+import { AsyncQueue } from '@/shared/async-queue';
 import { LoggerOptions } from '@/shared/logger';
 import { MdnsDiscovery, MdnsDiscoveryResponse } from '@/shared/mdns-discovery';
 import { Credentials, DeviceOptions } from './client';
@@ -33,6 +34,54 @@ export class Discovery extends MdnsDiscovery<MdnsTxtRecord> {
   constructor(options?: DiscoveryOptions) {
     super(MDNS_DISCOVERY_TYPE, options?.logger);
   }
+}
+
+export interface DiscoverOptions extends DiscoveryOptions {
+  /** Ends the discovery after this many milliseconds. Without it, it runs until the loop ends or `signal` aborts. */
+  timeout?: number;
+  /** Ends the discovery, like a `break` in the loop. */
+  signal?: AbortSignal;
+}
+
+/**
+ * Discovers the devices with the API v2 as an async iterator, for `for await`. Each device is yielded once, and
+ * again when its txt record or IP address changes. Discovery stops when the loop ends, `timeout` passes or
+ * `signal` aborts. It throws a `HomeWizardError` with kind `network` when mDNS fails.
+ *
+ * @example
+ * for await (const found of discover({ timeout: 10000 })) {
+ *   console.log(found.ip, found.txt.product_type);
+ * }
+ */
+export function discover(options: DiscoverOptions = {}): AsyncIterableIterator<DiscoveryResponse> {
+  const { timeout, signal } = options;
+  const discovery = new Discovery(options);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  const onAbort = () => queue.end();
+  const queue = new AsyncQueue<DiscoveryResponse>(() => {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', onAbort);
+    discovery.stop();
+  });
+
+  if (signal?.aborted) {
+    queue.end();
+    return queue;
+  }
+
+  discovery.start();
+  discovery.on('response', found => queue.push(found));
+  discovery.on('error', error =>
+    queue.fail(
+      new HomeWizardError('network', `mDNS discovery failed: ${error.message}`, { cause: error }),
+    ),
+  );
+
+  signal?.addEventListener('abort', onAbort, { once: true });
+  if (timeout) timer = setTimeout(onAbort, timeout);
+
+  return queue;
 }
 
 export type DiscoveredDevice = P1Meter | KwhMeter1Phase | KwhMeter3Phase | PlugInBattery;
