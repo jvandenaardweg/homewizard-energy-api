@@ -43,14 +43,15 @@ export interface PairResult extends Required<Credentials> {
  * Splits the options that only pairing uses from the device options, which pairing and the device after it share.
  */
 export function splitPairOptions(options: PairOptions) {
-  const { pairTimeout, interval, signal, onAttempt, ...deviceOptions } = options;
+  const { pairTimeout, interval, signal, onAttempt, identifier, ...deviceOptions } = options;
 
   return {
     pairTimeout,
     interval,
     signal,
     onAttempt,
-    deviceOptions,
+    identifier,
+    deviceOptions: deviceOptions as DeviceOptions,
   };
 }
 
@@ -94,12 +95,13 @@ export async function pair(
     interval = DEFAULT_PAIR_INTERVAL,
     signal,
     onAttempt,
-    deviceOptions: clientOptions,
+    identifier,
+    deviceOptions,
   } = splitPairOptions(options);
 
   // Checked before the token is created: a token without an identifier can't be used, and the button would need
   // another press. Your own dispatcher doesn't run the certificate check that learns the identifier.
-  if (clientOptions.dispatcher && !clientOptions.identifier && !clientOptions.insecure) {
+  if (deviceOptions.dispatcher && !identifier && !deviceOptions.insecure) {
     throw new HomeWizardError(
       'invalid',
       'Pairing with your own "dispatcher" can\'t read the identifier from the certificate. Pass the "identifier" option, or set "insecure: true".',
@@ -109,7 +111,8 @@ export async function pair(
   const seenIdentifiers = new Set<string>();
 
   const client = new Client(host, {
-    ...clientOptions,
+    ...deviceOptions,
+    identifier,
     allowMissingIdentifier: true,
     onCertificate: commonName => seenIdentifiers.add(commonName),
   });
