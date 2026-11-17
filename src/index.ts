@@ -26,7 +26,7 @@ export { pair } from './pairing';
 export type { PairOptions, PairResult } from './pairing';
 export { poll } from './poll';
 export type { Poller, PollOptions } from './poll';
-export { getCertificateIdentifier } from './tls';
+export { getCertificateIdentifier, isSameIdentifier } from './tls';
 // The mDNS constants stay internal: 2.x exported the same names from the root with the v1 values
 export { ProductTypeList } from './types';
 export type {

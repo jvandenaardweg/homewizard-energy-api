@@ -74,7 +74,11 @@ export function isCertificateError(error: unknown): boolean {
 
 /**
  * Returns `true` when two identifiers name the same device. Case doesn't matter, like in a certificate's name, so
- * an identifier typed from the serial on the device label, in capitals, still matches.
+ * an identifier typed from the serial on the device label, in capitals, still matches. Use it to pick your paired
+ * device from the discovered ones.
+ *
+ * @example
+ * isSameIdentifier(found.txt.id, credentials.identifier);
  */
 export function isSameIdentifier(a: unknown, b: unknown): boolean {
   return (

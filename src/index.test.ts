@@ -12,6 +12,7 @@ describe('entry points', () => {
     expect(library.Discovery).toBeTypeOf('function');
     expect(library.connect).toBeTypeOf('function');
     expect(library.discover).toBeTypeOf('function');
+    expect(library.isSameIdentifier).toBeTypeOf('function');
     expect(library.HomeWizardError).toBeTypeOf('function');
   });
 
