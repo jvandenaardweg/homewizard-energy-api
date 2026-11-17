@@ -24,8 +24,20 @@ describe('telegram', () => {
     it('should write a zero offset as Z, and an offset behind UTC with a minus', () => {
       const date = new Date(2019, 0, 5, 9, 3, 4);
 
-      expect(formatIsoLocal(date, 0)).toBe('2019-01-05T09:03:04Z');
-      expect(formatIsoLocal(date, 330)).toBe('2019-01-05T09:03:04-05:30');
+      const formatIn = (timeZone: string) => {
+        const previous = process.env.TZ;
+
+        // Node reads TZ again when it changes
+        process.env.TZ = timeZone;
+        try {
+          return formatIsoLocal(date);
+        } finally {
+          process.env.TZ = previous;
+        }
+      };
+
+      expect(formatIn('UTC')).toBe('2019-01-05T08:03:04Z');
+      expect(formatIn('America/St_Johns')).toBe('2019-01-05T04:33:04-03:30');
     });
 
     it('should throw for an invalid date', () => {
