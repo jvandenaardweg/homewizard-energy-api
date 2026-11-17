@@ -122,4 +122,66 @@ describe('v2/poll', () => {
     expect(logged).toContain('polling \\"getMeasurement\\"');
     expect(logged).toContain('polling \\"poll\\"');
   });
+
+  describe('stream()', () => {
+    it('should start polling, yield each result, and stop at a break', async () => {
+      let count = 0;
+      const poller = poll(async () => ++count, { interval: 500 });
+      const values: number[] = [];
+
+      const loop = (async () => {
+        for await (const value of poller.stream()) {
+          values.push(value);
+          if (value === 3) break;
+        }
+      })();
+      await vi.advanceTimersByTimeAsync(1000);
+      await loop;
+
+      expect(values).toStrictEqual([1, 2, 3]);
+      expect(poller.isPolling).toBe(false);
+    });
+
+    it('should leave a poller running that it did not start', async () => {
+      const poller = poll(async () => 'ok', { interval: 500 });
+      poller.start();
+
+      const stream = poller.stream();
+      await expect(stream.next()).resolves.toStrictEqual({ value: 'ok', done: false });
+      await stream.return?.();
+
+      expect(poller.isPolling).toBe(true);
+      poller.stop();
+    });
+
+    it('should throw a failed call from the loop, and stop polling', async () => {
+      const error = new Error('offline');
+      const poller = poll(async () => {
+        throw error;
+      });
+
+      await expect(poller.stream().next()).rejects.toBe(error);
+      expect(poller.isPolling).toBe(false);
+    });
+
+    it('should end at stop(), and when the signal aborts or was aborted already', async () => {
+      const poller = poll(() => new Promise<string>(() => undefined));
+      const controller = new AbortController();
+
+      const stopped = poller.stream().next();
+      poller.stop();
+      await expect(stopped).resolves.toStrictEqual({ value: undefined, done: true });
+
+      const aborted = poller.stream({ signal: controller.signal }).next();
+      controller.abort();
+      await expect(aborted).resolves.toStrictEqual({ value: undefined, done: true });
+      expect(poller.isPolling).toBe(false);
+
+      await expect(poller.stream({ signal: AbortSignal.abort() }).next()).resolves.toStrictEqual({
+        value: undefined,
+        done: true,
+      });
+      expect(poller.isPolling).toBe(false);
+    });
+  });
 });
