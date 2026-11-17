@@ -319,15 +319,15 @@ try {
 }
 ```
 
-| `kind`        | When                                                                                                | Fields                                  |
-| ------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| `response`    | The device answered with an error status, or with a body that isn't valid JSON                      | `code`, `url`, `statusCode`, `response` |
-| `timeout`     | The device didn't answer within the `timeout` option                                                | `url`, `timeout`                        |
-| `network`     | The connection failed, for example because the device is offline                                    | `url`, `cause`                          |
-| `certificate` | The certificate isn't from HomeWizard, or is issued to another identifier, so the token wasn't sent | `url`, `cause`                          |
-| `pairing`     | The button wasn't pressed in time, or the pairing was aborted                                       | `reason`                                |
-| `socket`      | The WebSocket failed, or the device sent an error over it                                           | `code`, `cause`                         |
-| `invalid`     | The arguments or options can't work, for example a missing identifier or an `http://` host          |                                         |
+| `kind`        | When                                                                                                                                                                      | Fields                                  |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `response`    | The device answered with an error status, or with a body that isn't valid JSON                                                                                            | `code`, `url`, `statusCode`, `response` |
+| `timeout`     | The device didn't answer within the `timeout` option                                                                                                                      | `url`, `timeout`                        |
+| `network`     | The connection failed, for example because the device is offline                                                                                                          | `url`, `cause`                          |
+| `certificate` | The certificate isn't from HomeWizard, or is issued to another identifier, so the token wasn't sent. `connect()` throws it for a device announced with another identifier | `url`, `cause`                          |
+| `pairing`     | The button wasn't pressed in time, or the pairing was aborted                                                                                                             | `reason`                                |
+| `socket`      | The WebSocket failed, or the device sent an error over it                                                                                                                 | `code`, `cause`                         |
+| `invalid`     | The arguments or options can't work, for example a missing identifier or an `http://` host                                                                                |                                         |
 
 With a `logger`, a device logs once when it answers with a newer API version than the 2.3.0 these types follow. It keeps working, because HomeWizard keeps each major version backward compatible, but the fields it added since aren't typed yet.
 

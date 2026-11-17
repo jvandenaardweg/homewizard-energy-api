@@ -11,7 +11,8 @@ import { ErrorCode, ErrorResponse } from './types';
  * - `timeout`: the device didn't answer within the `timeout` option.
  * - `network`: the connection failed, for example because the device is offline. `cause` has the error.
  * - `certificate`: the certificate isn't from HomeWizard, or is issued to another identifier than the stored
- *   one, so the token wasn't sent. Another device may answer at this address.
+ *   one, so the token wasn't sent. Another device may answer at this address. `connect()` throws it too, for a
+ *   device announced with another identifier.
  * - `pairing`: the button on the device wasn't pressed in time (`reason: 'timeout'`), or the pairing was
  *   aborted (`reason: 'aborted'`).
  * - `socket`: the WebSocket failed or the device sent an error over it, with its `code`.

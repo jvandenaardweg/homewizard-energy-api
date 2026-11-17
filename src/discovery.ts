@@ -134,7 +134,7 @@ export function connect(
 
   if (credentials.identifier && credentials.identifier !== txt.id) {
     throw new HomeWizardError(
-      'invalid',
+      'certificate',
       `The discovered device is "${txt.id}", not "${credentials.identifier}"`,
     );
   }

@@ -178,7 +178,11 @@ describe('connect', () => {
         options,
       ),
     ).toThrow(
-      'The discovered device is "appliance/p1dongle/3c39e7aabb02", not "appliance/p1dongle/000000000000"',
+      expect.objectContaining({
+        kind: 'certificate',
+        message:
+          'The discovered device is "appliance/p1dongle/3c39e7aabb02", not "appliance/p1dongle/000000000000"',
+      }),
     );
   });
 
