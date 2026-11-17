@@ -1,7 +1,18 @@
+export interface AsyncQueueOptions {
+  /** Runs once, when the iteration ends for any reason, including a `break` in the loop: remove listeners here. */
+  onDone?: () => void;
+  /** Ends the iteration when it aborts, or straight away when it already has. */
+  signal?: AbortSignal;
+  /**
+   * The most values kept while nobody reads them. When it's full, the oldest value is dropped, so a slow loop
+   * gets recent data instead of a growing backlog. Unlimited by default.
+   */
+  maxBuffered?: number;
+}
+
 /**
  * Turns pushed values into an async iterator, for `for await`. Values pushed while nobody waits are buffered.
- * `end()` finishes the iteration once the buffer is read, and `fail()` throws an error after it. `onDone` runs
- * once, when the iteration ends for any reason, including a `break` in the loop: use it to remove listeners.
+ * `end()` finishes the iteration once the buffer is read, and `fail()` throws an error after it.
  */
 export class AsyncQueue<T> implements AsyncIterableIterator<T> {
   protected readonly buffer: T[] = [];
@@ -11,30 +22,14 @@ export class AsyncQueue<T> implements AsyncIterableIterator<T> {
   }[] = [];
   protected done = false;
   protected error: { value: unknown } | undefined;
-  protected removeAbortListener: (() => void) | undefined;
+  protected readonly options: AsyncQueueOptions;
+  protected readonly onAbort = () => this.end();
 
-  constructor(protected readonly onDone: () => void = () => undefined) {}
+  constructor(options: AsyncQueueOptions = {}) {
+    this.options = options;
 
-  /** `true` once the iteration ended, or will end after the buffered values. */
-  get isDone(): boolean {
-    return this.done;
-  }
-
-  /** Ends the iteration when `signal` aborts, or straight away when it already has. */
-  endOn(signal: AbortSignal | undefined): this {
-    if (!signal) return this;
-
-    if (signal.aborted) {
-      this.end();
-      return this;
-    }
-
-    const onAbort = () => this.end();
-
-    signal.addEventListener('abort', onAbort, { once: true });
-    this.removeAbortListener = () => signal.removeEventListener('abort', onAbort);
-
-    return this;
+    if (options.signal?.aborted) this.end();
+    else options.signal?.addEventListener('abort', this.onAbort, { once: true });
   }
 
   push(value: T): void {
@@ -42,13 +37,13 @@ export class AsyncQueue<T> implements AsyncIterableIterator<T> {
 
     const waiter = this.waiting.shift();
 
-    if (waiter) waiter.resolve({ value, done: false });
-    else this.buffer.push(value);
-  }
+    if (waiter) {
+      waiter.resolve({ value, done: false });
+      return;
+    }
 
-  /** Finishes the iteration after the buffered values. */
-  end(): void {
-    this.finish();
+    if (this.buffer.length === this.options.maxBuffered) this.buffer.shift();
+    this.buffer.push(value);
   }
 
   /** Throws `error` from the iteration after the buffered values. */
@@ -56,7 +51,7 @@ export class AsyncQueue<T> implements AsyncIterableIterator<T> {
     if (this.done) return;
 
     this.error = { value: error };
-    this.finish();
+    this.end();
   }
 
   next(): Promise<IteratorResult<T, undefined>> {
@@ -80,7 +75,7 @@ export class AsyncQueue<T> implements AsyncIterableIterator<T> {
   return(): Promise<IteratorResult<T, undefined>> {
     this.buffer.length = 0;
     this.error = undefined;
-    this.finish();
+    this.end();
 
     return Promise.resolve({ value: undefined, done: true });
   }
@@ -89,12 +84,13 @@ export class AsyncQueue<T> implements AsyncIterableIterator<T> {
     return this;
   }
 
-  protected finish(): void {
+  /** Finishes the iteration after the buffered values. */
+  end(): void {
     if (this.done) return;
 
     this.done = true;
-    this.removeAbortListener?.();
-    this.onDone();
+    this.options.signal?.removeEventListener('abort', this.onAbort);
+    this.options.onDone?.();
 
     // Nothing is buffered while someone waits, so the waiters get the end or the error
     for (const waiter of this.waiting.splice(0)) {

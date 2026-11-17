@@ -94,9 +94,12 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
   protected authorizationSent = false;
   /** Connections in a row that the device dropped after the token was sent, before it authorized. */
   protected droppedAfterToken = 0;
-  protected closedByUser = false;
-  /** The error the socket stopped for, without reconnecting: a missing or rejected token. */
-  protected fatalError: HomeWizardError | undefined;
+  /** `true` once the socket stopped for good: `close()`, a missing or rejected token, or a drop without reconnect. */
+  protected stopped = false;
+  /** The error the socket stopped for: a missing or rejected token. */
+  protected stopError: HomeWizardError | undefined;
+  /** The running `stream()` iterators, which end when the socket stops. */
+  protected readonly streams = new Set<Pick<AsyncQueue<unknown>, 'end' | 'fail'>>();
   /** The topics a `stream()` subscribed to, which it unsubscribes when the last listener stops. */
   protected readonly streamSubscriptions = new Set<string>();
   protected reconnectAttempt = 0;
@@ -119,11 +122,6 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
 
     // An "error" event without a listener would throw, and crash the process from a socket callback
     this.emitter.on('error', () => undefined);
-  }
-
-  /** `true` when the socket won't connect again after the current connection: closed, or `reconnect: false`. */
-  protected get willNotReconnect(): boolean {
-    return this.closedByUser || !this.options.reconnect;
   }
 
   /** `true` while the connection is open and the device accepted the token. */
@@ -161,8 +159,8 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
   connect(): void {
     if (this.socket) return;
 
-    this.closedByUser = false;
-    this.fatalError = undefined;
+    this.stopped = false;
+    this.stopError = undefined;
     this.authorizationSent = false;
     clearTimeout(this.reconnectTimer);
 
@@ -191,7 +189,16 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
 
   /** Closes the connection, without reconnecting. */
   close(): void {
-    this.closedByUser = true;
+    this.stop();
+  }
+
+  /**
+   * Stops for good, without reconnecting: the one place the socket gives up. It emits `error` first, when there is
+   * one, closes the connection, and ends every `stream()`, or makes it throw `error`.
+   */
+  protected stop(error?: HomeWizardError): void {
+    this.stopped = true;
+    this.stopError = error;
     clearTimeout(this.reconnectTimer);
     this.stopHeartbeat();
 
@@ -199,9 +206,16 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     this.socket = null;
     this.authorized = false;
 
+    if (error) this.emitter.emit('error', error);
+
     if (socket) {
       socket.close(1000);
       this.emitter.emit('close', 1000, 'closed');
+    }
+
+    for (const stream of [...this.streams]) {
+      if (error) stream.fail(error);
+      else stream.end();
     }
   }
 
@@ -211,7 +225,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
    *
    * The stream keeps going while the socket reconnects. It ends when you `break` the loop, `signal` aborts, or
    * the socket closes for good (`close()`, or a drop with `reconnect: false`). It throws a `HomeWizardError`
-   * when the token is missing or rejected.
+   * when the token is missing or rejected. A loop that falls behind gets the latest data, not a backlog.
    *
    * @example
    * for await (const measurement of socket.stream('measurement')) {
@@ -224,32 +238,35 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
   ): AsyncIterableIterator<TTopics[K]> {
     const { signal } = options;
 
+    // An aborted signal ends the stream before it starts
+    if (signal?.aborted) return new AsyncQueue({ signal });
+
     const onData = (data: TTopics[K]) => queue.push(data);
-    const onClose = () => {
-      if (this.fatalError) queue.fail(this.fatalError);
-      else if (this.willNotReconnect) queue.end();
-    };
 
-    const queue = new AsyncQueue<TTopics[K]>(() => {
-      this.off(topic, onData);
-      this.off('close', onClose);
+    const queue: AsyncQueue<TTopics[K]> = new AsyncQueue<TTopics[K]>({
+      signal,
+      // Every topic is state: a slow loop only needs the latest
+      maxBuffered: 1,
+      onDone: () => {
+        this.streams.delete(queue);
+        this.off(topic, onData);
 
-      if (this.streamSubscriptions.has(topic) && this.emitter.listenerCount(topic) === 0) {
-        this.streamSubscriptions.delete(topic);
-        this.unsubscribe(topic);
-      }
-    }).endOn(signal);
+        if (this.streamSubscriptions.has(topic) && this.emitter.listenerCount(topic) === 0) {
+          this.streamSubscriptions.delete(topic);
+          this.unsubscribe(topic);
+        }
+      },
+    });
 
-    if (queue.isDone) return queue;
-
-    this.on(topic, onData);
-    this.on('close', onClose);
-
-    // A socket that closed for good emits no more events, so the stream ends straight away
-    if (!this.socket && this.willNotReconnect) {
-      onClose();
+    // A socket that stopped emits no more events, so the stream ends straight away
+    if (this.stopped) {
+      if (this.stopError) queue.fail(this.stopError);
+      else queue.end();
       return queue;
     }
+
+    this.streams.add(queue);
+    this.on(topic, onData);
 
     if (!this.subscriptions.has(topic) && !this.subscriptions.has('*')) {
       this.streamSubscriptions.add(topic);
@@ -344,13 +361,13 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     const { token } = this.connection;
 
     if (!token) {
-      this.fatalError = new HomeWizardError(
-        'socket',
-        'The device asks for a token, but there is none. Pair first, and pass the token.',
-        { code: 'user:unauthorized' },
+      this.stop(
+        new HomeWizardError(
+          'socket',
+          'The device asks for a token, but there is none. Pair first, and pass the token.',
+          { code: 'user:unauthorized' },
+        ),
       );
-      this.emitter.emit('error', this.fatalError);
-      this.close();
       return;
     }
 
@@ -383,13 +400,9 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
       { code },
     );
 
-    this.emitter.emit('error', error);
-
     // Reconnecting with the same token won't help
-    if (code === 'user:unauthorized') {
-      this.fatalError = error;
-      this.close();
-    }
+    if (code === 'user:unauthorized') this.stop(error);
+    else this.emitter.emit('error', error);
   }
 
   protected handleClose(code: number, reason: string): void {
@@ -408,18 +421,19 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     this.stopHeartbeat();
 
     if (this.droppedAfterToken >= REJECTED_TOKEN_DROPS) {
-      this.closedByUser = true;
-      this.fatalError = new HomeWizardError(
-        'socket',
-        'The device closed the connection after the token was sent, so the token is probably invalid',
-        { code: 'user:unauthorized' },
+      this.stop(
+        new HomeWizardError(
+          'socket',
+          'The device closed the connection after the token was sent, so the token is probably invalid',
+          { code: 'user:unauthorized' },
+        ),
       );
-      this.emitter.emit('error', this.fatalError);
     }
 
     this.emitter.emit('close', code, reason);
 
-    if (this.closedByUser || !this.options.reconnect) return;
+    if (!this.stopped && !this.options.reconnect) this.stop();
+    if (this.stopped) return;
 
     const delay = Math.min(
       this.options.maxReconnectDelay,
