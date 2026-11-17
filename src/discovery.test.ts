@@ -164,6 +164,35 @@ describe('connect', () => {
     expect(client.options.identifier).toBe('appliance/p1dongle/3c39e7aabb02');
   });
 
+  it('should refuse a txt record that names a property of Object, or announces no identifier', () => {
+    expect(() =>
+      connect(
+        {
+          ...mockDiscoveryV2Response,
+          txt: { ...mockDiscoveryV2Response.txt, product_type: 'constructor' },
+        },
+        credentials,
+        options,
+      ),
+    ).toThrow(
+      expect.objectContaining({ kind: 'invalid', message: expect.stringMatching(/"constructor"/) }),
+    );
+
+    const { id: _id, ...withoutId } = mockDiscoveryV2Response.txt;
+    expect(() =>
+      connect(
+        { ...mockDiscoveryV2Response, txt: withoutId as typeof mockDiscoveryV2Response.txt },
+        credentials,
+        options,
+      ),
+    ).toThrow(
+      expect.objectContaining({
+        kind: 'certificate',
+        message: expect.stringMatching(/announces no identifier/),
+      }),
+    );
+  });
+
   it('should accept the stored identifier in another case', () => {
     const upper = { ...credentials, identifier: mockDiscoveryV2Response.txt.id.toUpperCase() };
 

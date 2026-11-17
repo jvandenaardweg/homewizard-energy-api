@@ -50,7 +50,9 @@ export const CERTIFICATE_PRODUCT_TYPES: Record<ProductType, string> = {
  * getCertificateIdentifier('HWE-P1', '5c2fafaabbcc'); // 'appliance/p1dongle/5c2fafaabbcc'
  */
 export function getCertificateIdentifier(productType: string, serial: string): string | undefined {
-  const certificateProductType = CERTIFICATE_PRODUCT_TYPES[productType as ProductType];
+  const certificateProductType = Object.hasOwn(CERTIFICATE_PRODUCT_TYPES, productType)
+    ? CERTIFICATE_PRODUCT_TYPES[productType as ProductType]
+    : undefined;
 
   if (!certificateProductType) return undefined;
 
@@ -74,8 +76,12 @@ export function isCertificateError(error: unknown): boolean {
  * Returns `true` when two identifiers name the same device. Case doesn't matter, like in a certificate's name, so
  * an identifier typed from the serial on the device label, in capitals, still matches.
  */
-export function isSameIdentifier(a: string, b: string): boolean {
-  return a.trim().toLowerCase() === b.trim().toLowerCase();
+export function isSameIdentifier(a: unknown, b: unknown): boolean {
+  return (
+    typeof a === 'string' &&
+    typeof b === 'string' &&
+    a.trim().toLowerCase() === b.trim().toLowerCase()
+  );
 }
 
 function createCertificateIdentityError(message: string): Error {

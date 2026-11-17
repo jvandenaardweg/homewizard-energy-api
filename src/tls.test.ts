@@ -56,6 +56,11 @@ describe('v2/tls', () => {
       expect(onCertificate).toHaveBeenCalledWith('appliance/p1dongle/aa');
     });
 
+    it('should not build an identifier for a property of Object', () => {
+      expect(getCertificateIdentifier('constructor', '5c2fafaabbcc')).toBeUndefined();
+      expect(getCertificateIdentifier('toString', '5c2fafaabbcc')).toBeUndefined();
+    });
+
     it('should accept the identifier in another case, as typed from the device label', () => {
       const check = createCheckServerIdentity('appliance/p1dongle/5C2FAFAABBCC');
 
