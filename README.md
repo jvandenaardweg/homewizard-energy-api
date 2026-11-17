@@ -153,7 +153,7 @@ try {
 }
 ```
 
-Every error is a `HomeWizardError`, with a `kind` and the device's error `code`. See [Errors](#errors) for the kinds.
+The device classes, `pair()`, `connect()` and `discover()` throw a `HomeWizardError`, with a `kind` and the device's error `code`. See [Errors](#errors) for the kinds.
 
 ### Control your Plug-In Batteries
 
