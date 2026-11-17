@@ -474,6 +474,18 @@ describe('v2/DeviceSocket', () => {
       await expect(stream.next()).resolves.toStrictEqual({ value: undefined, done: true });
     });
 
+    it('should end on close() while the socket waits to reconnect', async () => {
+      const socket = open({ reconnectDelay: 5000 });
+      const next = socket.stream('measurement').next();
+
+      await waitFor(() => socket.isAuthorized);
+      server.connections[0].destroy();
+      await waitFor(() => !socket.isAuthorized);
+      socket.close();
+
+      await expect(next).resolves.toStrictEqual({ value: undefined, done: true });
+    });
+
     it('should end when the connection drops without reconnect', async () => {
       const socket = open({ reconnect: false });
       const stream = socket.stream('measurement');
