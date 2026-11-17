@@ -6,11 +6,11 @@ import {
   MockWebSocketServer,
   startMockWebSocketServer,
 } from '@/mocks/tls/websocket-server';
-import { KwhMeter1Phase } from './devices/kwh-meter';
-import { P1Meter } from './devices/p1-meter';
-import { PlugInBattery } from './devices/plug-in-battery';
-import { HomeWizardError } from './errors';
-import { DeviceSocket, WebSocketOptions } from './websocket';
+import { KwhMeter1Phase } from '../devices/kwh-meter';
+import { P1Meter } from '../devices/p1-meter';
+import { PlugInBattery } from '../devices/plug-in-battery';
+import { HomeWizardError } from '../errors';
+import { DeviceSocket, WebSocketOptions } from '.';
 
 /** Resolves once `predicate` is true, checking every 5ms. */
 async function waitFor(predicate: () => boolean, timeout = 3000): Promise<void> {

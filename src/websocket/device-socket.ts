@@ -1,57 +1,11 @@
 import { EventEmitter } from 'events';
-import { Dispatcher, WebSocket } from 'undici';
 import { AsyncQueue } from '@/shared/async-queue';
 import { Backoff } from '@/shared/backoff';
-import { log, LoggerOptions, redact } from '@/shared/logger';
-import { HomeWizardError } from './errors';
+import { log } from '@/shared/logger';
+import { HomeWizardError } from '../errors';
+import { Connection, ConnectionHandlers } from './connection';
 import { Heartbeat } from './heartbeat';
-import { Batteries, DeviceInformation, User } from './types';
-
-/**
- * The data of each WebSocket topic: the same as the response of its endpoint.
- *
- * @link https://api-documentation.homewizard.com/docs/v2/websocket#subscribe
- */
-export interface CommonTopics<TMeasurement, TSystem> {
-  device: DeviceInformation;
-  user: User[];
-  measurement: TMeasurement;
-  /** Only `cloud_enabled` and `status_led_brightness_pct` are pushed when they change. */
-  system: TSystem;
-}
-
-export interface BatteriesTopic {
-  /** Only `mode`, `permissions` and `target_power_w` are pushed when they change. */
-  batteries: Batteries;
-}
-
-export interface WebSocketOptions {
-  /** Connect again after the connection drops. Defaults to `true`. */
-  reconnect?: boolean;
-  /** The first delay before connecting again, in milliseconds. It doubles after each failed attempt. Defaults to `1000`. */
-  reconnectDelay?: number;
-  /** The longest delay before connecting again, in milliseconds. Defaults to `30000`. */
-  maxReconnectDelay?: number;
-  /**
-   * When nothing arrives for this long, in milliseconds, the socket asks the device for its information. When
-   * nothing arrives for twice as long, the connection is treated as dead and reconnected. Defaults to `30000`.
-   * Set to `0` to disable it.
-   */
-  heartbeatInterval?: number;
-}
-
-export interface StreamOptions {
-  /** Ends the stream, like a `break` in the loop. */
-  signal?: AbortSignal;
-}
-
-/** @internal */
-export interface DeviceSocketConnection {
-  url: string;
-  token: string | undefined;
-  dispatcher: Dispatcher;
-  logger: LoggerOptions | undefined;
-}
+import { Message, SocketTarget, StreamOptions, WebSocketOptions } from './types';
 
 /** After this many drops in a row between sending the token and `authorized`, the token counts as rejected. */
 const REJECTED_TOKEN_DROPS = 2;
@@ -59,11 +13,6 @@ const REJECTED_TOKEN_DROPS = 2;
 const DEFAULT_RECONNECT_DELAY = 1000;
 const DEFAULT_MAX_RECONNECT_DELAY = 30000;
 const DEFAULT_HEARTBEAT_INTERVAL = 30000;
-
-interface Message {
-  type: string;
-  data?: unknown;
-}
 
 /**
  * The WebSocket of a device: it pushes the data of the topics you subscribe to when it changes, so there's no
@@ -91,9 +40,8 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
   protected readonly emitter = new EventEmitter();
   protected readonly subscriptions = new Set<keyof TTopics | '*'>();
   protected readonly queue: Message[] = [];
-  protected socket: WebSocket | null = null;
-  protected authorized = false;
-  protected authorizationSent = false;
+  /** The open connection. A new one replaces it on each (re)connect. */
+  protected connection: Connection | null = null;
   /** Connections in a row that the device dropped after the token was sent, before it authorized. */
   protected droppedAfterToken = 0;
   /** `true` once the socket stopped for good: `close()`, a missing or rejected token, or a drop without reconnect. */
@@ -107,10 +55,11 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
   protected reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   protected readonly reconnectBackoff: Backoff;
   protected readonly heartbeat: Heartbeat;
+  protected readonly connectionHandlers: ConnectionHandlers;
   protected readonly options: Required<WebSocketOptions>;
 
   constructor(
-    protected readonly connection: DeviceSocketConnection,
+    protected readonly target: SocketTarget,
     options: WebSocketOptions = {},
   ) {
     this.options = {
@@ -131,6 +80,15 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
         this.dropConnection();
       },
     });
+    this.connectionHandlers = {
+      onActivity: () => this.heartbeat.touch(),
+      onMessage: message => this.handleMessage(message),
+      onAuthorized: () => this.handleAuthorized(),
+      onMissingToken: () => this.handleMissingToken(),
+      onError: error => this.emitter.emit('error', error),
+      onClose: (code, reason, awaitingAuthorization) =>
+        this.handleClose(code, reason, awaitingAuthorization),
+    };
 
     // An "error" event without a listener would throw, and crash the process from a socket callback
     this.emitter.on('error', () => undefined);
@@ -138,11 +96,11 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
 
   /** `true` while the connection is open and the device accepted the token. */
   get isAuthorized(): boolean {
-    return this.authorized;
+    return this.connection?.isAuthorized ?? false;
   }
 
   protected log(...args: unknown[]): void {
-    log(this.connection.logger, ...args);
+    log(this.target.logger, ...args);
   }
 
   /** Data of a topic you subscribed to. */
@@ -169,34 +127,13 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
 
   /** Connects. Called by `openWebSocket()`, and does nothing while connected or connecting. */
   connect(): void {
-    if (this.socket) return;
+    if (this.connection) return;
 
     this.stopped = false;
     this.stopError = undefined;
-    this.authorizationSent = false;
     clearTimeout(this.reconnectTimer);
 
-    this.log(`Connecting to ${this.connection.url}`);
-
-    const socket = new WebSocket(this.connection.url, { dispatcher: this.connection.dispatcher });
-    this.socket = socket;
-
-    socket.onmessage = event => {
-      if (this.socket === socket) this.handleMessage(event.data);
-    };
-    socket.onerror = event => {
-      if (this.socket !== socket) return;
-
-      const cause = (event as unknown as { error?: unknown }).error;
-      const detail = cause instanceof Error && cause.message ? `: ${cause.message}` : '';
-      this.emitter.emit(
-        'error',
-        new HomeWizardError('socket', `The WebSocket connection failed${detail}`, { cause }),
-      );
-    };
-    socket.onclose = event => {
-      if (this.socket === socket) this.handleClose(event.code, event.reason);
-    };
+    this.connection = new Connection(this.target, this.connectionHandlers);
   }
 
   /** Closes the connection, without reconnecting. */
@@ -214,14 +151,13 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     clearTimeout(this.reconnectTimer);
     this.heartbeat.stop();
 
-    const { socket } = this;
-    this.socket = null;
-    this.authorized = false;
+    const { connection } = this;
+    this.connection = null;
 
     if (error) this.emitter.emit('error', error);
 
-    if (socket) {
-      socket.close(1000);
+    if (connection) {
+      connection.close(1000);
       this.emitter.emit('close', 1000, 'closed');
     }
 
@@ -315,7 +251,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
    * sent on each authorization.
    */
   protected send(message: Message, isSubscription = false): void {
-    if (this.socket && this.authorized) {
+    if (this.isAuthorized) {
       this.write(message);
       return;
     }
@@ -324,33 +260,17 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
   }
 
   protected write(message: Message): void {
-    this.log(`Sending ${redact(message)}`);
-    this.socket?.send(JSON.stringify(message));
+    this.connection?.send(message);
   }
 
-  protected handleMessage(raw: unknown): void {
-    this.heartbeat.touch();
-
-    let message: Message;
-
-    try {
-      message = JSON.parse(String(raw)) as Message;
-    } catch {
-      this.emitter.emit(
-        'error',
-        new HomeWizardError('socket', `Received a message that is not JSON: ${String(raw)}`),
-      );
-      return;
-    }
-
-    this.log(`Received ${message.type}`);
+  /** A message of the open connection. The connection answers the ones of the authorization itself. */
+  protected handleMessage(message: Message): void {
     this.emitter.emit('message', message);
 
     switch (message.type) {
       case 'authorization_requested':
-        return this.authorize();
       case 'authorized':
-        return this.handleAuthorized();
+        return;
       case 'error':
         return this.handleDeviceError(message.data);
       default:
@@ -365,27 +285,17 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     }
   }
 
-  protected authorize(): void {
-    const { token } = this.connection;
-
-    if (!token) {
-      this.stop(
-        new HomeWizardError(
-          'socket',
-          'The device asks for a token, but there is none. Pair first, and pass the token.',
-          { code: 'user:unauthorized' },
-        ),
-      );
-      return;
-    }
-
-    // Not logged: the message has the token
-    this.socket?.send(JSON.stringify({ type: 'authorization', data: token }));
-    this.authorizationSent = true;
+  protected handleMissingToken(): void {
+    this.stop(
+      new HomeWizardError(
+        'socket',
+        'The device asks for a token, but there is none. Pair first, and pass the token.',
+        { code: 'user:unauthorized' },
+      ),
+    );
   }
 
   protected handleAuthorized(): void {
-    this.authorized = true;
     this.reconnectBackoff.reset();
 
     for (const topic of this.subscriptions) {
@@ -413,19 +323,22 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     else this.emitter.emit('error', error);
   }
 
-  protected handleClose(code: number, reason: string): void {
+  /**
+   * The open connection closed, without `close()`. `awaitingAuthorization` tells whether the token was sent and
+   * the device hadn't accepted it yet.
+   */
+  protected handleClose(code: number, reason: string, awaitingAuthorization: boolean): void {
     this.log(`Connection closed (${code}${reason ? `: ${reason}` : ''})`);
 
     // The device drops the connection without an error message when the token is wrong. A network drop in that
     // moment looks the same, so only two in a row count as a rejected token.
-    if (this.authorizationSent && !this.authorized) {
+    if (awaitingAuthorization) {
       this.droppedAfterToken++;
     } else {
       this.droppedAfterToken = 0;
     }
 
-    this.socket = null;
-    this.authorized = false;
+    this.connection = null;
     this.heartbeat.stop();
 
     if (this.droppedAfterToken >= REJECTED_TOKEN_DROPS) {
@@ -451,10 +364,10 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
 
   /** Treats the connection as dead: closes it and reconnects, without waiting for a close handshake. */
   protected dropConnection(): void {
-    // The heartbeat only runs while connected, so there is a socket
-    (this.socket as WebSocket).close();
+    // The heartbeat only runs on an authorized connection, so there is one
+    (this.connection as Connection).close();
 
-    this.handleClose(1006, 'no response');
+    this.handleClose(1006, 'no response', false);
   }
 }
 

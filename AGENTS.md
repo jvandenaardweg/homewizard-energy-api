@@ -34,7 +34,7 @@ This is a typed Node client for the HomeWizard Energy local API: API v2 over HTT
 The change is done when every applicable item is covered:
 
 1. The function goes in `src/endpoints.ts`, and the method on each device class in `src/devices/` whose device supports it, per the upstream docs.
-2. Types go in `src/types.ts`, and a new WebSocket topic in `src/websocket.ts`.
+2. Types go in `src/types.ts`, and a new WebSocket topic in `src/websocket/types.ts`.
 3. Fixtures go in `src/mocks/data/v2.ts`, mocked with `mockV2()` from `src/mocks/api-v2.ts`.
 4. Tests go in `src/endpoints.test.ts` and the table in `src/devices/devices.test.ts`, including the device's `missing` methods.
 5. For a new device, add an example to `src/examples/`, and its product type to `ProductTypeList` in `src/types.ts`, `CERTIFICATE_PRODUCT_TYPES` in `src/tls.ts` and `DEVICE_CLASSES` in `src/discovery.ts`, export it from `src/devices/index.ts`, and add it to the README's method table. When the device also has a v1 class, that class stays in `src/v1/` until upstream removes the API v1.
