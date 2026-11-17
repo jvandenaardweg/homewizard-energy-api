@@ -530,5 +530,19 @@ describe('v2/DeviceSocket', () => {
         message: expect.stringMatching(/probably invalid/),
       });
     });
+
+    it('should throw when the device sends a user:unauthorized error', async () => {
+      const socket = open();
+      const next = socket.stream('measurement').next();
+      await waitFor(() => socket.isAuthorized);
+
+      server.connections[0].send({ type: 'error', data: { message: 'user:unauthorized' } });
+
+      await expect(next).rejects.toMatchObject({
+        kind: 'socket',
+        code: 'user:unauthorized',
+        message: 'The device sent an error: user:unauthorized',
+      });
+    });
   });
 });
