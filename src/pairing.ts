@@ -1,3 +1,4 @@
+import { formatError } from '@/shared/errors';
 import { Client, Credentials, DeviceOptions } from './client';
 import { createUser, getDevice } from './endpoints';
 import { HomeWizardError } from './errors';
@@ -153,7 +154,7 @@ export async function pair(
         client.log(
           isWaitingForButton
             ? 'The button is not pressed yet, trying again'
-            : `Pairing attempt failed, trying again: ${String(error)}`,
+            : `Pairing attempt failed, trying again: ${formatError(error)}`,
         );
 
         // Don't wait past the pair timeout

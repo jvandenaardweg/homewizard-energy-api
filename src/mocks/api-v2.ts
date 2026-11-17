@@ -1,5 +1,6 @@
 import { IncomingHttpHeaders } from 'http';
 import { mockApiAgent } from './api';
+import { mockV2Identifier, mockV2Token } from './data/v2';
 
 /*
  * Interceptors for the API v2. The tests pass `mockApiAgent` as the `dispatcher` option, because the device
@@ -68,8 +69,8 @@ export function mockV2(path: string, method: string, options: MockV2Options = {}
 /** The credentials of the mocked device, as `pair()` returns them. */
 export const mockV2Credentials = {
   host: mockV2Host,
-  identifier: 'appliance/p1dongle/5c2fafaabbcc',
-  token: '0123456789ABCDEF0123456789ABCDEF',
+  identifier: mockV2Identifier,
+  token: mockV2Token,
 };
 
 /** The options for the internal `Client`: the credentials without the host, and the mock dispatcher. */

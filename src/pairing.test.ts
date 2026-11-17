@@ -1,6 +1,6 @@
 import { mockApiAgent } from '@/mocks/api';
 import { mockV2, mockV2Host, mockV2Pool } from '@/mocks/api-v2';
-import { mockV2DeviceInformation, mockV2UserCreated } from '@/mocks/data/v2';
+import { mockV2DeviceInformation, mockV2Identifier, mockV2UserCreated } from '@/mocks/data/v2';
 import {
   mockTlsCa,
   mockTlsIdentifier,
@@ -11,7 +11,7 @@ import { HomeWizardError } from './errors';
 import { getIdentifier, isRetryable, pair } from './pairing';
 import { CERTIFICATE_IDENTITY_ERROR_CODE } from './tls';
 
-const identifier = 'appliance/p1dongle/5c2fafaabbcc';
+const identifier = mockV2Identifier;
 const options = { dispatcher: mockApiAgent, identifier };
 
 const mockButtonNotPressed = (times = 1) =>

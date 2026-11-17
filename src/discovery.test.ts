@@ -2,11 +2,11 @@ import * as multicastDns from 'multicast-dns';
 import { HomeWizardEnergyDiscovery } from '@/v1/homewizard-energy-discovery';
 import { mockApiAgent } from '@/mocks/api';
 import { mockMdnsResponse } from '@/mocks/mdns';
-import { mockMdnsV2Response } from '@/mocks/mdns-v2';
+import { mockDiscoveryV2Response, mockMdnsV2Response } from '@/mocks/mdns-v2';
 import { KwhMeter1Phase, KwhMeter3Phase } from './devices/kwh-meter';
 import { P1Meter } from './devices/p1-meter';
 import { PlugInBattery } from './devices/plug-in-battery';
-import { connect, discover, Discovery, DiscoveryResponse } from './discovery';
+import { connect, discover, Discovery } from './discovery';
 
 const querySpy = vi.fn();
 const onSpy = vi.fn();
@@ -29,21 +29,8 @@ function getResponseHandler(
   discovery.start();
   discovery.on('response', callback);
 
-  return onSpy.mock.calls.at(-1)?.[1] as (response: multicastDns.ResponsePacket) => void;
+  return lastHandler('response') as (response: multicastDns.ResponsePacket) => void;
 }
-
-const discovered: DiscoveryResponse = {
-  ip: '192.168.1.35',
-  hostname: 'p1meter-AABB02.local',
-  fqdn: 'p1meter-AABB02._homewizard._tcp.local',
-  txt: {
-    serial: '3c39e7aabb02',
-    product_type: 'HWE-P1',
-    product_name: 'P1 Meter',
-    id: 'appliance/p1dongle/3c39e7aabb02',
-    api_version: '2.2.0',
-  },
-};
 
 /** Returns the last mDNS handler registered for `event`. */
 function lastHandler(event: string) {
@@ -59,7 +46,7 @@ describe('discover', () => {
 
     lastHandler('response')(mockMdnsV2Response);
 
-    await expect(next).resolves.toStrictEqual({ value: discovered, done: false });
+    await expect(next).resolves.toStrictEqual({ value: mockDiscoveryV2Response, done: false });
     await devices.return?.();
     expect(destroySpy).toHaveBeenCalledTimes(1);
   });
@@ -116,7 +103,7 @@ describe('Discovery', () => {
 
     handler(mockMdnsV2Response);
 
-    expect(callback).toHaveBeenCalledWith(discovered);
+    expect(callback).toHaveBeenCalledWith(mockDiscoveryV2Response);
   });
 
   it('should ignore a device on _hwenergy._tcp', () => {
@@ -139,7 +126,11 @@ describe('Discovery', () => {
 });
 
 describe('connect', () => {
-  const credentials = { host: '192.168.1.99', token: 'x', identifier: discovered.txt.id };
+  const credentials = {
+    host: '192.168.1.99',
+    token: 'x',
+    identifier: mockDiscoveryV2Response.txt.id,
+  };
   const options = { dispatcher: mockApiAgent };
 
   it.each([
@@ -151,7 +142,10 @@ describe('connect', () => {
     ['HWE-BAT', PlugInBattery],
   ])('should return the device class for %s', (productType, DeviceClass) => {
     const device = connect(
-      { ...discovered, txt: { ...discovered.txt, product_type: productType } },
+      {
+        ...mockDiscoveryV2Response,
+        txt: { ...mockDiscoveryV2Response.txt, product_type: productType },
+      },
       credentials,
       options,
     );
@@ -160,7 +154,7 @@ describe('connect', () => {
   });
 
   it('should use the discovered IP instead of the stored host, and the stored identifier', () => {
-    const device = connect(discovered, credentials, options);
+    const device = connect(mockDiscoveryV2Response, credentials, options);
     const { client } = device as unknown as {
       client: { baseUrl: string; options: { identifier: string } };
     };
@@ -173,7 +167,7 @@ describe('connect', () => {
   it('should refuse a device announced with another identifier, so the token is not sent to it', () => {
     expect(() =>
       connect(
-        discovered,
+        mockDiscoveryV2Response,
         { ...credentials, identifier: 'appliance/p1dongle/000000000000' },
         options,
       ),
@@ -187,21 +181,24 @@ describe('connect', () => {
   });
 
   it('should not take the identifier from discovery', () => {
-    expect(() => connect(discovered, { token: 'x' }, options)).toThrow(
+    expect(() => connect(mockDiscoveryV2Response, { token: 'x' }, options)).toThrow(
       /"identifier" of the credentials is required/,
     );
   });
 
   it('should allow a missing identifier with insecure', () => {
-    expect(connect(discovered, {}, { insecure: true, dispatcher: mockApiAgent })).toBeInstanceOf(
-      P1Meter,
-    );
+    expect(
+      connect(mockDiscoveryV2Response, {}, { insecure: true, dispatcher: mockApiAgent }),
+    ).toBeInstanceOf(P1Meter);
   });
 
   it('should throw for a product type without a device class', () => {
     expect(() =>
       connect(
-        { ...discovered, txt: { ...discovered.txt, product_type: 'HWE-SKT' } },
+        {
+          ...mockDiscoveryV2Response,
+          txt: { ...mockDiscoveryV2Response.txt, product_type: 'HWE-SKT' },
+        },
         credentials,
         options,
       ),

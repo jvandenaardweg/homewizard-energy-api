@@ -136,8 +136,5 @@ export function connect(
     );
   }
 
-  return new DeviceClass(
-    { host: found.ip, token: credentials.token, identifier: credentials.identifier },
-    options,
-  );
+  return new DeviceClass({ ...credentials, host: found.ip }, options);
 }
