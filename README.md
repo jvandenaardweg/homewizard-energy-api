@@ -194,6 +194,78 @@ console.log(telegram.power.import.t1); // { value: 10830.511, unit: 'kWh' }
 
 The measurement already has the parsed values; the telegram is the raw data from the smart meter.
 
+## Recipes for the API v1
+
+The Energy Socket and the Watermeter only have the API v1 for now. It uses plain HTTP without a token: turn on the `Local API` setting for the device in the HomeWizard app. The full reference is in [docs/v1.md](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/docs/v1.md).
+
+### Switch an Energy Socket on and off
+
+```typescript
+import { EnergySocketApi } from 'homewizard-energy-api/v1';
+
+const socket = new EnergySocketApi('http://192.168.1.10');
+
+await socket.getState(); // { power_on: true, switch_lock: false, brightness: 255 }
+
+await socket.updateState({ power_on: false }); // { power_on: false }
+await socket.updateState({ brightness: 128 }); // the LED ring at 50%
+```
+
+With `switch_lock: true` the socket stays on, and can't be turned off until you set it back to `false`.
+
+### Read what an Energy Socket uses
+
+```typescript
+const data = await socket.getData();
+// {
+//   total_power_import_kwh: 30.511,
+//   total_power_export_kwh: 85.951,
+//   active_power_w: 543.312,
+//   active_voltage_v: 231.539,
+//   active_current_a: 2.346,
+//   ...
+// }
+```
+
+### Follow an Energy Socket's usage
+
+```typescript
+const socket = new EnergySocketApi('http://192.168.1.10', { polling: { interval: 1000 } });
+
+socket.polling.getData.on('response', data => console.log(data.active_power_w)); // 543.312, each second
+socket.polling.getData.on('error', error => console.error(error));
+socket.polling.getData.start();
+```
+
+`socket.polling.getState` follows the switch the same way.
+
+### Read the Watermeter
+
+```typescript
+import { WaterMeterApi } from 'homewizard-energy-api/v1';
+
+const water = new WaterMeterApi('http://192.168.1.12');
+
+const { total_liter_m3, active_liter_lpm } = await water.getData(); // 123.456, 7.2
+```
+
+The Watermeter only has a local API when it's powered over USB.
+
+### Find the API v1 devices on your network
+
+```typescript
+import { HomeWizardEnergyDiscovery } from 'homewizard-energy-api/v1';
+
+const discovery = new HomeWizardEnergyDiscovery();
+
+discovery.start();
+discovery.on('response', found => {
+  console.log(found.ip, found.txt.product_type); // 192.168.1.10 HWE-SKT
+});
+```
+
+It finds every device with the API v1 turned on, including the P1 and kWh meters. Call `discovery.stop()` when you're done.
+
 ## Reference
 
 ### Pairing
