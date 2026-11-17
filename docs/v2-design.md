@@ -1,12 +1,25 @@
 # API v2 design sketch
 
-Status: decisions made (16 November 2026). Nothing here is implemented yet. The build order is in [v2-implementation-plan.md](v2-implementation-plan.md).
+Status: implemented, and reshaped for 3.0 on 17 November 2026 (see [3.0](#30)). The original build order is in [v2-implementation-plan.md](v2-implementation-plan.md).
 
 This sketch describes how to add the HomeWizard API v2 to this library. It is based on the upstream docs at [homewizard/api-documentation@d89ea01](https://github.com/homewizard/api-documentation/tree/d89ea01) (11 November 2026) and on a review of [jvandenaardweg/homewizard-energy-api#135](https://github.com/jvandenaardweg/homewizard-energy-api/pull/135).
 
+## 3.0
+
+The first build added the API v2 as a `v2` namespace next to the v1 classes, so it could ship in 2.x. Before it shipped, the maintainer chose to release it as 3.0 instead, with the API v2 as the library and v1 frozen beside it:
+
+- **Entry points:** an `exports` map with `.` (the API v2, without a namespace: `P1Meter`, `pair`, `discover`), `./v1` (the v1 classes, unchanged, until upstream removes v1) and `./telegram` (`parseTelegram()`). The package is ESM; `require(esm)` covers CommonJS users on Node 22.12+.
+- **Credentials:** `pair()` returns `{ host, token, identifier, name }`, and the device classes take it as their first argument, with the connection options second. Users store one value.
+- **`connect(found, credentials)`** replaces `fromDiscovery()`, with the same identifier check.
+- **One error:** `HomeWizardError` with a `kind` (`response`, `timeout`, `network`, `certificate`, `pairing`, `socket`, `invalid`) and the device's `code`, instead of three v2 classes that extended the v1 errors.
+- **Async iterators** next to the events: `discover()` and `socket.stream(topic)`.
+- **No `date-fns`:** the telegram parser formats its one timestamp itself.
+
+The decisions below are from the first build. Where they mention `v2.*`, `fromDiscovery()` or the v2 error classes, read the 3.0 names above.
+
 ## Decisions
 
-1. **Export: a `v2` namespace from the root.** `import { v2 } from 'homewizard-energy-api'`, then `new v2.P1Meter(...)`, with types as `v2.P1MeterMeasurement`. It's additive, so it ships in 2.x. A subpath (`homewizard-energy-api/v2`) would need an `exports` map, which is semver-major, so it waits for v3. A code search on GitHub found no consumer that deep-imports from `dist/`. A spike confirmed that `export * as v2 from './v2'` works through `tsc` + `tsc-alias`: at runtime, in the emitted `.d.ts`, and for consumer types.
+1. **Export: a `v2` namespace from the root** (replaced in 3.0). `import { v2 } from 'homewizard-energy-api'`, then `new v2.P1Meter(...)`, with types as `v2.P1MeterMeasurement`. It's additive, so it ships in 2.x. A subpath (`homewizard-energy-api/v2`) would need an `exports` map, which is semver-major, so it waits for v3. A code search on GitHub found no consumer that deep-imports from `dist/`. A spike confirmed that `export * as v2 from './v2'` works through `tsc` + `tsc-alias`: at runtime, in the emitted `.d.ts`, and for consumer types.
 2. **Polling: WebSocket first, plus one `v2.poll()` helper.** Device classes have no `polling` getter. `v2.poll(() => p1.getMeasurement(), { interval })` returns a poller with `start()`, `stop()` and `on('response' | 'error')`, on top of the same shared loop that v1 uses.
 3. **v1: extract the shared code, deprecate per device.** The v1 public API stays as it is in 2.x. A v1 class gets `@deprecated` only once its v2 class has been verified on hardware: `P1MeterApi` after `v2.P1Meter`, and the kWh classes after `v2.KwhMeter1Phase`/`3Phase`. `EnergySocketApi` and `WaterMeterApi` stay undeprecated until upstream ships v2 for those devices. v1 is removed in a later major release, once upstream removes it or every device has v2.
 4. **Identifier: learned at pairing, required after that.** `pair()` checks only the certificate chain and captures the certificate's CN (`appliance/<type>/<serial>`), returning `{ token, identifier }`. After that, the device constructors require `identifier` unless `insecure: true`. This works like SSH `known_hosts`. A spike with a local TLS server and a test CA confirmed four things: undici passes `checkServerIdentity` through to `tls.connect`, the CN can be captured, a wrong CN is rejected, and undici's `WebSocket` runs the same check through `dispatcher`. It hasn't been tested against a real device yet.
@@ -24,40 +37,46 @@ The endpoints are plain functions that take a client, and the device classes cal
 
 ```
 src/
+  index.ts                 # the package root: the API v2
+  client.ts                # Client (internal): base URL, TLS agent, token, X-Api-Version, errors, redact(); Credentials, DeviceOptions
+  tls.ts                   # HomeWizard CA, checkServerIdentity on the CN, getCertificateIdentifier()
+  errors.ts                # HomeWizardError { kind, code }, toHomeWizardError()
+  endpoints.ts             # one function per endpoint: (client, ...args) => Promise<T>
+  pairing.ts               # pair(): retries POST /api/user until the button is pressed
+  poll.ts                  # poll(fn, options), on shared/poller.ts
+  websocket.ts             # DeviceSocket<Topics>, with stream()
+  devices/
+    device.ts              # Device: what every device has
+    p1-meter.ts  kwh-meter.ts (KwhMeter1Phase, KwhMeter3Phase)  plug-in-battery.ts
+  discovery.ts             # Discovery on _homewizard._tcp, discover(), connect()
+  types.ts                 # mirrors upstream, snake_case, optional data points
   shared/                  # extracted from base-api.ts, used by v1 and v2
     request.ts             # undici request + timeout race, isResponseOk, parseJsonResponse
-    errors.ts              # HomeWizardEnergyApiError and friends (re-exported unchanged)
+    errors.ts              # the v1 errors, HomeWizardEnergyApiError and friends
     logger.ts
-    poller.ts              # the polling loop (BaseApi.startPolling and v2.poll use it)
+    poller.ts              # the polling loop (BaseApi.startPolling and poll() use it)
     mdns-discovery.ts      # MdnsDiscovery: TXT/PTR/A parsing, with the service type as a parameter
-  v2/
-    client.ts              # Client (internal): base URL, TLS agent, token, X-Api-Version, errors, redact()
-    tls.ts                 # HomeWizard CA, checkServerIdentity on the CN, getCertificateIdentifier()
-    errors.ts              # HomeWizardApiV2Error { code }, HomeWizardApiV2PairingError, HomeWizardApiV2WebSocketError
-    endpoints.ts           # one function per endpoint: (client, ...args) => Promise<T>
-    pairing.ts             # pair(): retries POST /api/user until the button is pressed
-    poll.ts                # v2.poll(fn, options), on shared/poller.ts
-    websocket.ts           # DeviceSocket<Topics>
-    devices/
-      device.ts            # Device: what every v2 device has
-      p1-meter.ts  kwh-meter.ts (KwhMeter1Phase, KwhMeter3Phase)  plug-in-battery.ts
-    discovery.ts           # v2.Discovery on _homewizard._tcp, fromDiscovery()
-    types.ts               # mirrors upstream, snake_case, optional data points
-    index.ts
+    async-queue.ts         # AsyncQueue: events to an async iterator
+  telegram/                # parseTelegram(), the ./telegram entry point
+  v1/                      # the frozen API v1, the ./v1 entry point
 ```
 
 **Refactoring `base-api.ts`.** `BaseApi` is exported and its protected methods are part of the public API for anyone who subclasses it. In 2.x its signatures stay as they are. The bodies moved into `shared/`, and `BaseApi` calls them. v2 uses `shared/` directly and never extends `BaseApi`.
 
 ### Client
 
-The device constructors take `DeviceOptions`:
+The device constructors take `Credentials` and `DeviceOptions`:
 
 ```ts
-interface DeviceOptions {
+interface Credentials {
+  host: string;
   /** From pair(). Without one, every request fails with user:unauthorized. */
   token?: string;
   /** `appliance/<cert product type>/<serial>`, returned by pair(). Required unless `insecure`. */
   identifier?: string;
+}
+
+interface DeviceOptions {
   /** Skip the certificate checks. Debugging only. */
   insecure?: boolean;
   /** Until the response headers arrive, including connecting. Defaults to 5000. */
@@ -72,19 +91,20 @@ interface DeviceOptions {
 
 - Only `pair()` connects without an identifier, using a chain-only check, and it returns the identifier from the certificate (decision 4). With `insecure: true` it builds the identifier from `GET /api` instead, because Node skips the identity check when the chain check fails. The constructors throw when `identifier` is missing and `insecure` isn't set.
 - The certificate uses legacy product types (`p1dongle`, `energymeter`, `battery`, …), so `getCertificateIdentifier()` builds the identifier from `product_type` and `serial`.
-- Errors: JSON endpoints return `{"error": "<scope>:<code>"}`, and `/api/telegram` returns the code as plain text. Both map to `HomeWizardApiV2Error.code`, which extends the v1 `HomeWizardEnergyApiResponseError`. The type is a union of the known codes plus `string`, because upstream says new codes will be added.
+- Errors: JSON endpoints return `{"error": "<scope>:<code>"}`, and `/api/telegram` returns the code as plain text. Both map to `HomeWizardError.code`, with kind `response`. The type is a union of the known codes plus `string`, because upstream says new codes will be added. `Client.send()` wraps timeouts, network and certificate errors in a `HomeWizardError` too, with the original as `cause`.
 - Logged request and response bodies go through `redact()`, so a `token` field never reaches a log.
 
 ### Devices
 
 ```ts
 class P1Meter {
-  constructor(host: string, options: DeviceOptions);
+  constructor(credentials: Credentials, options?: DeviceOptions);
+  readonly host: string;
   static pair(
     host: string,
     name: string,
     options?: PairOptions,
-  ): Promise<{ device: P1Meter; token: string; name: string; identifier: string }>;
+  ): Promise<{ device: P1Meter; credentials: PairResult }>;
 
   getDevice(): Promise<DeviceInformation>;
   getMeasurement(): Promise<P1MeterMeasurement>;
@@ -105,15 +125,16 @@ class P1Meter {
 
 The method names follow the endpoints (`getMeasurement`, `getDevice`), not v1's `getData`/`getBasicInformation`. Nothing needs to stay compatible with v1, because these are new classes.
 
-**Parsed telegram.** v2 measurement already includes the Belgian capacity-tariff fields and the external gas and water meters. Upstream says: "If you need parsed data, use the measurement endpoint". So v2 has no `getParsedTelegram`, and `parseTelegram()` is exported from the package root for anyone who wants it.
+**Parsed telegram.** v2 measurement already includes the Belgian capacity-tariff fields and the external gas and water meters. Upstream says: "If you need parsed data, use the measurement endpoint". So v2 has no `getParsedTelegram`, and `parseTelegram()` is exported from `homewizard-energy-api/telegram` for anyone who wants it.
 
 ### WebSocket
 
 ```ts
 const socket = p1.openWebSocket();
 socket.on('measurement', m => ...);   // typed per device
-socket.on('error', e => ...);         // HomeWizardApiV2WebSocketError, from {"type":"error","data":{"message":"..."}}
+socket.on('error', e => ...);         // HomeWizardError (kind 'socket'), from {"type":"error","data":{"message":"..."}}
 socket.subscribe('measurement');
+for await (const m of socket.stream('measurement')) { ... }  // subscribes, and unsubscribes when the loop ends
 socket.request('system');             // one-off read over the socket
 socket.set('system', { status_led_brightness_pct: 50 });
 socket.identify();
@@ -127,9 +148,9 @@ socket.close();
 
 ### Discovery
 
-`HomeWizardEnergyDiscovery` and its `DiscoveryResponse` don't change. The PR widens `txt` to a union, and that changes a response type. `v2.Discovery` browses `_homewizard._tcp` and returns its own response type, with `api_version` and `id`. Both discovery classes extend `shared/mdns-discovery.ts`. A device that speaks both versions shows up once in each.
+`HomeWizardEnergyDiscovery` and its `DiscoveryResponse` don't change. The PR widens `txt` to a union, and that changes a response type. `Discovery` browses `_homewizard._tcp` and returns its own response type, with `api_version` and `id`. Both discovery classes extend `shared/mdns-discovery.ts`. A device that speaks both versions shows up once in each.
 
-mDNS is unauthenticated, so the discovered `id` is not trusted as the identifier. `v2.fromDiscovery(response, { token, identifier })` takes the identifier stored at pairing, and throws when the discovered `id` differs. It finds a paired device at its current IP. To pair with a discovered device, pass its IP to `pair()`.
+mDNS is unauthenticated, so the discovered `id` is not trusted as the identifier. `connect(found, credentials)` takes the identifier stored at pairing, and throws when the discovered `id` differs. It finds a paired device at its current IP. `discover()` yields the discovered devices as an async iterator. To pair with a discovered device, pass its IP to `pair()`.
 
 ## Capability matrix (from the docs)
 

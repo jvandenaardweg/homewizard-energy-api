@@ -19,31 +19,39 @@ Full type-safe implementation of the HomeWizard Energy local API in Node. Read a
 
 - Complete type-safety on all API methods, responses, and errors
 - The API v2: pairing with the button on the device, HTTPS with certificate checks, and a WebSocket that pushes updates
-- The API v1, for the devices that don't have the API v2 yet
+- The API v1 under `homewizard-energy-api/v1`, for the devices that don't have the API v2 yet
 - Discovers the devices on your network using Multicast DNS
-- Polling helpers for near real-time data over HTTP
+- Async iterators for discovery and the WebSocket, next to the events
 - Turns the P1 telegram text into a detailed object, including the Belgian capacity tariff
 - Includes inline documentation on each method, type and property
 - Follows the official [HomeWizard Energy API documentation](https://api-documentation.homewizard.com/docs/introduction)
 
 ## Installation
 
-This library requires Node 22.19 or higher. Version 1.x supports Node 14.18 and higher. TypeScript is only required for type-safety, the library also works without it.
+This library requires Node 22.19 or higher. TypeScript is only required for type-safety, the library also works without it.
 
 ```bash
 npm install homewizard-energy-api
 ```
 
+The package is ESM. CommonJS code can still `require()` it, because Node 22.12 and later load ESM from `require()`. It has three entry points:
+
+| Import                           | What it has                                                    |
+| -------------------------------- | -------------------------------------------------------------- |
+| `homewizard-energy-api`          | The API v2: the device classes, pairing, discovery and errors  |
+| `homewizard-energy-api/v1`       | The API v1 classes, for the Energy Socket and the Watermeter   |
+| `homewizard-energy-api/telegram` | `parseTelegram()`, which parses the raw telegram of a P1 meter |
+
 ## Supported devices
 
-| Device                                  | Product type              | API v2                                 | API v1                                                 |
-| --------------------------------------- | ------------------------- | -------------------------------------- | ------------------------------------------------------ |
-| P1 meter                                | `HWE-P1`                  | [`v2.P1Meter`](#using-a-device)        | [`P1MeterApi`](#p1-meter) (deprecated)                 |
-| kWh meter (1 phase)                     | `HWE-KWH1`, `SDM230-wifi` | [`v2.KwhMeter1Phase`](#using-a-device) | [`KwhMeter1PhaseApi`](#kwh-meter-1-phase) (deprecated) |
-| kWh meter (3 phase)                     | `HWE-KWH3`, `SDM630-wifi` | [`v2.KwhMeter3Phase`](#using-a-device) | [`KwhMeter3PhaseApi`](#kwh-meter-3-phase) (deprecated) |
-| Plug-In Battery                         | `HWE-BAT`                 | [`v2.PlugInBattery`](#using-a-device)  | Not available                                          |
-| Energy Socket                           | `HWE-SKT`                 | Planned by HomeWizard                  | [`EnergySocketApi`](#energy-socket)                    |
-| Watermeter (only when powered over USB) | `HWE-WTR`                 | Planned by HomeWizard                  | [`WaterMeterApi`](#watermeter)                         |
+| Device                                  | Product type              | API v2                              | API v1 (`/v1`)                                         |
+| --------------------------------------- | ------------------------- | ----------------------------------- | ------------------------------------------------------ |
+| P1 meter                                | `HWE-P1`                  | [`P1Meter`](#using-a-device)        | [`P1MeterApi`](#p1-meter) (deprecated)                 |
+| kWh meter (1 phase)                     | `HWE-KWH1`, `SDM230-wifi` | [`KwhMeter1Phase`](#using-a-device) | [`KwhMeter1PhaseApi`](#kwh-meter-1-phase) (deprecated) |
+| kWh meter (3 phase)                     | `HWE-KWH3`, `SDM630-wifi` | [`KwhMeter3Phase`](#using-a-device) | [`KwhMeter3PhaseApi`](#kwh-meter-3-phase) (deprecated) |
+| Plug-In Battery                         | `HWE-BAT`                 | [`PlugInBattery`](#using-a-device)  | Not available                                          |
+| Energy Socket                           | `HWE-SKT`                 | Planned by HomeWizard               | [`EnergySocketApi`](#energy-socket)                    |
+| Watermeter (only when powered over USB) | `HWE-WTR`                 | Planned by HomeWizard               | [`WaterMeterApi`](#watermeter)                         |
 
 Use the API v2 where the device has it. HomeWizard [no longer develops the API v1](https://api-documentation.homewizard.com/docs/changelog) and plans to remove it, but hasn't given a date. The Energy Socket and Watermeter only have the API v1 for now.
 
@@ -52,22 +60,23 @@ Use the API v2 where the device has it. HomeWizard [no longer develops the API v
 Pair once: run this, and press the button on the device when asked. On the kWh meters, hold the button for 1 to 3 seconds.
 
 ```typescript
-import { v2 } from 'homewizard-energy-api';
+import { pair } from 'homewizard-energy-api';
 
-const { token, identifier } = await v2.pair('192.168.1.35', 'my-app', {
+const credentials = await pair('192.168.1.35', 'my-app', {
   onAttempt: remainingMs =>
     console.log(`Press the button on the device (${Math.round(remainingMs / 1000)}s left)`),
 });
 
-// Store the token and identifier. The token is a secret: it gives full access to the device.
+// Store the credentials: { host, token, identifier, name }. The token is a secret: it gives full access to the device.
+await storage.save(JSON.stringify(credentials));
 ```
 
-Then use the stored token and identifier:
+Then create the device from the stored credentials:
 
 ```typescript
-import { v2 } from 'homewizard-energy-api';
+import { P1Meter } from 'homewizard-energy-api';
 
-const p1 = new v2.P1Meter('192.168.1.35', { token, identifier });
+const p1 = new P1Meter(JSON.parse(await storage.load()));
 
 const measurement = await p1.getMeasurement();
 console.log(`${measurement.power_w} W`);
@@ -75,20 +84,16 @@ console.log(`${measurement.power_w} W`);
 
 ## API v2
 
-The API v2 uses HTTPS and a token, and has a WebSocket that pushes updates. It is always on: there's no setting to enable in the HomeWizard app. Everything for it is in the `v2` namespace, next to the v1 classes:
-
-```typescript
-import { v2 } from 'homewizard-energy-api';
-```
+The API v2 uses HTTPS and a token, and has a WebSocket that pushes updates. It is always on: there's no setting to enable in the HomeWizard app.
 
 ### Pairing
 
-A device only gives out a token after someone presses its button, which proves they have the device. `v2.pair()` keeps asking for a token until the button is pressed. After the press there are 30 seconds to get the token, and `pair()` asks every 2 seconds.
+A device only gives out a token after someone presses its button, which proves they have the device. `pair()` keeps asking for a token until the button is pressed. After the press there are 30 seconds to get the token, and `pair()` asks every 2 seconds.
 
 ```typescript
 const controller = new AbortController();
 
-const { token, identifier, name } = await v2.pair('192.168.1.35', 'my-app', {
+const credentials = await pair('192.168.1.35', 'my-app', {
   pairTimeout: 60000, // How long to wait for the button press. Defaults to 120000 (2 minutes)
   interval: 2000, // The time between attempts. Defaults to 2000
   signal: controller.signal, // Stops the pairing when aborted
@@ -96,15 +101,18 @@ const { token, identifier, name } = await v2.pair('192.168.1.35', 'my-app', {
 });
 ```
 
-- **The name** is 1 to 40 characters of `a-z`, `A-Z`, `0-9`, `-`, `_`, `\`, `/`, `#` and spaces. `pair()` adds the `local/` prefix the device needs. Pairing again with the same name gives a new token, and the old one stops working.
-- **The token** is a secret that gives full access to the device. Store it: the device can't return it again.
-- **The identifier**, such as `appliance/p1dongle/5c2fafaabbcc`, is what the device's certificate is issued to. `pair()` reads it from the certificate, after checking that HomeWizard signed it. Store it with the token: the device classes require it, and refuse a device whose certificate is issued to another identifier. `v2.getCertificateIdentifier(productType, serial)` builds it from the serial on the device label.
+`pair()` returns the credentials:
 
-When the button isn't pressed in time, or the pairing is aborted, `pair()` throws a `v2.HomeWizardApiV2PairingError` with a `reason` of `'timeout'` or `'aborted'`.
+- **`host`** is the address you paired with.
+- **`token`** is a secret that gives full access to the device. Store it: the device can't return it again.
+- **`identifier`**, such as `appliance/p1dongle/5c2fafaabbcc`, is what the device's certificate is issued to. `pair()` reads it from the certificate, after checking that HomeWizard signed it. The device classes require it, and refuse a device whose certificate is issued to another identifier. `getCertificateIdentifier(productType, serial)` builds it from the serial on the device label.
+- **`name`** is the user name on the device, with the `local/` prefix. The name you pass is 1 to 40 characters of `a-z`, `A-Z`, `0-9`, `-`, `_`, `\`, `/`, `#` and spaces. Pairing again with the same name gives a new token, and the old one stops working.
 
-### Storing the token
+When the button isn't pressed in time, or the pairing is aborted, `pair()` throws a `HomeWizardError` with kind `pairing` and a `reason` of `'timeout'` or `'aborted'`.
 
-`pair()` gives you two values to keep: the `token` and the `identifier`. Together with the device's IP address, they're all you need to connect again. HomeWizard leaves storage to your app, so use what your platform offers:
+### Storing the credentials
+
+The credentials are one object, so store them as one JSON value. HomeWizard leaves storage to your app, so use what your platform offers:
 
 - **Scripts:** environment variables, or a `.env` file that only you can read.
 - **Home automation plugins** (Homebridge, Node-RED and others): the platform's config or credential store.
@@ -112,12 +120,14 @@ When the button isn't pressed in time, or the pairing is aborted, `pair()` throw
 
 The token gives full access to the device, so keep it out of logs and version control. The library never logs it.
 
-When the token is lost, pair again with the same name: the device gives a new token, and the old one stops working. A request with a token the device no longer knows throws a `v2.HomeWizardApiV2Error` with code `user:unauthorized`, which means it's time to pair again. To revoke a token, delete its user with `users.delete('local/my-app')`.
+When the token is lost, pair again with the same name: the device gives a new token, and the old one stops working. A request with a token the device no longer knows throws a `HomeWizardError` with code `user:unauthorized`, which means it's time to pair again. To revoke a token, delete its user with `users.delete('local/my-app')`.
 
 ### Using a device
 
 ```typescript
-const p1 = new v2.P1Meter('192.168.1.35', { token, identifier });
+import { P1Meter } from 'homewizard-energy-api';
+
+const p1 = new P1Meter(credentials);
 
 const measurement = await p1.getMeasurement();
 console.log(measurement.power_w, measurement.energy_import_kwh);
@@ -137,24 +147,26 @@ Each class has only the methods its device supports:
 | `getTelegram()`                       | ✓         |                                    |                 |
 | `getBatteries()`, `updateBatteries()` | ✓         | ✓                                  |                 |
 
-Each class also has a static `pair()`, which returns the device with its new token. Call `close()` when you no longer need a device.
+Each class also has a static `pair()`, which returns the device and its credentials. Call `close()` when you no longer need a device.
 
 ```typescript
-const { device, token, identifier } = await v2.P1Meter.pair('192.168.1.35', 'my-app');
+const { device, credentials } = await P1Meter.pair('192.168.1.35', 'my-app');
 ```
 
-The options of the device classes:
+The second argument of the device classes has the connection options:
+
+```typescript
+const p1 = new P1Meter(credentials, { timeout: 3000, logger: { method: console.log } });
+```
 
 | Option       | Description                                                                                                             |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `token`      | The token from `pair()`.                                                                                                |
-| `identifier` | The identifier from `pair()`. Required, unless `insecure` is `true`.                                                    |
 | `timeout`    | The time in milliseconds until the response headers arrive, including connecting. Defaults to `5000`. `0` turns it off. |
 | `logger`     | `{ method, prefix }`, for example `{ method: console.log }`. The token is never logged.                                 |
-| `insecure`   | Skips all certificate checks, so any device at this address is accepted. For debugging only.                            |
+| `insecure`   | Skips all certificate checks, so any device at this address is accepted, without an identifier. For debugging only.     |
 | `dispatcher` | Your own undici dispatcher, for example a `MockAgent` in tests. It replaces the certificate checks.                     |
 
-The [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) (`v2-*.ts`) show each device.
+The [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) show each device.
 
 ### System settings
 
@@ -170,7 +182,7 @@ await p1.updateSystem({ status_led_brightness_pct: 50 });
 
 ### Plug-In Batteries
 
-The P1 meter or kWh meter controls the Plug-In Batteries, so `getBatteries()` and `updateBatteries()` are on those devices, not on `v2.PlugInBattery`:
+The P1 meter or kWh meter controls the Plug-In Batteries, so `getBatteries()` and `updateBatteries()` are on those devices, not on `PlugInBattery`:
 
 ```typescript
 const batteries = await p1.getBatteries();
@@ -189,7 +201,7 @@ await p1.updateBatteries({ charge_to_full: true });
 Some fields depend on the API version of the device: `permissions` and `battery_count` from 2.2.0, and `predictive` and `charge_to_full` from 2.3.0. A battery's own state of charge is in its measurement:
 
 ```typescript
-const battery = new v2.PlugInBattery('192.168.1.36', { token, identifier });
+const battery = new PlugInBattery(batteryCredentials);
 
 const { state_of_charge_pct, power_w } = await battery.getMeasurement();
 ```
@@ -197,6 +209,20 @@ const { state_of_charge_pct, power_w } = await battery.getMeasurement();
 ### WebSocket
 
 The device pushes the data of the topics you subscribe to when it changes: `measurement`, `system`, `device`, `user`, and on the P1 meter and kWh meters `batteries`. `system` only pushes changes of `cloud_enabled` and `status_led_brightness_pct`, and `batteries` only of `mode`, `permissions` and `target_power_w`.
+
+`stream()` returns a topic as an async iterator. It subscribes for you, and unsubscribes when the loop ends:
+
+```typescript
+const socket = p1.openWebSocket();
+
+for await (const measurement of socket.stream('measurement')) {
+  console.log(measurement.power_w);
+}
+```
+
+The stream keeps going while the socket reconnects. It ends when you `break` the loop, its `signal` aborts (`socket.stream('measurement', { signal })`), or the socket closes for good. It throws a `HomeWizardError` with code `user:unauthorized` when the token is missing or rejected.
+
+The events work too:
 
 ```typescript
 const socket = p1.openWebSocket();
@@ -227,63 +253,104 @@ const socket = p1.openWebSocket({
 
 ### Polling
 
-The WebSocket makes polling unnecessary, but `v2.poll()` polls any method when you'd rather use HTTP:
+The WebSocket makes polling unnecessary, but `poll()` polls any method when you'd rather use HTTP:
 
 ```typescript
-const poller = v2.poll(() => p1.getMeasurement(), { interval: 1000 });
+import { poll } from 'homewizard-energy-api';
+
+const poller = poll(() => p1.getMeasurement(), { interval: 1000 });
 
 poller.on('response', measurement => console.log(measurement.power_w));
 poller.on('error', error => console.error(error));
 poller.start();
 ```
 
-HomeWizard advises not to request data more often than every 500ms. On the P1 meter, `getTelegram()` returns the raw telegram from the smart meter, and `parseTelegram()` turns it into a detailed object. The measurement already has the parsed values.
+HomeWizard advises not to request data more often than every 500ms.
+
+### Telegram
+
+On the P1 meter, `getTelegram()` returns the raw telegram from the smart meter. The measurement already has the parsed values, and `parseTelegram()` turns the whole telegram into a detailed object:
+
+```typescript
+import { parseTelegram } from 'homewizard-energy-api/telegram';
+
+const telegram = parseTelegram(await p1.getTelegram());
+console.log(telegram.power.import.t1, telegram.power.demand);
+```
 
 ### Discovery
 
-`v2.Discovery` finds the devices on `_homewizard._tcp`. It helps to find a paired device after its IP address changed, and `v2.fromDiscovery()` returns the class for the device at its current IP:
+`discover()` finds the devices on `_homewizard._tcp`. It helps to find a paired device after its IP address changed, and `connect()` returns the class for the device at its current IP:
 
 ```typescript
-const discovery = new v2.Discovery();
+import { connect, discover, P1Meter } from 'homewizard-energy-api';
 
-discovery.start();
-
-discovery.on('response', response => {
+for await (const found of discover({ timeout: 10000 })) {
   // { ip: '192.168.1.35', txt: { product_type: 'HWE-P1', id: 'appliance/p1dongle/5c2fafaabbcc', api_version: '2.2.0', ... }, ... }
-  if (response.txt.id !== stored.identifier) return;
+  if (found.txt.id !== credentials.identifier) continue;
 
-  const device = v2.fromDiscovery(response, { token: stored.token, identifier: stored.identifier });
+  const device = connect(found, credentials);
 
-  if (device instanceof v2.P1Meter) {
-    // ...
+  if (device instanceof P1Meter) {
+    // Store the new address for next time
+    await storage.save(JSON.stringify({ ...credentials, host: device.host }));
   }
-});
+  break;
+}
 ```
 
-Anyone on the network can announce a device, so pass the identifier you stored at pairing: `fromDiscovery()` throws for a device announced with another `id`, so your token is never sent to a device you didn't pair with. To pair with a discovered device, pass its IP to `v2.pair()`.
+`discover()` runs until the loop ends, `timeout` passes or its `signal` aborts. `Discovery` has the same with events: `new Discovery()`, `start()`, `on('response', …)` and `stop()`.
+
+Anyone on the network can announce a device, so `connect()` takes the identifier you stored at pairing, and throws for a device announced with another `id`: your token is never sent to a device you didn't pair with. To pair with a discovered device, pass its IP to `pair()`.
 
 ### Errors
 
-An error response throws a `v2.HomeWizardApiV2Error`, with the error `code` from the device, such as `user:unauthorized` or `json:parameter-invalid-type:status_led_brightness_pct`. It extends `HomeWizardEnergyApiResponseError`, so it has the same `url`, `statusCode` and `response` as the v1 errors, and timeouts throw a `HomeWizardEnergyApiTimeoutError`. WebSocket errors arrive as `error` events with a `v2.HomeWizardApiV2WebSocketError`, which has the `code` too. See the [official docs](https://api-documentation.homewizard.com/docs/v2/error-handling) for the codes.
+Everything throws a `HomeWizardError`, and the WebSocket emits one. Its `kind` says what went wrong, and `code` has the error code the device sent, such as `user:unauthorized` or `json:parameter-invalid-type:status_led_brightness_pct`. See the [official docs](https://api-documentation.homewizard.com/docs/v2/error-handling) for the codes.
 
 ```typescript
+import { HomeWizardError } from 'homewizard-energy-api';
+
 try {
   await p1.getMeasurement();
 } catch (error) {
-  if (error instanceof v2.HomeWizardApiV2Error && error.code === 'user:unauthorized') {
+  if (error instanceof HomeWizardError && error.code === 'user:unauthorized') {
     // The token was deleted, pair again
   }
 }
 ```
 
+| `kind`        | When                                                                                                | Fields                                  |
+| ------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `response`    | The device answered with an error status, or with a body that isn't valid JSON                      | `code`, `url`, `statusCode`, `response` |
+| `timeout`     | The device didn't answer within the `timeout` option                                                | `url`, `timeout`                        |
+| `network`     | The connection failed, for example because the device is offline                                    | `url`, `cause`                          |
+| `certificate` | The certificate isn't from HomeWizard, or is issued to another identifier, so the token wasn't sent | `url`, `cause`                          |
+| `pairing`     | The button wasn't pressed in time, or the pairing was aborted                                       | `reason`                                |
+| `socket`      | The WebSocket failed, or the device sent an error over it                                           | `code`, `cause`                         |
+| `invalid`     | The arguments or options can't work, for example a missing identifier or an `http://` host          |                                         |
+
 With a `logger`, a device logs once when it answers with a newer API version than the 2.3.0 these types follow. It keeps working, because HomeWizard keeps each major version backward compatible, but the fields it added since aren't typed yet.
 
-### Moving from v1
+### Upgrading from 2.x
+
+The API v1 classes didn't change, but moved to their own entry point. Change the import, and the rest of your code keeps working:
+
+```typescript
+// 2.x
+import { P1MeterApi, HomeWizardEnergyDiscovery } from 'homewizard-energy-api';
+
+// 3.0
+import { P1MeterApi, HomeWizardEnergyDiscovery } from 'homewizard-energy-api/v1';
+```
+
+The package is ESM now, and imports of files inside `dist/` no longer work. Use the three entry points above.
+
+### Moving from v1 to v2
 
 1. Pair with the device (see [Pairing](#pairing)), instead of enabling the Local API in the HomeWizard app.
-2. Use the v2 class with the IP address, the token and the identifier: `new v2.P1Meter('192.168.1.35', { token, identifier })` instead of `new P1MeterApi('http://192.168.1.35')`.
+2. Create the v2 class from the credentials: `new P1Meter(credentials)` instead of `new P1MeterApi('http://192.168.1.35')`.
 3. Rename the methods: `getBasicInformation()` is `getDevice()`, and `getData()` is `getMeasurement()`. `getParsedTelegram()` is gone: the measurement has the parsed values, or use `parseTelegram(await p1.getTelegram())`.
-4. Replace `api.polling.<method>` with the WebSocket, or with `v2.poll()`.
+4. Replace `api.polling.<method>` with the WebSocket, or with `poll()`.
 5. Rename the fields:
 
 | API v1 (`getData()`)                                        | API v2 (`getMeasurement()`)                            |
@@ -306,19 +373,19 @@ Timestamps are ISO 8601 strings without a timezone, such as `2024-06-28T14:12:34
 
 ## API v1
 
-The API v1 uses plain HTTP without a token. Enable the `Local API` setting for each device in the HomeWizard app to use it. On the P1 meter and kWh meters, the API v1 can also be [turned off](#system-settings), so keep it on to use these classes.
+The API v1 uses plain HTTP without a token. Import it from `homewizard-energy-api/v1`. Enable the `Local API` setting for each device in the HomeWizard app to use it. On the P1 meter and kWh meters, the API v1 can also be [turned off](#system-settings), so keep it on to use these classes.
 
 Each class assumes it talks to the device type it's named after and doesn't check this. For example, a `P1MeterApi` pointed at an Energy Socket returns the socket's data from `getData()`. Use `getBasicInformation()` and its `product_type`, or the discovery `txt.product_type`, to pick the right class.
 
 ### P1 Meter
 
 > [!NOTE]
-> `P1MeterApi` is deprecated in favour of [`v2.P1Meter`](#api-v2), because HomeWizard plans to remove the API v1. It keeps working while the device has the API v1 enabled.
+> `P1MeterApi` is deprecated in favour of [`P1Meter`](#api-v2), because HomeWizard plans to remove the API v1. It keeps working while the device has the API v1 enabled.
 
 Get the power consumption or gas usage in your home from the [Wi-Fi P1 Meter](https://www.homewizard.com/shop/wi-fi-p1-meter/):
 
 ```typescript
-import { P1MeterApi } from 'homewizard-energy-api';
+import { P1MeterApi } from 'homewizard-energy-api/v1';
 
 const p1Meter = new P1MeterApi('http://192.168.1.11');
 
@@ -341,7 +408,7 @@ const data = await p1Meter.getData();
 A simple polling interface for the P1 Meter (and all other devices) is exposed via `api.polling.getData`, `api.polling.getTelegram` and `api.polling.getParsedTelegram`. See the [examples](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples) for more information.
 
 ```typescript
-import { P1MeterApi } from 'homewizard-energy-api';
+import { P1MeterApi } from 'homewizard-energy-api/v1';
 
 const p1Meter = new P1MeterApi('http://192.168.1.35', {
   polling: {
@@ -382,7 +449,7 @@ p1Meter.polling.getData.on('error', error => {
 Control your [Wi-Fi Energy Socket](https://www.homewizard.com/shop/wi-fi-energy-socket/):
 
 ```typescript
-import { EnergySocketApi } from 'homewizard-energy-api';
+import { EnergySocketApi } from 'homewizard-energy-api/v1';
 
 const energySocket = new EnergySocketApi('http://192.168.1.10');
 
@@ -409,7 +476,7 @@ A simple polling interface for the Energy Sockets is exposed via `api.polling.ge
 Get the water consumption in your home from the [Wi-Fi Watermeter](https://www.homewizard.com/shop/wi-fi-watermeter/):
 
 ```typescript
-import { WaterMeterApi } from 'homewizard-energy-api';
+import { WaterMeterApi } from 'homewizard-energy-api/v1';
 
 const waterMeter = new WaterMeterApi('http://192.168.1.12');
 
@@ -432,12 +499,12 @@ A simple polling interface for the Watermeter is exposed via `api.polling.getDat
 ### kWh Meter 1-phase
 
 > [!NOTE]
-> `KwhMeter1PhaseApi` is deprecated in favour of [`v2.KwhMeter1Phase`](#api-v2), because HomeWizard plans to remove the API v1. It keeps working while the device has the API v1 enabled.
+> `KwhMeter1PhaseApi` is deprecated in favour of [`KwhMeter1Phase`](#api-v2), because HomeWizard plans to remove the API v1. It keeps working while the device has the API v1 enabled.
 
 Get the power consumption from the [Wi-Fi kWh meter 1-phase MID](https://www.homewizard.com/shop/wi-fi-kwh-meter-1-phase/):
 
 ```typescript
-import { KwhMeter1PhaseApi } from 'homewizard-energy-api';
+import { KwhMeter1PhaseApi } from 'homewizard-energy-api/v1';
 
 const kwhMeter1Phase = new KwhMeter1PhaseApi('http://192.168.1.13');
 
@@ -460,12 +527,12 @@ A simple polling interface for the kWh Meter 1-phase is exposed via `api.polling
 ### kWh Meter 3-phase
 
 > [!NOTE]
-> `KwhMeter3PhaseApi` is deprecated in favour of [`v2.KwhMeter3Phase`](#api-v2), because HomeWizard plans to remove the API v1. It keeps working while the device has the API v1 enabled.
+> `KwhMeter3PhaseApi` is deprecated in favour of [`KwhMeter3Phase`](#api-v2), because HomeWizard plans to remove the API v1. It keeps working while the device has the API v1 enabled.
 
 Get the power consumption from the [Wi-Fi kWh meter 3-phase MID](https://www.homewizard.com/shop/wi-fi-kwh-meter-3-phase/):
 
 ```typescript
-import { KwhMeter3PhaseApi } from 'homewizard-energy-api';
+import { KwhMeter3PhaseApi } from 'homewizard-energy-api/v1';
 
 const kwhMeter3Phase = new KwhMeter3PhaseApi('http://192.168.1.14');
 
@@ -494,7 +561,7 @@ import {
   EnergySocketApi,
   ErrorCodes,
   HomeWizardEnergyApiResponseError,
-} from 'homewizard-energy-api';
+} from 'homewizard-energy-api/v1';
 
 const energySocket = new EnergySocketApi('http://192.168.1.10');
 
@@ -543,7 +610,7 @@ Other network failures, like a refused connection, throw the error from [undici]
 `HomeWizardEnergyDiscovery` finds the devices on `_hwenergy._tcp`, which have the API v1. Each HomeWizard device broadcasts itself on your local network using Multicast DNS. This allows you to use all the devices in your network without knowing the actual IP address of the device. You can find more details about this in the [official docs](https://api-documentation.homewizard.com/docs/discovery).
 
 ```typescript
-import { HomeWizardEnergyDiscovery } from 'homewizard-energy-api';
+import { HomeWizardEnergyDiscovery } from 'homewizard-energy-api/v1';
 
 const discovery = new HomeWizardEnergyDiscovery();
 

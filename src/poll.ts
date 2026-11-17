@@ -34,7 +34,7 @@ export interface Poller<T> {
  * where the device supports it.
  *
  * @example
- * const poller = v2.poll(() => p1.getMeasurement(), { interval: 1000 });
+ * const poller = poll(() => p1.getMeasurement(), { interval: 1000 });
  * poller.on('response', measurement => console.log(measurement.power_w));
  * poller.on('error', error => console.error(error));
  * poller.start();

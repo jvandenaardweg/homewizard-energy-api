@@ -29,7 +29,7 @@ npm test
 To run one test file, or to keep tests running while you work:
 
 ```bash
-TZ=Europe/Amsterdam npx vitest run src/utils/telegram.test.ts
+TZ=Europe/Amsterdam npx vitest run src/telegram/telegram.test.ts
 ```
 
 ```bash
@@ -38,50 +38,45 @@ npm run test:watch
 
 Always set `TZ=Europe/Amsterdam` when you call vitest directly. P1 telegram timestamps are formatted in local time, and the expected values in the tests use Amsterdam offsets. The npm scripts set it for you.
 
-Tests never touch the network. A global undici `MockAgent` answers every request, so add an interceptor to `src/mocks/api.ts` and fixture data to `src/mocks/data/` for any new request. Each interceptor answers once, so a test that makes two requests needs two `apiMocks.<name>()` calls.
+Tests never touch the network. A global undici `MockAgent` answers every request, so mock each new request with `mockV2()` from `src/mocks/api-v2.ts` and fixture data in `src/mocks/data/v2.ts`. Each interceptor answers once, so a test that makes two requests needs two `mockV2()` calls.
 
 The goal is 100% coverage, so new code should come with a test for each branch. CI doesn't enforce a threshold, but please don't lower coverage.
 
 ### Trying it against a real device
 
-The scripts in `src/examples/` talk to real devices on hard-coded LAN IP addresses. To use one, enable the local API for your device in the HomeWizard Energy app, change the IP in the example, and run it:
+The scripts in `src/examples/` talk to real devices on your network. Pair first, which prints the credentials for the other examples:
 
 ```bash
-npx tsx src/examples/p1-meter.ts
+HOMEWIZARD_HOST=192.168.1.35 npx tsx src/examples/pair.ts
 ```
+
+The API v1 examples in `src/examples/v1/` need the local API enabled in the HomeWizard Energy app, and the IP address changed in the example.
 
 This is optional. Pull requests are verified by the test suite.
 
 ## Compatibility
 
-- **Node.js:** the library supports Node `>=22.19.0`, and CI tests on Node 22, 24 and 26. Only use APIs that Node 22.19 has. HTTP requests go through `undici` and date handling through `date-fns`. Please discuss new runtime dependencies in an issue first.
-- **Public API:** everything exported from `src/index.ts` is public, and the package follows semver. Renaming or removing an export, a method or a response field is a breaking change.
+- **Node.js:** the library supports Node `>=22.19.0`, and CI tests on Node 22, 24 and 26. Only use APIs that Node 22.19 has. The only dependencies are `undici` and `multicast-dns`. Please discuss new runtime dependencies in an issue first.
+- **Public API:** everything exported from the three entry points is public: the root (`src/index.ts`), `homewizard-energy-api/v1` (`src/v1/index.ts`) and `homewizard-energy-api/telegram` (`src/telegram/index.ts`). The package follows semver. Renaming or removing an export, a method or a response field is a breaking change.
 
 ## How the code is organised
 
-The library has two APIs side by side, which share the request, error, logging, polling and mDNS code in `src/shared/`:
+- **The package root** is the API v2 (HTTPS with a token): `src/endpoints.ts` has one function per endpoint. The device classes in `src/devices/` extend a small `Device` base class with what every device has, and add only the endpoints their device supports. They take the credentials from `pair()`, and everything throws one `HomeWizardError`. The design is in [`docs/v2-design.md`](docs/v2-design.md).
+- **`src/v1/`** is the API v1 (HTTP), frozen until HomeWizard removes it: it gets fixes, but no new endpoints or devices. `BaseApi` holds the request, error handling, logging and polling logic, and each device class (`P1MeterApi`, `EnergySocketApi` and so on) re-exposes the methods its device supports.
+- **`src/telegram/`** parses the P1 telegram, and **`src/shared/`** has the request, logging, polling and mDNS code both APIs use.
 
-- **API v1** (HTTP): `BaseApi` (`src/base-api.ts`) holds the request, error handling, logging and polling logic as `protected` methods. Each device class (`P1MeterApi`, `EnergySocketApi` and so on) extends it and re-exposes the methods that device supports, typed with that device's response type.
-- **API v2** (HTTPS with a token), in `src/v2/` and exported as the `v2` namespace: `src/v2/endpoints.ts` has one function per endpoint. The device classes in `src/v2/devices/` extend a small `Device` base class with what every device has, and add only the endpoints their device supports. The design is in [`docs/v2-design.md`](docs/v2-design.md).
-
-The response types in `src/types.ts` and `src/v2/types.ts` mirror the HomeWizard API exactly. Field names stay snake_case, and data points are optional because devices leave out null values. Each field's JSDoc lists the devices that send it, and each type links to the upstream docs at https://api-documentation.homewizard.com. These comments ship to users as editor docs, so keep them accurate.
+The response types in `src/types.ts` and `src/v1/types.ts` mirror the HomeWizard API exactly. Field names stay snake_case, and data points are optional because devices leave out null values. Each field's JSDoc lists the devices that send it, and each type links to the upstream docs at https://api-documentation.homewizard.com. These comments ship to users as editor docs, so keep them accurate.
 
 ## Adding an endpoint or a device
 
 A pull request that adds an endpoint is complete when it covers each of these:
 
-1. The URL in the class's `endpoints` getter, and the method on the device class.
+1. The function in `src/endpoints.ts`, and the method on each device class in `src/devices/` whose device supports it.
 2. Request and response types in `src/types.ts`.
-3. An interceptor in `src/mocks/api.ts` and fixture data in `src/mocks/data/`.
-4. Tests in the device's `*.test.ts`, with at least a success case and an error status (500).
+3. Fixture data in `src/mocks/data/v2.ts`.
+4. Tests in `src/endpoints.test.ts` and the table in `src/devices/devices.test.ts`, with at least a success case and an error status (500).
 
-A new device also needs:
-
-5. Its product type in `SupportedDevicesList` in `src/types.ts` and in `mockBasicInformationResponse` in `src/mocks/data/basic.ts`.
-6. The new class exported from `src/index.ts`.
-7. An example in `src/examples/` and a section in `README.md`.
-
-For the API v2, the files differ: see "Adding an endpoint or device" in [`AGENTS.md`](AGENTS.md).
+A new device also needs an example in `src/examples/` and a row in the README's method table. The full checklist is in "Adding an endpoint or device" in [`AGENTS.md`](AGENTS.md).
 
 ## Commits and pull requests
 

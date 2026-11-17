@@ -1,14 +1,10 @@
-import { Discovery } from '..';
+import { discover } from '..';
 
 // Lists the devices with the API v2 on the network for 10 seconds
-const discovery = new Discovery();
-
-discovery.start();
-
-discovery.on('response', response => {
-  console.log(
-    `${response.ip} ${response.txt.product_type} ${response.txt.id} (API ${response.txt.api_version})`,
-  );
-});
-
-setTimeout(() => discovery.stop(), 10000);
+(async () => {
+  for await (const found of discover({ timeout: 10000 })) {
+    console.log(
+      `${found.ip} ${found.txt.product_type} ${found.txt.id} (API ${found.txt.api_version})`,
+    );
+  }
+})();
