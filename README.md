@@ -170,7 +170,7 @@ await p1.updateBatteries({ charge_to_full: true }); // charge to 100%, then go b
 - **`mode`**: `zero` keeps your home at net zero, and is the default. `predictive` uses the predicted usage and energy prices, and needs the HomeWizard cloud.
 - **`permissions`**: `charge_allowed` and `discharge_allowed`. An empty list allows neither.
 
-`permissions` and `battery_count` need API 2.2.0, and `predictive` and `charge_to_full` need 2.3.0. A battery's own charge is in its measurement: `(await battery.getMeasurement()).state_of_charge_pct`.
+`permissions` and `battery_count` need API 2.2.0, and `predictive` and `charge_to_full` need 2.3.0: check with `isApiVersionAtLeast((await p1.getDevice()).api_version, '2.3.0')`. A battery's own charge is in its measurement: `(await battery.getMeasurement()).state_of_charge_pct`.
 
 ### Change device settings
 
@@ -244,13 +244,14 @@ Each class also has a static `pair()`, which returns `{ device, credentials }`, 
 const p1 = new P1Meter(credentials, { timeout: 3000, logger: { method: console.log } });
 ```
 
-| Option       | Description                                                                                                             |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `timeout`    | The time in milliseconds until the response headers arrive, including connecting. Defaults to `5000`. `0` turns it off. |
-| `logger`     | `{ method, prefix }`, for example `{ method: console.log }`. The token is never logged.                                 |
-| `insecure`   | Skips all certificate checks, so any device at this address is accepted, without an identifier. For debugging only.     |
-| `dispatcher` | Your own undici dispatcher, for example a `MockAgent` in tests. It replaces the certificate checks.                     |
-| `ca`         | The CA certificate (PEM) the device's certificate must be signed by. Defaults to the HomeWizard CA.                     |
+| Option       | Description                                                                                                                |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `timeout`    | The time in milliseconds until the response headers arrive, including connecting. Defaults to `5000`. `0` turns it off.    |
+| `logger`     | `{ method, prefix }`, for example `{ method: console.log }`. The token is never logged.                                    |
+| `retries`    | How often a read is retried after a timeout or network error, waiting 500 ms, then 1 s. Defaults to `2`. `0` turns it off. |
+| `insecure`   | Skips all certificate checks, so any device at this address is accepted, without an identifier. For debugging only.        |
+| `dispatcher` | Your own undici dispatcher, for example a `MockAgent` in tests. It replaces the certificate checks.                        |
+| `ca`         | The CA certificate (PEM) the device's certificate must be signed by. Defaults to the HomeWizard CA.                        |
 
 With a `logger`, a device logs once when it answers with a newer API version than the 2.3.0 these types follow. It keeps working, but the fields added since aren't typed yet.
 

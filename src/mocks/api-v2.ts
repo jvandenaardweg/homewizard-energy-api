@@ -76,6 +76,7 @@ export const mockV2Credentials = {
 /** The options for the internal `Client`: the credentials without the host, and the mock dispatcher. */
 export const mockV2DeviceOptions = {
   dispatcher: mockApiAgent,
+  retries: 0,
   identifier: mockV2Credentials.identifier,
   token: mockV2Credentials.token,
 };

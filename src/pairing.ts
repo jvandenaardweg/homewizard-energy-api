@@ -111,6 +111,8 @@ export async function pair(
 
   const client = new Client(host, {
     ...deviceOptions,
+    // pair() retries on its own, until the pair timeout
+    retries: 0,
     identifier,
     allowMissingIdentifier: true,
     onCertificate: commonName => seenIdentifiers.add(commonName),

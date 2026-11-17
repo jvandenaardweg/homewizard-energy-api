@@ -10,6 +10,7 @@
  *
  * @link https://api-documentation.homewizard.com/docs/category/api-v2
  */
+export { isApiVersionAtLeast } from './client';
 export type { Credentials, DeviceOptions } from './client';
 export * from './devices';
 export { connect, discover, Discovery } from './discovery';
