@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { Dispatcher, WebSocket } from 'undici';
 import { AsyncQueue } from '@/shared/async-queue';
-import { log, LoggerOptions } from '@/shared/logger';
+import { log, LoggerOptions, redact } from '@/shared/logger';
 import { HomeWizardError } from './errors';
 import { Batteries, DeviceInformation, User } from './types';
 
@@ -140,7 +140,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
   /** The connection closed. With `reconnect`, a new connection follows. */
   on(event: 'close', listener: (code: number, reason: string) => void): this;
   /** A connection error, or an error message from the device (with its `code`). */
-  on(event: 'error', listener: (error: Error) => void): this;
+  on(event: 'error', listener: (error: HomeWizardError) => void): this;
   /** Every message from the device, including the ones above. */
   on(event: 'message', listener: (message: Message) => void): this;
   // oxlint-disable-next-line typescript/no-explicit-any
@@ -314,7 +314,7 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
   }
 
   protected write(message: Message): void {
-    this.log(`Sending ${JSON.stringify(message)}`);
+    this.log(`Sending ${redact(message)}`);
     this.socket?.send(JSON.stringify(message));
   }
 

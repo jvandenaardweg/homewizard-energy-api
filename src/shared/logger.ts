@@ -13,3 +13,8 @@ export function log(options: LoggerOptions | undefined, ...args: unknown[]): voi
 
   return options.method(options.prefix || DEFAULT_LOGGER_PREFIX, ...args);
 }
+
+/** Formats a value for a log line, with every `token` field replaced, so a token never ends up in a log. */
+export function redact(value: unknown): string {
+  return JSON.stringify(value, (key, field) => (key === 'token' ? '[redacted]' : field));
+}
