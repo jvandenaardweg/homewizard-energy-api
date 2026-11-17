@@ -1,5 +1,7 @@
 # API v2 implementation plan
 
+> This is the plan for the first build, which added the API v2 as a `v2` namespace in 2.x. It was reshaped into 3.0 before release: see [3.0 in the design](v2-design.md#30). The open items under Status still apply.
+
 This plan builds [v2-design.md](v2-design.md) in small PRs. Each PR passes `npm test` on its own and ships as a minor or patch release in 2.x, without breaking changes. Each PR also follows the "Adding an endpoint or device" checklist in `AGENTS.md`, with the v2 equivalents of its files.
 
 Work taken from [jvandenaardweg/homewizard-energy-api#135](https://github.com/jvandenaardweg/homewizard-energy-api/pull/135) gets a `Co-authored-by: Nebz <…>` trailer on the commit that uses it, so NebzHB shows up under Contributors in the release notes.
