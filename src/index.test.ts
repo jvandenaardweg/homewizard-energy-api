@@ -9,7 +9,6 @@ describe('entry points', () => {
     expect(library.KwhMeter3Phase).toBeTypeOf('function');
     expect(library.PlugInBattery).toBeTypeOf('function');
     expect(library.pair).toBeTypeOf('function');
-    expect(library.Discovery).toBeTypeOf('function');
     expect(library.connect).toBeTypeOf('function');
     expect(library.discover).toBeTypeOf('function');
     expect(library.isSameIdentifier).toBeTypeOf('function');

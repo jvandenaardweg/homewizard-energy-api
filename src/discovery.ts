@@ -16,47 +16,32 @@ import { isProductType, MDNS_DISCOVERY_TYPE, MdnsTxtRecord, ProductType } from '
  */
 export type DiscoveryResponse = MdnsDiscoveryResponse<MdnsTxtRecord>;
 
-export interface DiscoveryOptions {
-  logger?: LoggerOptions;
-}
-
-/**
- * Discovers the devices with the API v2, which announce `_homewizard._tcp`. Devices that also have the API v1
- * announce `_hwenergy._tcp` too, which the v1 `HomeWizardEnergyDiscovery` finds.
- *
- * @example
- * const discovery = new Discovery();
- * discovery.start();
- * discovery.on('response', response => console.log(response.ip, response.txt.product_type));
- *
- * @link https://api-documentation.homewizard.com/docs/discovery
- */
-export class Discovery extends MdnsDiscovery<MdnsTxtRecord> {
-  constructor(options?: DiscoveryOptions) {
-    super(MDNS_DISCOVERY_TYPE, options?.logger);
-  }
-}
-
-export interface DiscoverOptions extends DiscoveryOptions {
+export interface DiscoverOptions {
   /** Ends the discovery after this many milliseconds. Without it, it runs until the loop ends or `signal` aborts. */
   timeout?: number;
   /** Ends the discovery, like a `break` in the loop. */
   signal?: AbortSignal;
+  logger?: LoggerOptions;
 }
 
 /**
- * Discovers the devices with the API v2 as an async iterator, for `for await`. Each device is yielded once, and
- * again when its txt record or IP address changes. Discovery stops when the loop ends, `timeout` passes or
- * `signal` aborts. It throws a `HomeWizardError` with kind `network` when mDNS fails.
+ * Discovers the devices with the API v2, which announce `_homewizard._tcp`, as an async iterator for `for await`.
+ * Each device is yielded once, and again when its txt record or IP address changes. Discovery stops when the loop
+ * ends, `timeout` passes or `signal` aborts. It throws a `HomeWizardError` with kind `network` when mDNS fails.
+ *
+ * Devices that also have the API v1 announce `_hwenergy._tcp` too, which `HomeWizardEnergyDiscovery` from
+ * `homewizard-energy-api/v1` finds.
  *
  * @example
  * for await (const found of discover({ timeout: 10000 })) {
  *   console.log(found.ip, found.txt.product_type);
  * }
+ *
+ * @link https://api-documentation.homewizard.com/docs/discovery
  */
 export function discover(options: DiscoverOptions = {}): AsyncIterableIterator<DiscoveryResponse> {
-  const { timeout, signal } = options;
-  const discovery = new Discovery(options);
+  const { timeout, signal, logger } = options;
+  const discovery = new MdnsDiscovery<MdnsTxtRecord>(MDNS_DISCOVERY_TYPE, logger);
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   const queue = new AsyncQueue<DiscoveryResponse>({

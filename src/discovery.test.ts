@@ -6,7 +6,7 @@ import { mockDiscoveryV2Response, mockMdnsV2Response } from '@/mocks/mdns-v2';
 import { KwhMeter1Phase, KwhMeter3Phase } from './devices/kwh-meter';
 import { P1Meter } from './devices/p1-meter';
 import { PlugInBattery } from './devices/plug-in-battery';
-import { connect, discover, Discovery } from './discovery';
+import { connect, discover } from './discovery';
 
 const querySpy = vi.fn();
 const onSpy = vi.fn();
@@ -90,29 +90,20 @@ describe('discover', () => {
   });
 });
 
-describe('Discovery', () => {
-  it('should query _homewizard._tcp', () => {
-    new Discovery().start();
+describe('the service types', () => {
+  it('should query _homewizard._tcp, and ignore a device on _hwenergy._tcp', async () => {
+    const method = vi.fn();
+    const devices = discover({ logger: { method } });
+    const next = devices.next();
 
     expect(querySpy).toHaveBeenCalledWith('_homewizard._tcp.local', 'PTR');
-  });
 
-  it('should emit a device on _homewizard._tcp with its txt record', () => {
-    const callback = vi.fn();
-    const handler = getResponseHandler(new Discovery({ logger: { method: vi.fn() } }), callback);
+    lastHandler('response')(mockMdnsResponse);
+    lastHandler('response')(mockMdnsV2Response);
 
-    handler(mockMdnsV2Response);
-
-    expect(callback).toHaveBeenCalledWith(mockDiscoveryV2Response);
-  });
-
-  it('should ignore a device on _hwenergy._tcp', () => {
-    const callback = vi.fn();
-    const handler = getResponseHandler(new Discovery(), callback);
-
-    handler(mockMdnsResponse);
-
-    expect(callback).not.toHaveBeenCalled();
+    await expect(next).resolves.toStrictEqual({ value: mockDiscoveryV2Response, done: false });
+    expect(JSON.stringify(method.mock.calls)).toContain('is not for _homewizard._tcp.local');
+    await devices.return?.();
   });
 
   it('should leave _homewizard._tcp to the v2 discovery in the v1 discovery', () => {
