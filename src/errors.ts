@@ -88,6 +88,11 @@ export class HomeWizardError extends Error {
   }
 }
 
+/** Returns `true` for the errors that can go away on their own, such as a reboot or bad Wi-Fi: timeouts and network errors. */
+export function isTransientError(error: HomeWizardError): boolean {
+  return error.kind === 'timeout' || error.kind === 'network';
+}
+
 /** Returns a `response` error for an error status, with the code from the body. */
 export function createResponseError(
   method: string,

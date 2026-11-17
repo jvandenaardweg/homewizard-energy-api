@@ -1,5 +1,6 @@
 import { Agent, Dispatcher } from 'undici';
 import { log, LoggerOptions, redact } from '@/shared/logger';
+import { wait } from '@/shared/wait';
 import {
   DEFAULT_TIMEOUT,
   isResponseOk,
@@ -11,6 +12,7 @@ import {
   createResponseError,
   createTimeoutError,
   HomeWizardError,
+  isTransientError,
   toHomeWizardError,
 } from './errors';
 import { createCheckServerIdentity, HOMEWIZARD_CA_CERT } from './tls';
@@ -84,11 +86,15 @@ export interface ClientOptions extends DeviceOptions, Omit<Credentials, 'host'> 
 
 export type HttpMethod = 'GET' | 'PUT' | 'POST' | 'DELETE';
 
+/** A JSON body to send, and the `Accept` header when it isn't JSON. */
+export interface RequestOptions {
+  body?: unknown;
+  accept?: string;
+}
+
 /** The retries of a failed read, and the first delay before one. */
 export const DEFAULT_RETRIES = 2;
 export const RETRY_DELAY = 500;
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Compares two API versions such as `2.4.0`: negative when `a` is older, `0` when equal, positive when newer.
@@ -230,7 +236,7 @@ export class Client {
   async send<T>(
     method: HttpMethod,
     path: string,
-    options: { body?: unknown; accept?: string },
+    options: RequestOptions,
     read: (url: string, response: Dispatcher.ResponseData<unknown>) => Promise<T>,
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
@@ -240,16 +246,13 @@ export class Client {
         return await read(url, await this.request(method, url, options));
       } catch (error) {
         const wrapped = toHomeWizardError(error, method, url);
-        const canRetry =
-          method === 'GET' &&
-          attempt < this.retries &&
-          (wrapped.kind === 'timeout' || wrapped.kind === 'network');
+        const canRetry = method === 'GET' && attempt < this.retries && isTransientError(wrapped);
 
         if (!canRetry) throw wrapped;
 
         const delay = RETRY_DELAY * 2 ** attempt;
         this.log(`${method} ${url} failed (${wrapped.kind}), retrying in ${delay}ms`);
-        await sleep(delay);
+        await wait(delay);
       }
     }
   }
@@ -258,7 +261,7 @@ export class Client {
   protected async request(
     method: HttpMethod,
     url: string,
-    options: { body?: unknown; accept?: string },
+    options: RequestOptions,
   ): Promise<Dispatcher.ResponseData<unknown>> {
     const hasBody = options.body !== undefined;
 

@@ -1,7 +1,8 @@
 import { formatError } from '@/shared/errors';
+import { wait } from '@/shared/wait';
 import { Client, Credentials, DeviceOptions } from './client';
 import { createUser, getDevice } from './endpoints';
-import { HomeWizardError } from './errors';
+import { HomeWizardError, isTransientError } from './errors';
 import { getCertificateIdentifier } from './tls';
 import { UserCreated } from './types';
 
@@ -52,19 +53,6 @@ export function splitPairOptions(options: PairOptions) {
     identifier,
     deviceOptions: deviceOptions as DeviceOptions,
   };
-}
-
-function wait(ms: number, signal?: AbortSignal): Promise<void> {
-  return new Promise(resolve => {
-    const done = () => {
-      clearTimeout(timer);
-      signal?.removeEventListener('abort', done);
-      resolve();
-    };
-    const timer = setTimeout(done, ms);
-
-    signal?.addEventListener('abort', done, { once: true });
-  });
 }
 
 /**
@@ -168,7 +156,13 @@ export async function pair(
       return {
         host,
         token: user.token,
-        identifier: await learnIdentifier(client, user, options, seenIdentifiers),
+        identifier: await learnIdentifier(
+          client,
+          user,
+          identifier,
+          deviceOptions.insecure,
+          seenIdentifiers,
+        ),
       };
     }
   } finally {
@@ -184,23 +178,24 @@ export async function pair(
 async function learnIdentifier(
   client: Client,
   user: UserCreated,
-  options: PairOptions,
+  identifier: string | undefined,
+  insecure: boolean | undefined,
   seen: Set<string>,
 ): Promise<string> {
-  if (options.identifier || !options.insecure) {
-    return getIdentifier(options.identifier, seen);
+  if (identifier || !insecure) {
+    return getIdentifier(identifier, seen);
   }
 
   client.token = user.token;
 
   const device = await getDevice(client);
-  const identifier = getCertificateIdentifier(device.product_type, device.serial);
+  const built = getCertificateIdentifier(device.product_type, device.serial);
 
-  if (!identifier) {
+  if (!built) {
     client.log(`The identifier of a "${device.product_type}" is not known, so it stays empty`);
   }
 
-  return identifier ?? '';
+  return built ?? '';
 }
 
 /**
@@ -208,9 +203,7 @@ async function learnIdentifier(
  * Errors from the device (an invalid name, no storage), an invalid name and certificate errors won't.
  */
 export function isRetryable(error: unknown): boolean {
-  if (!(error instanceof HomeWizardError)) return true;
-
-  return error.kind === 'timeout' || error.kind === 'network';
+  return !(error instanceof HomeWizardError) || isTransientError(error);
 }
 
 /** Returns the given identifier, or the one seen in the certificate. */
