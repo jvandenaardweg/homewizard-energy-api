@@ -4,6 +4,7 @@ import { createServer } from 'https';
 import { AddressInfo } from 'net';
 import { Duplex } from 'stream';
 import { join } from 'path';
+import { mockV2Identifier } from '../data/v2';
 
 /*
  * A local HTTPS server with a certificate like a device's, for the tests that need a real TLS handshake:
@@ -14,7 +15,8 @@ import { join } from 'path';
  */
 
 export const mockTlsCa = readFileSync(join(__dirname, 'ca.pem'), 'utf8');
-export const mockTlsIdentifier = 'appliance/p1dongle/5c2fafaabbcc';
+/** The identifier the test device certificate is issued to: the same as the API v2 fixtures. */
+export const mockTlsIdentifier = mockV2Identifier;
 
 export interface MockTlsServer {
   /** The host to connect to, for example `127.0.0.1:54321`. */

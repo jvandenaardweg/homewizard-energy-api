@@ -1,4 +1,5 @@
 import * as multicastDns from 'multicast-dns';
+import type { DiscoveryResponse } from '../discovery';
 
 /* A `_homewizard._tcp` response, shaped like the one from a P1 Meter with API 2.2.0. */
 
@@ -52,4 +53,18 @@ export const mockMdnsV2Response: multicastDns.ResponsePacket = {
       data: '192.168.1.35',
     },
   ],
+};
+
+/** What `Discovery` makes of `mockMdnsV2Response`. */
+export const mockDiscoveryV2Response: DiscoveryResponse = {
+  ip: '192.168.1.35',
+  hostname: 'p1meter-AABB02.local',
+  fqdn: 'p1meter-AABB02._homewizard._tcp.local',
+  txt: {
+    serial: '3c39e7aabb02',
+    product_type: 'HWE-P1',
+    product_name: 'P1 Meter',
+    id: 'appliance/p1dongle/3c39e7aabb02',
+    api_version: '2.2.0',
+  },
 };
