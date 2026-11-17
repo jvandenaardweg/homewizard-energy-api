@@ -13,18 +13,18 @@
   <a href="https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/LICENSE" title="MIT license"><img alt="mit license" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
 </p>
 
-Full type-safe implementation of the HomeWizard Energy local API in Node. Read and control your HomeWizard devices on your own network, over the API v2 with HTTPS, pairing and a WebSocket, or over the API v1.
+A typed Node client for the HomeWizard Energy local API. It handles the parts of the API that take the most work to get right: pairing, certificate checks and a live connection that stays up.
 
 ## Features
 
-- Complete type-safety on all API methods, responses, and errors
-- The API v2: pairing with the button on the device, HTTPS with certificate checks, and a WebSocket that pushes updates
-- The API v1 under `homewizard-energy-api/v1`, for the devices that don't have the API v2 yet
-- Discovers the devices on your network using Multicast DNS
-- Async iterators for discovery and the WebSocket, next to the events
-- Turns the P1 telegram text into a detailed object, including the Belgian capacity tariff
-- Includes inline documentation on each method, type and property
-- Follows the official [HomeWizard Energy API documentation](https://api-documentation.homewizard.com/docs/introduction)
+- **Pairing in one step.** It waits for the button press on the device and gives you the credentials to store.
+- **Secure by default.** It checks that each device really is the one you paired with, before your token is sent.
+- **Live updates that keep working.** It reconnects after Wi-Fi drops and picks up where it left off.
+- **Types for every device.** You only see what your device supports, with documentation in your editor.
+- **Clear errors.** One error type tells you what went wrong, such as an expired token or an offline device.
+- **Finds your devices** on the network, even after their IP address changes.
+- **Reads the P1 telegram** in full, including the Belgian capacity tariff.
+- **Works with older devices** that only have the API v1.
 
 ## Installation
 
