@@ -117,7 +117,15 @@ The name, `my-app` here, is 1 to 40 characters of `a-z`, `A-Z`, `0-9`, `-`, `_`,
 
 ### Storing the credentials
 
-The credentials are one object, so store them as one JSON value. HomeWizard leaves storage to your app, so use what your platform offers:
+Two of the three values are needed to connect again, and the third saves a step:
+
+| Value        | Store it? | Why                                                                                                                                                          |
+| ------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `token`      | Yes       | It's the proof that you paired, and the device can't return it again.                                                                                        |
+| `identifier` | Yes       | The library only sends the token to a device whose certificate is issued to it. It can't be learned safely later, because anyone can announce a device.      |
+| `host`       | Optional  | The IP address can change. Without it, `discover()` and `connect()` find the device by its identifier, at its current address (see [Discovery](#discovery)). |
+
+Store the credentials as one JSON value. HomeWizard leaves storage to your app, so use what your platform offers:
 
 - **Scripts:** environment variables, or a `.env` file that only you can read.
 - **Home automation plugins** (Homebridge, Node-RED and others): the platform's config or credential store.
