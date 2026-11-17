@@ -1,11 +1,8 @@
 import { PlugInBattery } from '..';
+import { credentialsFromEnv } from './credentials';
 
 // Run src/examples/pair.ts first for the credentials. The Plug-In Battery only has the API v2.
-const battery = new PlugInBattery({
-  host: process.env.HOMEWIZARD_HOST || '192.168.1.41',
-  token: process.env.HOMEWIZARD_TOKEN,
-  identifier: process.env.HOMEWIZARD_IDENTIFIER,
-});
+const battery = new PlugInBattery(credentialsFromEnv('192.168.1.41'));
 
 (async () => {
   try {

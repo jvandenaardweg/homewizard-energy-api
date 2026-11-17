@@ -215,15 +215,21 @@ describe('connect', () => {
     );
   });
 
-  it('should not take the identifier from discovery', () => {
-    expect(() => connect(mockDiscoveryV2Response, { token: 'x' }, options)).toThrow(
+  it('should not take the identifier from discovery, as credentials from JSON can miss it', () => {
+    const withoutIdentifier = { token: 'x' } as typeof credentials;
+
+    expect(() => connect(mockDiscoveryV2Response, withoutIdentifier, options)).toThrow(
       /"identifier" of the credentials is required/,
     );
   });
 
-  it('should allow a missing identifier with insecure', () => {
+  it('should allow an empty identifier with insecure', () => {
     expect(
-      connect(mockDiscoveryV2Response, {}, { insecure: true, dispatcher: mockApiAgent }),
+      connect(
+        mockDiscoveryV2Response,
+        { token: 'x', identifier: '' },
+        { insecure: true, dispatcher: mockApiAgent },
+      ),
     ).toBeInstanceOf(P1Meter);
   });
 

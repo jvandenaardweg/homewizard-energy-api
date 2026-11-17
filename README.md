@@ -316,14 +316,14 @@ Each class also has a static `pair()`, which returns `{ device, credentials }`, 
 const p1 = new P1Meter(credentials, { timeout: 3000, logger: { method: console.log } });
 ```
 
-| Option       | Description                                                                                                                |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `timeout`    | The time in milliseconds until the response headers arrive, including connecting. Defaults to `5000`. `0` turns it off.    |
-| `logger`     | `{ method, prefix }`, for example `{ method: console.log }`. The token is never logged.                                    |
-| `retries`    | How often a read is retried after a timeout or network error, waiting 500 ms, then 1 s. Defaults to `2`. `0` turns it off. |
-| `insecure`   | Skips all certificate checks, so any device at this address is accepted, without an identifier. For debugging only.        |
-| `dispatcher` | Your own undici dispatcher, for example a `MockAgent` in tests. It replaces the certificate checks.                        |
-| `ca`         | The CA certificate (PEM) the device's certificate must be signed by. Defaults to the HomeWizard CA.                        |
+| Option       | Description                                                                                                                   |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `timeout`    | The time in milliseconds until the response headers arrive, including connecting. Defaults to `5000`. `0` turns it off.       |
+| `logger`     | `{ method, prefix }`, for example `{ method: console.log }`. The token is never logged.                                       |
+| `retries`    | How often a read is retried after a timeout or network error, waiting 500 ms, then 1 s. Defaults to `2`. `0` turns it off.    |
+| `insecure`   | Skips all certificate checks, so any device at this address is accepted, and the identifier may be empty. For debugging only. |
+| `dispatcher` | Your own undici dispatcher, for example a `MockAgent` in tests. It replaces the certificate checks.                           |
+| `ca`         | The CA certificate (PEM) the device's certificate must be signed by. Defaults to the HomeWizard CA.                           |
 
 With a `logger`, a device logs once when it answers with a newer API version than the 2.3.0 these types follow. It keeps working, but the fields added since aren't typed yet.
 

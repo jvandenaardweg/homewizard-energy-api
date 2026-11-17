@@ -32,21 +32,22 @@ export interface Credentials {
   /** The IP address or hostname of the device, for example `192.168.1.35`. */
   host: string;
   /**
-   * The token from `pair()`. Without it, every request fails with `user:unauthorized`.
+   * The token from `pair()`. Keep it secret: it gives full access to the device.
    *
    * @link https://api-documentation.homewizard.com/docs/v2/authorization
    */
-  token?: string;
+  token: string;
   /**
    * The identifier the device's certificate is issued to, formatted as `appliance/<product type>/<serial>`.
    * Store the one `pair()` returns. `getCertificateIdentifier()` builds it from the product type and the serial on
    * the device's label. Don't take it from discovery: anyone on the network can announce a device.
    *
-   * Required, unless `insecure` is `true`. Requests fail when the certificate isn't issued to this identifier.
+   * Requests fail when the certificate isn't issued to this identifier. Only with `insecure: true` may it be an
+   * empty string.
    *
    * @link https://api-documentation.homewizard.com/docs/v2/authorization#https
    */
-  identifier?: string;
+  identifier: string;
 }
 
 /** How a device connects. All optional. */
@@ -78,7 +79,11 @@ export interface DeviceOptions {
 }
 
 /** @internal */
-export interface ClientOptions extends DeviceOptions, Omit<Credentials, 'host'> {
+export interface ClientOptions extends DeviceOptions {
+  /** Missing while pairing, which creates it. */
+  token?: string;
+  /** Missing while pairing, which learns it from the certificate. */
+  identifier?: string;
   /** Allows a missing `identifier` without `insecure`, so pairing can learn it. */
   allowMissingIdentifier?: boolean;
   /** Receives the Common Name of each certificate that passes the check. */

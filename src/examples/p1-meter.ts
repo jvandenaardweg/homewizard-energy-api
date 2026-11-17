@@ -1,11 +1,8 @@
 import { P1Meter } from '..';
+import { credentialsFromEnv } from './credentials';
 
 // Run src/examples/pair.ts first for the credentials
-const p1 = new P1Meter({
-  host: process.env.HOMEWIZARD_HOST || '192.168.1.35',
-  token: process.env.HOMEWIZARD_TOKEN,
-  identifier: process.env.HOMEWIZARD_IDENTIFIER,
-});
+const p1 = new P1Meter(credentialsFromEnv('192.168.1.35'));
 
 (async () => {
   try {
