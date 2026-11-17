@@ -6,17 +6,17 @@ const host = process.env.HOMEWIZARD_HOST || '192.168.1.35';
 
 (async () => {
   try {
+    const name = 'homewizard-energy-api-example';
     const {
       host: pairedHost,
       token,
       identifier,
-      name,
-    } = await pair(host, 'homewizard-energy-api-example', {
+    } = await pair(host, name, {
       onAttempt: remainingMs =>
         console.log(`Press the button on the device (${Math.round(remainingMs / 1000)}s left)`),
     });
 
-    console.log(`Paired as ${name}. Keep the token secret:`);
+    console.log(`Paired as local/${name}. Keep the token secret:`);
     console.log(
       `HOMEWIZARD_HOST=${pairedHost} HOMEWIZARD_TOKEN=${token} HOMEWIZARD_IDENTIFIER=${identifier}`,
     );

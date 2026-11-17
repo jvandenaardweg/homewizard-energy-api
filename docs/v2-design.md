@@ -9,7 +9,7 @@ This sketch describes how to add the HomeWizard API v2 to this library. It is ba
 The first build added the API v2 as a `v2` namespace next to the v1 classes, so it could ship in 2.x. Before it shipped, the maintainer chose to release it as 3.0 instead, with the API v2 as the library and v1 frozen beside it:
 
 - **Entry points:** an `exports` map with `.` (the API v2, without a namespace: `P1Meter`, `pair`, `discover`), `./v1` (the v1 classes, unchanged, until upstream removes v1) and `./telegram` (`parseTelegram()`). The package is ESM; `require(esm)` covers CommonJS users on Node 22.12+.
-- **Credentials:** `pair()` returns `{ host, token, identifier, name }`, and the device classes take it as their first argument, with the connection options second. Users store one value.
+- **Credentials:** `pair()` returns `{ host, token, identifier }`, and the device classes take it as their first argument, with the connection options second. Users store one value.
 - **`connect(found, credentials)`** replaces `fromDiscovery()`, with the same identifier check.
 - **One error:** `HomeWizardError` with a `kind` (`response`, `timeout`, `network`, `certificate`, `pairing`, `socket`, `invalid`) and the device's `code`, instead of three v2 classes that extended the v1 errors.
 - **Async iterators** next to the events: `discover()` and `socket.stream(topic)`.
