@@ -118,6 +118,20 @@ describe('v2/pair', () => {
     await pair(mockV2Host, 'new_user', options);
   });
 
+  it('should retry the device information after an insecure pairing, so the token is kept', async () => {
+    mockV2('/api/user', 'POST', { response: mockV2UserCreated });
+    mockV2Pool.intercept({ path: '/api', method: 'GET' }).replyWithError(new Error('ECONNRESET'));
+    mockV2('/api', 'GET', { response: mockV2DeviceInformation['HWE-P1'] });
+
+    const pairing = pair(mockV2Host, 'new_user', { dispatcher: mockApiAgent, insecure: true });
+    await vi.advanceTimersByTimeAsync(500);
+
+    await expect(pairing).resolves.toMatchObject({
+      token: mockV2UserCreated.token,
+      identifier: 'appliance/p1dongle/5c2fafaabbcc',
+    });
+  });
+
   it('should build the identifier from the device information when insecure', async () => {
     mockV2('/api/user', 'POST', { response: mockV2UserCreated });
     const onRequest = vi.fn();
