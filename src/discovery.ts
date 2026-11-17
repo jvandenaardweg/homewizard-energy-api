@@ -58,17 +58,12 @@ export function discover(options: DiscoverOptions = {}): AsyncIterableIterator<D
   const discovery = new Discovery(options);
   let timer: ReturnType<typeof setTimeout> | undefined;
 
-  const onAbort = () => queue.end();
   const queue = new AsyncQueue<DiscoveryResponse>(() => {
     clearTimeout(timer);
-    signal?.removeEventListener('abort', onAbort);
     discovery.stop();
-  });
+  }).endOn(signal);
 
-  if (signal?.aborted) {
-    queue.end();
-    return queue;
-  }
+  if (queue.isDone) return queue;
 
   discovery.start();
   discovery.on('response', found => queue.push(found));
@@ -78,8 +73,7 @@ export function discover(options: DiscoverOptions = {}): AsyncIterableIterator<D
     ),
   );
 
-  signal?.addEventListener('abort', onAbort, { once: true });
-  if (timeout) timer = setTimeout(onAbort, timeout);
+  if (timeout) timer = setTimeout(() => queue.end(), timeout);
 
   return queue;
 }

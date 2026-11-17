@@ -121,6 +121,11 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     this.emitter.on('error', () => undefined);
   }
 
+  /** `true` when the socket won't connect again after the current connection: closed, or `reconnect: false`. */
+  protected get willNotReconnect(): boolean {
+    return this.closedByUser || !this.options.reconnect;
+  }
+
   /** `true` while the connection is open and the device accepted the token. */
   get isAuthorized(): boolean {
     return this.authorized;
@@ -222,26 +227,26 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     const onData = (data: TTopics[K]) => queue.push(data);
     const onClose = () => {
       if (this.fatalError) queue.fail(this.fatalError);
-      else if (this.closedByUser || !this.options.reconnect) queue.end();
+      else if (this.willNotReconnect) queue.end();
     };
-    const onAbort = () => queue.end();
 
     const queue = new AsyncQueue<TTopics[K]>(() => {
       this.off(topic, onData);
       this.off('close', onClose);
-      signal?.removeEventListener('abort', onAbort);
 
       if (this.streamSubscriptions.has(topic) && this.emitter.listenerCount(topic) === 0) {
         this.streamSubscriptions.delete(topic);
         this.unsubscribe(topic);
       }
-    });
+    }).endOn(signal);
+
+    if (queue.isDone) return queue;
 
     this.on(topic, onData);
     this.on('close', onClose);
 
     // A socket that closed for good emits no more events, so the stream ends straight away
-    if (!this.socket && (this.closedByUser || !this.options.reconnect)) {
+    if (!this.socket && this.willNotReconnect) {
       onClose();
       return queue;
     }
@@ -250,9 +255,6 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
       this.streamSubscriptions.add(topic);
       this.subscribe(topic);
     }
-
-    if (signal?.aborted) queue.end();
-    else signal?.addEventListener('abort', onAbort, { once: true });
 
     return queue;
   }
