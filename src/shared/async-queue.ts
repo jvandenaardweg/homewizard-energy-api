@@ -46,6 +46,12 @@ export class AsyncQueue<T> implements AsyncIterableIterator<T> {
     this.buffer.push(value);
   }
 
+  /** Finishes the iteration, or throws `error` from it when there is one, after the buffered values. */
+  close(error?: unknown): void {
+    if (error === undefined) this.end();
+    else this.fail(error);
+  }
+
   /** Throws `error` from the iteration after the buffered values. */
   fail(error: unknown): void {
     if (this.done) return;
