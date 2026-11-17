@@ -28,14 +28,28 @@ function abortAfter(ms: number, controller: AbortController, createError: () => 
   return { promise, cancel: () => clearTimeout(timer) };
 }
 
+/** Creates the error for a request that timed out. The API v1 and the root API each throw their own class. */
+export type TimeoutErrorFactory = (message: string, url: string, timeout: number) => Error;
+
+/** Creates the error for a response body that isn't valid JSON. */
+export type InvalidJsonErrorFactory = (
+  message: string,
+  url: string,
+  statusCode: number,
+  body: string,
+) => Error;
+
 /**
- * Sends a request with undici. When `timeout` is set, the call throws a `HomeWizardEnergyApiTimeoutError` once
- * it passes before the response headers arrive. A `signal` in `options` takes precedence over the timeout.
+ * Sends a request with undici. When `timeout` is set, the call throws the error from `createTimeoutError` (a
+ * `HomeWizardEnergyApiTimeoutError` by default) once it passes before the response headers arrive. A `signal` in
+ * `options` takes precedence over the timeout.
  */
 export async function requestWithTimeout(
   url: RequestParameters[0],
   options: RequestParameters[1],
   timeout: number,
+  createTimeoutError: TimeoutErrorFactory = (message, errorUrl, ms) =>
+    new HomeWizardEnergyApiTimeoutError(message, errorUrl, ms),
 ): Promise<Dispatcher.ResponseData<unknown>> {
   // A signal from the user takes precedence over the timeout
   if (!timeout || options?.signal) {
@@ -46,15 +60,12 @@ export async function requestWithTimeout(
 
   // Since undici 7, aborting doesn't interrupt a pending connect, which undici allows 10 seconds for.
   // So the timeout settles the call itself, and the abort only cleans up the request.
-  const timeoutError = abortAfter(
-    timeout,
-    controller,
-    () =>
-      new HomeWizardEnergyApiTimeoutError(
-        `${describeCall(options?.method || 'GET', url)} timed out after ${timeout}ms`,
-        String(url),
-        timeout,
-      ),
+  const timeoutError = abortAfter(timeout, controller, () =>
+    createTimeoutError(
+      `${describeCall(options?.method || 'GET', url)} timed out after ${timeout}ms`,
+      String(url),
+      timeout,
+    ),
   );
 
   try {
@@ -90,20 +101,22 @@ export function isResponseOk(response: Dispatcher.ResponseData<unknown>): boolea
 }
 
 /**
- * Reads the response body as JSON. A body that isn't valid JSON throws a `HomeWizardEnergyApiResponseError`
- * instead of a bare `SyntaxError`, so it has the URL and the raw body.
+ * Reads the response body as JSON. A body that isn't valid JSON throws the error from `createError` (a
+ * `HomeWizardEnergyApiResponseError` by default) instead of a bare `SyntaxError`, so it has the URL and the raw body.
  */
 export async function parseJsonResponse<T>(
   url: string,
   method: string,
   response: Dispatcher.ResponseData<unknown>,
+  createError: InvalidJsonErrorFactory = (message, errorUrl, statusCode, body) =>
+    new HomeWizardEnergyApiResponseError(message, errorUrl, statusCode, body),
 ): Promise<T> {
   const text = await response.body.text();
 
   try {
     return JSON.parse(text) as T;
   } catch {
-    throw new HomeWizardEnergyApiResponseError(
+    throw createError(
       `${describeCall(method, url)} returned a response that is not valid JSON: ${text}`,
       url,
       response.statusCode,
