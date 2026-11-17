@@ -2,7 +2,7 @@ import { Client, Credentials, DeviceOptions } from '../client';
 import * as endpoints from '../endpoints';
 import { pair, PairOptions, PairResult, splitPairOptions } from '../pairing';
 import { DeviceInformation, System, User } from '../types';
-import { CommonTopics, DeviceSocket, WebSocketOptions } from '../websocket';
+import { CommonTopics, DeviceSocket, DeviceSocketConnection, WebSocketOptions } from '../websocket';
 
 export interface Users {
   /**
@@ -38,8 +38,14 @@ export abstract class Device<
   TSystemUpdate,
   TTopics extends CommonTopics<TMeasurement, TSystem> = CommonTopics<TMeasurement, TSystem>,
   TUpdates extends object = { system: TSystemUpdate },
+  TSocket extends DeviceSocket<TTopics, TUpdates> = DeviceSocket<TTopics, TUpdates>,
 > {
   protected readonly client: Client;
+  /** The socket class `openWebSocket()` creates. Devices that can identify use `IdentifiableDeviceSocket`. */
+  protected readonly socketClass: new (
+    connection: DeviceSocketConnection,
+    options?: WebSocketOptions,
+  ) => TSocket = DeviceSocket as never;
   /** The IP address or hostname this device connects to, as given in the credentials. */
   readonly host: string;
 
@@ -65,17 +71,12 @@ export abstract class Device<
    *
    * @link https://api-documentation.homewizard.com/docs/v2/websocket
    */
-  openWebSocket(options?: WebSocketOptions): DeviceSocket<TTopics, TUpdates> {
-    const socket = this.createWebSocket(options);
+  openWebSocket(options?: WebSocketOptions): TSocket {
+    const socket = new this.socketClass(this.client.webSocketConnection(), options);
 
     socket.connect();
 
     return socket;
-  }
-
-  /** Creates the socket for `openWebSocket()`. Devices that can identify return an `IdentifiableDeviceSocket`. */
-  protected createWebSocket(options?: WebSocketOptions): DeviceSocket<TTopics, TUpdates> {
-    return new DeviceSocket<TTopics, TUpdates>(this.client.webSocketConnection(), options);
   }
 
   /**

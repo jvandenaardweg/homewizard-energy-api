@@ -6,12 +6,7 @@ import {
   P1MeterSystem,
   P1MeterSystemUpdate,
 } from '../types';
-import {
-  BatteriesTopic,
-  CommonTopics,
-  IdentifiableDeviceSocket,
-  WebSocketOptions,
-} from '../websocket';
+import { BatteriesTopic, CommonTopics, IdentifiableDeviceSocket } from '../websocket';
 import { Device } from './device';
 
 type P1MeterTopics = CommonTopics<P1MeterMeasurement, P1MeterSystem> & BatteriesTopic;
@@ -36,20 +31,10 @@ export class P1Meter extends Device<
   P1MeterSystem,
   P1MeterSystemUpdate,
   P1MeterTopics,
-  P1MeterUpdates
+  P1MeterUpdates,
+  IdentifiableDeviceSocket<P1MeterTopics, P1MeterUpdates>
 > {
-  openWebSocket(
-    options?: WebSocketOptions,
-  ): IdentifiableDeviceSocket<P1MeterTopics, P1MeterUpdates> {
-    return super.openWebSocket(options) as IdentifiableDeviceSocket<P1MeterTopics, P1MeterUpdates>;
-  }
-
-  protected createWebSocket(options?: WebSocketOptions) {
-    return new IdentifiableDeviceSocket<P1MeterTopics, P1MeterUpdates>(
-      this.client.webSocketConnection(),
-      options,
-    );
-  }
+  protected readonly socketClass = IdentifiableDeviceSocket<P1MeterTopics, P1MeterUpdates>;
 
   /**
    * Blinks the status LED for a few seconds, so the user can find the device.

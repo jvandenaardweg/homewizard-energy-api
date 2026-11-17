@@ -1,6 +1,6 @@
 import * as endpoints from '../endpoints';
 import { PlugInBatteryMeasurement, PlugInBatterySystem, PlugInBatterySystemUpdate } from '../types';
-import { CommonTopics, IdentifiableDeviceSocket, WebSocketOptions } from '../websocket';
+import { CommonTopics, IdentifiableDeviceSocket } from '../websocket';
 import { Device } from './device';
 
 type PlugInBatteryTopics = CommonTopics<PlugInBatteryMeasurement, PlugInBatterySystem>;
@@ -19,23 +19,13 @@ export class PlugInBattery extends Device<
   PlugInBatterySystem,
   PlugInBatterySystemUpdate,
   PlugInBatteryTopics,
-  PlugInBatteryUpdates
+  PlugInBatteryUpdates,
+  IdentifiableDeviceSocket<PlugInBatteryTopics, PlugInBatteryUpdates>
 > {
-  openWebSocket(
-    options?: WebSocketOptions,
-  ): IdentifiableDeviceSocket<PlugInBatteryTopics, PlugInBatteryUpdates> {
-    return super.openWebSocket(options) as IdentifiableDeviceSocket<
-      PlugInBatteryTopics,
-      PlugInBatteryUpdates
-    >;
-  }
-
-  protected createWebSocket(options?: WebSocketOptions) {
-    return new IdentifiableDeviceSocket<PlugInBatteryTopics, PlugInBatteryUpdates>(
-      this.client.webSocketConnection(),
-      options,
-    );
-  }
+  protected readonly socketClass = IdentifiableDeviceSocket<
+    PlugInBatteryTopics,
+    PlugInBatteryUpdates
+  >;
 
   /**
    * Blinks the status LED for a few seconds, so the user can find the device.
