@@ -9,7 +9,7 @@ import {
 import { KwhMeter1Phase } from './devices/kwh-meter';
 import { P1Meter } from './devices/p1-meter';
 import { PlugInBattery } from './devices/plug-in-battery';
-import { HomeWizardApiV2WebSocketError } from './errors';
+import { HomeWizardError } from './errors';
 import { DeviceSocket, WebSocketOptions } from './websocket';
 
 /** Resolves once `predicate` is true, checking every 5ms. */
@@ -128,15 +128,15 @@ describe('v2/DeviceSocket', () => {
     await waitFor(() => onClose.mock.calls.length === 1);
     await sleep(30);
 
-    expect(onError.mock.calls[0][0]).toBeInstanceOf(HomeWizardApiV2WebSocketError);
+    expect(onError.mock.calls[0][0]).toBeInstanceOf(HomeWizardError);
     expect(onError.mock.calls[0][0].code).toBe('user:unauthorized');
     expect(server.connections).toHaveLength(1);
   });
 
   it('should report a rejected token after two drops in a row, and stop reconnecting', async () => {
     const socket = open({}, 'WRONG');
-    const errors: HomeWizardApiV2WebSocketError[] = [];
-    socket.on('error', error => errors.push(error as HomeWizardApiV2WebSocketError));
+    const errors: HomeWizardError[] = [];
+    socket.on('error', error => errors.push(error as HomeWizardError));
 
     await waitFor(() => errors.some(error => error.code === 'user:unauthorized'));
     await sleep(50);
@@ -158,8 +158,8 @@ describe('v2/DeviceSocket', () => {
     };
 
     const socket = open();
-    const errors: HomeWizardApiV2WebSocketError[] = [];
-    socket.on('error', error => errors.push(error as HomeWizardApiV2WebSocketError));
+    const errors: HomeWizardError[] = [];
+    socket.on('error', error => errors.push(error as HomeWizardError));
 
     await waitFor(() => socket.isAuthorized);
 

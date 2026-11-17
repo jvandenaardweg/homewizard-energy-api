@@ -1,4 +1,4 @@
-import { HomeWizardEnergyApiError } from '@/shared/errors';
+import { HomeWizardError } from './errors';
 import { Client } from './client';
 import {
   Batteries,
@@ -74,7 +74,8 @@ export function toLocalUserName(name: string): string {
     : name;
 
   if (!USER_NAME_PATTERN.test(withoutPrefix)) {
-    throw new HomeWizardEnergyApiError(
+    throw new HomeWizardError(
+      'invalid',
       `The user name "${name}" is invalid: use 1 to 40 characters of a-z, A-Z, 0-9, -, _, \\, /, # and spaces`,
     );
   }

@@ -73,7 +73,7 @@ export class P1Meter extends Device<
    * Returns the most recent valid telegram from the smart meter, unprocessed. Use `getMeasurement()` for parsed
    * values, or `parseTelegram()` to parse it yourself.
    *
-   * Throws a `HomeWizardApiV2Error` with code `telegram:no-telegram-received` when the meter sent no telegram.
+   * Throws a `HomeWizardError` with code `telegram:no-telegram-received` when the meter sent no telegram.
    *
    * @link https://api-documentation.homewizard.com/docs/v2/telegram
    */

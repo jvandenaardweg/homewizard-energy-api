@@ -1,4 +1,3 @@
-import { HomeWizardEnergyApiError, HomeWizardEnergyApiTimeoutError } from '@/shared/errors';
 import { mockApiAgent } from '@/mocks/api';
 import { mockV2, mockV2Host, mockV2Pool } from '@/mocks/api-v2';
 import { mockV2DeviceInformation, mockV2UserCreated } from '@/mocks/data/v2';
@@ -8,7 +7,7 @@ import {
   MockTlsServer,
   startMockTlsServer,
 } from '@/mocks/tls/server';
-import { HomeWizardApiV2Error, HomeWizardApiV2PairingError } from './errors';
+import { HomeWizardError } from './errors';
 import { getIdentifier, isRetryable, pair } from './pairing';
 import { CERTIFICATE_IDENTITY_ERROR_CODE } from './tls';
 
@@ -50,7 +49,7 @@ describe('v2/pair', () => {
     await vi.advanceTimersByTimeAsync(5000);
 
     const error = await pairing;
-    expect(error).toBeInstanceOf(HomeWizardApiV2PairingError);
+    expect(error).toBeInstanceOf(HomeWizardError);
     expect(error.reason).toBe('timeout');
     expect(error.message).toBe('The button on the device was not pressed within 5000ms');
   });
@@ -66,7 +65,7 @@ describe('v2/pair', () => {
     controller.abort();
 
     const error = await pairing;
-    expect(error).toBeInstanceOf(HomeWizardApiV2PairingError);
+    expect(error).toBeInstanceOf(HomeWizardError);
     expect(error.reason).toBe('aborted');
   });
 
@@ -84,7 +83,7 @@ describe('v2/pair', () => {
 
     const error = await pair(mockV2Host, 'new_user', options).catch(error => error);
 
-    expect(error).toBeInstanceOf(HomeWizardApiV2Error);
+    expect(error).toBeInstanceOf(HomeWizardError);
     expect(error.code).toBe('user:no-storage');
   });
 
@@ -161,11 +160,11 @@ describe('v2/pair', () => {
   describe('isRetryable', () => {
     it('should retry network errors and timeouts only', () => {
       expect(isRetryable(new Error('ECONNRESET'))).toBe(true);
-      expect(isRetryable(new HomeWizardEnergyApiTimeoutError('slow', 'https://x', 1))).toBe(true);
-      expect(isRetryable(new HomeWizardEnergyApiError('invalid name'))).toBe(false);
-      expect(isRetryable(new HomeWizardApiV2Error('x', 'https://x', 400, ''))).toBe(false);
-      expect(isRetryable({ code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' })).toBe(false);
-      expect(isRetryable({ code: CERTIFICATE_IDENTITY_ERROR_CODE })).toBe(false);
+      expect(isRetryable(new HomeWizardError('network', 'ECONNRESET'))).toBe(true);
+      expect(isRetryable(new HomeWizardError('timeout', 'slow'))).toBe(true);
+      expect(isRetryable(new HomeWizardError('invalid', 'invalid name'))).toBe(false);
+      expect(isRetryable(new HomeWizardError('response', 'no storage'))).toBe(false);
+      expect(isRetryable(new HomeWizardError('certificate', 'another device'))).toBe(false);
     });
   });
 
@@ -245,14 +244,17 @@ describe('v2/pair', () => {
         identifier: 'appliance/p1dongle/000000000000',
       }).catch(error => error);
 
-      expect(error.code).toBe(CERTIFICATE_IDENTITY_ERROR_CODE);
+      expect(error).toBeInstanceOf(HomeWizardError);
+      expect(error.kind).toBe('certificate');
+      expect(error.cause.code).toBe(CERTIFICATE_IDENTITY_ERROR_CODE);
       expect(attempts).toBe(0);
     });
 
     it('should stop straight away for a certificate the HomeWizard CA did not sign', async () => {
       const error = await pair(server.host, 'new_user').catch(error => error);
 
-      expect(error.code).toMatch(/CERT|SIGNATURE|ISSUER/);
+      expect(error.kind).toBe('certificate');
+      expect(error.cause.code).toMatch(/CERT|SIGNATURE|ISSUER/);
       expect(attempts).toBe(0);
     });
   });

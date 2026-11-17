@@ -12,11 +12,8 @@ export type { Credentials, DeviceOptions } from './client';
 export * from './devices';
 export { Discovery, connect } from './discovery';
 export type { DiscoveredDevice, DiscoveryOptions, DiscoveryResponse } from './discovery';
-export {
-  HomeWizardApiV2Error,
-  HomeWizardApiV2PairingError,
-  HomeWizardApiV2WebSocketError,
-} from './errors';
+export { HomeWizardError } from './errors';
+export type { HomeWizardErrorKind } from './errors';
 export { pair } from './pairing';
 export type { PairOptions, PairResult } from './pairing';
 export { poll } from './poll';

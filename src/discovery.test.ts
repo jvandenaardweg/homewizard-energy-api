@@ -125,7 +125,7 @@ describe('connect', () => {
 
   it('should not take the identifier from discovery', () => {
     expect(() => connect(discovered, { token: 'x' }, options)).toThrow(
-      /"identifier" option is required/,
+      /"identifier" of the credentials is required/,
     );
   });
 

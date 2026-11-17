@@ -1,8 +1,7 @@
-import { HomeWizardEnergyApiError, HomeWizardEnergyApiTimeoutError } from '@/shared/errors';
 import { Client, Credentials, DeviceOptions } from './client';
 import { createUser, getDevice } from './endpoints';
-import { HomeWizardApiV2Error, HomeWizardApiV2PairingError } from './errors';
-import { getCertificateIdentifier, isCertificateError } from './tls';
+import { HomeWizardError } from './errors';
+import { getCertificateIdentifier } from './tls';
 import { UserCreated } from './types';
 
 export const DEFAULT_PAIR_TIMEOUT = 120000;
@@ -99,7 +98,8 @@ export async function pair(
   // Checked before the token is created: a token without an identifier can't be used, and the button would need
   // another press. Your own dispatcher doesn't run the certificate check that learns the identifier.
   if (clientOptions.dispatcher && !clientOptions.identifier && !clientOptions.insecure) {
-    throw new HomeWizardEnergyApiError(
+    throw new HomeWizardError(
+      'invalid',
       'Pairing with your own "dispatcher" can\'t read the identifier from the certificate. Pass the "identifier" option, or set "insecure: true".',
     );
   }
@@ -120,15 +120,16 @@ export async function pair(
   try {
     while (true) {
       if (signal?.aborted) {
-        throw new HomeWizardApiV2PairingError('Pairing was aborted', 'aborted');
+        throw new HomeWizardError('pairing', 'Pairing was aborted', { reason: 'aborted' });
       }
 
       const remainingMs = timeLeft();
 
       if (remainingMs <= 0) {
-        throw new HomeWizardApiV2PairingError(
+        throw new HomeWizardError(
+          'pairing',
           `The button on the device was not pressed within ${pairTimeout}ms`,
-          'timeout',
+          { reason: 'timeout' },
         );
       }
 
@@ -140,7 +141,7 @@ export async function pair(
         user = await createUser(client, name);
       } catch (error) {
         const isWaitingForButton =
-          error instanceof HomeWizardApiV2Error && error.code === 'user:creation-not-enabled';
+          error instanceof HomeWizardError && error.code === 'user:creation-not-enabled';
 
         if (!isWaitingForButton && !isRetryable(error)) throw error;
 
@@ -201,11 +202,9 @@ async function learnIdentifier(
  * Errors from the device (an invalid name, no storage), an invalid name and certificate errors won't.
  */
 export function isRetryable(error: unknown): boolean {
-  if (error instanceof HomeWizardEnergyApiTimeoutError) return true;
-  if (error instanceof HomeWizardEnergyApiError) return false;
-  if (isCertificateError(error)) return false;
+  if (!(error instanceof HomeWizardError)) return true;
 
-  return true;
+  return error.kind === 'timeout' || error.kind === 'network';
 }
 
 /** Returns the given identifier, or the one seen in the certificate. */
@@ -213,7 +212,8 @@ export function getIdentifier(expected: string | undefined, seen: Set<string>): 
   if (expected) return expected;
 
   if (seen.size > 1) {
-    throw new HomeWizardEnergyApiError(
+    throw new HomeWizardError(
+      'certificate',
       `Different devices answered at this address during pairing (${[...seen].join(', ')}), so the token can't be trusted`,
     );
   }
@@ -221,7 +221,8 @@ export function getIdentifier(expected: string | undefined, seen: Set<string>): 
   const [identifier] = seen;
 
   if (!identifier) {
-    throw new HomeWizardEnergyApiError(
+    throw new HomeWizardError(
+      'certificate',
       'The identifier of the device could not be read from its certificate. Pass the "identifier" option, built with getCertificateIdentifier() from the serial on the device label.',
     );
   }

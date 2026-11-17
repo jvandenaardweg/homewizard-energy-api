@@ -14,7 +14,7 @@ import {
   mockV2UserCreated,
   mockV2Users,
 } from '@/mocks/data/v2';
-import { HomeWizardApiV2Error } from '../errors';
+import { HomeWizardError } from '../errors';
 import { KwhMeter1Phase, KwhMeter3Phase } from './kwh-meter';
 import { P1Meter } from './p1-meter';
 import { PlugInBattery } from './plug-in-battery';
@@ -139,7 +139,7 @@ describe.each(devices)('v2.$name', ({ create, Class, cases, missing }) => {
         expect(onRequest.mock.calls[0][0].body).toStrictEqual(body);
       });
 
-      it('should throw a HomeWizardApiV2Error for a 500', async () => {
+      it('should throw a HomeWizardError for a 500', async () => {
         mockV2(path, httpMethod, {
           statusCode: 500,
           response: { error: 'request:internal-server-error' },
@@ -149,9 +149,9 @@ describe.each(devices)('v2.$name', ({ create, Class, cases, missing }) => {
           string,
           (...args: unknown[]) => Promise<unknown>
         >;
-        const error = (await device[method](...args).catch(error => error)) as HomeWizardApiV2Error;
+        const error = (await device[method](...args).catch(error => error)) as HomeWizardError;
 
-        expect(error).toBeInstanceOf(HomeWizardApiV2Error);
+        expect(error).toBeInstanceOf(HomeWizardError);
         expect(error.statusCode).toBe(500);
       });
     },

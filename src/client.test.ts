@@ -1,10 +1,9 @@
 import { PeerCertificate } from 'tls';
 import { Agent } from 'undici';
-import { HomeWizardEnergyApiError, HomeWizardEnergyApiTimeoutError } from '@/shared/errors';
 import { mockV2, mockV2DeviceOptions, mockV2Host, mockV2Pool, mockV2Url } from '@/mocks/api-v2';
 import { DEFAULT_TIMEOUT } from '@/shared/request';
 import { Client, isNewerApiVersion, toBaseUrl } from './client';
-import { HomeWizardApiV2Error } from './errors';
+import { HomeWizardError } from './errors';
 import { HOMEWIZARD_CA_CERT } from './tls';
 
 describe('v2/Client', () => {
@@ -24,8 +23,8 @@ describe('v2/Client', () => {
 
   describe('constructor', () => {
     it('should require an identifier', () => {
-      expect(() => new Client(mockV2Host, { token: 'x' })).toThrow(HomeWizardEnergyApiError);
-      expect(() => new Client(mockV2Host)).toThrow(/"identifier" option is required/);
+      expect(() => new Client(mockV2Host, { token: 'x' })).toThrow(HomeWizardError);
+      expect(() => new Client(mockV2Host)).toThrow(/"identifier" of the credentials is required/);
     });
 
     it('should not require an identifier when insecure or pairing', () => {
@@ -113,15 +112,13 @@ describe('v2/Client', () => {
       await expect(client.empty('PUT', '/api/system/identify')).resolves.toBeUndefined();
     });
 
-    it('should throw a HomeWizardApiV2Error with the code for an error status', async () => {
+    it('should throw a HomeWizardError with the code for an error status', async () => {
       mockV2('/api', 'GET', { statusCode: 401, response: { error: 'user:unauthorized' } });
 
       const client = new Client(mockV2Host, mockV2DeviceOptions);
-      const error = (await client
-        .json('GET', '/api')
-        .catch(error => error)) as HomeWizardApiV2Error;
+      const error = (await client.json('GET', '/api').catch(error => error)) as HomeWizardError;
 
-      expect(error).toBeInstanceOf(HomeWizardApiV2Error);
+      expect(error).toBeInstanceOf(HomeWizardError);
       expect(error.code).toBe('user:unauthorized');
       expect(error.statusCode).toBe(401);
       expect(error.message).toBe(
@@ -129,17 +126,36 @@ describe('v2/Client', () => {
       );
     });
 
-    it('should throw a HomeWizardApiV2Error for a 500 without a body', async () => {
+    it('should throw a HomeWizardError for a 500 without a body', async () => {
       mockV2('/api', 'GET', { statusCode: 500 });
 
       const client = new Client(mockV2Host, mockV2DeviceOptions);
-      const error = (await client
-        .json('GET', '/api')
-        .catch(error => error)) as HomeWizardApiV2Error;
+      const error = (await client.json('GET', '/api').catch(error => error)) as HomeWizardError;
 
-      expect(error).toBeInstanceOf(HomeWizardApiV2Error);
+      expect(error).toBeInstanceOf(HomeWizardError);
       expect(error.code).toBeUndefined();
       expect(error.statusCode).toBe(500);
+    });
+
+    it('should throw a response error for a body that is not valid JSON', async () => {
+      mockV2('/api', 'GET', { response: 'not json' });
+
+      const client = new Client(mockV2Host, mockV2DeviceOptions);
+      const error = await client.json('GET', '/api').catch(error => error);
+
+      expect(error).toBeInstanceOf(HomeWizardError);
+      expect(error).toMatchObject({ kind: 'response', statusCode: 200, response: 'not json' });
+    });
+
+    it('should throw a network error when the connection fails', async () => {
+      mockV2Pool.intercept({ path: '/api', method: 'GET' }).replyWithError(new Error('ECONNRESET'));
+
+      const client = new Client(mockV2Host, mockV2DeviceOptions);
+      const error = (await client.json('GET', '/api').catch(error => error)) as HomeWizardError;
+
+      expect(error).toBeInstanceOf(HomeWizardError);
+      expect(error.kind).toBe('network');
+      expect(error.cause).toBeInstanceOf(Error);
     });
 
     it('should log requests and responses without the token', async () => {
@@ -166,7 +182,12 @@ describe('v2/Client', () => {
 
       await vi.advanceTimersByTimeAsync(DEFAULT_TIMEOUT);
 
-      await expect(request).resolves.toBeInstanceOf(HomeWizardEnergyApiTimeoutError);
+      await expect(request).resolves.toMatchObject({
+        kind: 'timeout',
+        url: `${mockV2Url}/api`,
+        timeout: DEFAULT_TIMEOUT,
+      });
+      await expect(request).resolves.toBeInstanceOf(HomeWizardError);
     });
 
     it('should not time out with timeout 0', async () => {
