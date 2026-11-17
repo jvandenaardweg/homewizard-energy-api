@@ -1,5 +1,5 @@
 import { mockApiAgent } from '@/mocks/api';
-import { mockV2, mockV2Host, mockV2Pool } from '@/mocks/api-v2';
+import { mockV2, mockV2Host, mockV2NetworkError, mockV2Pool } from '@/mocks/api-v2';
 import { mockV2DeviceInformation, mockV2Identifier, mockV2UserCreated } from '@/mocks/data/v2';
 import {
   mockTlsCa,
@@ -92,9 +92,7 @@ describe('v2/pair', () => {
   });
 
   it('should retry after a network error', async () => {
-    mockV2Pool
-      .intercept({ path: '/api/user', method: 'POST' })
-      .replyWithError(new Error('socket hang up'));
+    mockV2NetworkError('/api/user', 'POST', 'socket hang up');
     mockV2('/api/user', 'POST', { response: mockV2UserCreated });
 
     const method = vi.fn();
@@ -120,7 +118,7 @@ describe('v2/pair', () => {
 
   it('should retry the device information after an insecure pairing, so the token is kept', async () => {
     mockV2('/api/user', 'POST', { response: mockV2UserCreated });
-    mockV2Pool.intercept({ path: '/api', method: 'GET' }).replyWithError(new Error('ECONNRESET'));
+    mockV2NetworkError('/api');
     mockV2('/api', 'GET', { response: mockV2DeviceInformation['HWE-P1'] });
 
     const pairing = pair(mockV2Host, 'new_user', { dispatcher: mockApiAgent, insecure: true });

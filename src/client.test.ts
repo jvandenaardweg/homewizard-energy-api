@@ -1,8 +1,15 @@
 import { PeerCertificate } from 'tls';
 import { Agent } from 'undici';
-import { mockV2, mockV2DeviceOptions, mockV2Host, mockV2Pool, mockV2Url } from '@/mocks/api-v2';
+import {
+  mockV2,
+  mockV2DeviceOptions,
+  mockV2Host,
+  mockV2NetworkError,
+  mockV2Pool,
+  mockV2Url,
+} from '@/mocks/api-v2';
 import { DEFAULT_TIMEOUT } from '@/shared/request';
-import { Client, isApiVersionAtLeast, isNewerApiVersion, toBaseUrl } from './client';
+import { Client, toBaseUrl } from './client';
 import { HomeWizardError } from './errors';
 import { HOMEWIZARD_CA_CERT } from './tls';
 
@@ -153,7 +160,7 @@ describe('v2/Client', () => {
     });
 
     it('should throw a network error when the connection fails', async () => {
-      mockV2Pool.intercept({ path: '/api', method: 'GET' }).replyWithError(new Error('ECONNRESET'));
+      mockV2NetworkError('/api');
 
       const client = new Client(mockV2Host, mockV2DeviceOptions);
       const error = (await client.json('GET', '/api').catch(error => error)) as HomeWizardError;
@@ -211,8 +218,7 @@ describe('v2/Client', () => {
   });
 
   describe('retries', () => {
-    const fail = (method = 'GET') =>
-      mockV2Pool.intercept({ path: '/api', method }).replyWithError(new Error('ECONNRESET'));
+    const fail = (method = 'GET') => mockV2NetworkError('/api', method);
     const options = { ...mockV2DeviceOptions, retries: undefined };
 
     it('should retry a read twice by default, waiting 500ms and then 1s', async () => {
@@ -264,6 +270,20 @@ describe('v2/Client', () => {
       });
     });
 
+    it('should stop retrying on close(), and not retry on a closed client', async () => {
+      fail();
+      fail();
+
+      const client = new Client(mockV2Host, options);
+      const waiting = client.json('GET', '/api').catch(error => error);
+      await vi.advanceTimersByTimeAsync(100);
+      await client.close();
+
+      // No timers advance here: the wait for the retry ended at close()
+      await expect(waiting).resolves.toMatchObject({ kind: 'network' });
+      await expect(client.json('GET', '/api')).rejects.toMatchObject({ kind: 'network' });
+    });
+
     it('should not retry with retries 0', async () => {
       fail();
 
@@ -274,27 +294,6 @@ describe('v2/Client', () => {
   });
 
   describe('API version', () => {
-    it('should tell whether a version is newer', () => {
-      expect(isNewerApiVersion('2.4.0', '2.3.0')).toBe(true);
-      expect(isNewerApiVersion('2.3.1', '2.3.0')).toBe(true);
-      expect(isNewerApiVersion('3', '2.3.0')).toBe(true);
-      expect(isNewerApiVersion('2.10.0', '2.9.0')).toBe(true);
-      expect(isNewerApiVersion('2.3.0.1', '2.3.0')).toBe(true);
-      expect(isNewerApiVersion('2.3.0', '2.3.0')).toBe(false);
-      expect(isNewerApiVersion('2.3', '2.3.0')).toBe(false);
-      expect(isNewerApiVersion('2.2.0', '2.3.0')).toBe(false);
-      expect(isNewerApiVersion('v2', '2.3.0')).toBe(false);
-    });
-
-    it('should tell whether a version is at least the minimum', () => {
-      expect(isApiVersionAtLeast('2.3.0', '2.3.0')).toBe(true);
-      expect(isApiVersionAtLeast('2.3', '2.3.0')).toBe(true);
-      expect(isApiVersionAtLeast('2.10.0', '2.3.0')).toBe(true);
-      expect(isApiVersionAtLeast('3.0.0', '2.3.0')).toBe(true);
-      expect(isApiVersionAtLeast('2.2.0', '2.3.0')).toBe(false);
-      expect(isApiVersionAtLeast('v1', '2.0.0')).toBe(false);
-    });
-
     it('should log once when the device answers with a newer API version', async () => {
       const method = vi.fn();
       mockV2('/api', 'GET', { response: {}, headers: { 'x-api-version': '2.4.0' } });

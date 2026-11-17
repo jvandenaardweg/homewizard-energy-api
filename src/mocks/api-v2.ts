@@ -66,6 +66,11 @@ export function mockV2(path: string, method: string, options: MockV2Options = {}
   });
 }
 
+/** Makes one request to `path` fail on the network, before any response. */
+export function mockV2NetworkError(path: string, method = 'GET', message = 'ECONNRESET'): void {
+  mockV2Pool.intercept({ path, method }).replyWithError(new Error(message));
+}
+
 /** The credentials of the mocked device, as `pair()` returns them. */
 export const mockV2Credentials = {
   host: mockV2Host,
