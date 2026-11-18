@@ -465,6 +465,18 @@ describe('the protected finders that the v1 discovery calls', () => {
     expect(callback).toHaveBeenCalledOnce();
   });
 
+  it('should call removeCachedResponseByFqdn() only at a goodbye, not when a device changes', () => {
+    const remove = override(discovery, 'removeCachedResponseByFqdn');
+    const moved = packet();
+    moved.additionals = [{ ...moved.additionals[0], data: '192.168.1.35' } as Record];
+
+    handle(packet());
+    handle(moved);
+
+    expect(remove).not.toHaveBeenCalled();
+    expect(callback).toHaveBeenCalledTimes(2);
+  });
+
   it.each([
     ['response', 'handleMdnsResponse'],
     ['error', 'handleMdnsError'],
