@@ -155,7 +155,7 @@ describe('v2/transport-errors', () => {
     const error = new HomeWizardError('invalid', 'bad');
 
     await expect(failRequest(error)).resolves.toBe(error);
-    expect(toHomeWizardError(error, { type: 'websocket', url: 'wss://x/api/ws' })).toBe(error);
+    expect(toHomeWizardError(error, { type: 'websocket' })).toBe(error);
   });
 
   describe('parseErrorCode', () => {
