@@ -31,7 +31,7 @@ src/
   discovery.ts      # discover() on _homewizard._tcp, and connect()
   types.ts          # the response types, mirroring the upstream docs
   devices/          # Device, and one class per device
-  shared/           # used by the root and by v1: request with timeout, logger, polling loop, mDNS, AsyncQueue, wait
+  shared/           # used by the root and by v1: request with timeout, logger, polling loop, mDNS, AsyncQueue, StreamSet, wait
   telegram/         # the telegram parser
   v1/               # the API v1
   mocks/            # test fixtures, the mock agent, the mocked API and a local TLS and WebSocket server; v1/ holds the API v1 ones
@@ -94,6 +94,13 @@ The WebSocket (`DeviceSocket`) authorizes with the token, subscribes again after
 It uses undici's `WebSocket` with the same TLS agent as the requests, so there's no extra dependency.
 
 Data can be read with events or with `for await`: `socket.on()` and `socket.stream()`, `poller.on()` and `poller.stream()`, and `discover()`. The iterators are an `AsyncQueue` fed by the events. A stream keeps only the latest value while the loop is busy, because every topic is a current state.
+
+`poller.stream()` and `socket.stream()` open their streams through a `StreamSet` (`src/shared/stream-set.ts`), one per poller and one per topic of a socket. It ends a stream at once for an aborted signal, gives each stream its own listeners and removes them when it ends, and ends every open stream when the source stops. Each stream acquires the source as it opens: the poller starts polling, and the socket subscribes to the topic when nobody did. Who releases it differs:
+
+- A poller is stopped by the stream that started it, which ends the streams that joined, as `stream()` documents. A poller started with `start()` keeps running.
+- A topic is unsubscribed by the last stream to end, and only when no `on()` listener still uses it. A topic the user subscribed to stays subscribed.
+
+`discover()` uses an `AsyncQueue` of its own, since each call is one stream that owns its own mDNS discovery and timeout.
 
 `discover()` loads `multicast-dns` on its first call, so apps that never discover don't load it.
 
