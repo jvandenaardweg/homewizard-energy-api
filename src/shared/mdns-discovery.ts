@@ -10,6 +10,7 @@ import {
   isGoodbye,
   isSameName,
   MdnsDiscoveryResponse,
+  MdnsHostDetails,
   parseTxtRecord,
 } from './mdns-discovery-packet';
 
@@ -139,7 +140,7 @@ export class MdnsDiscovery<TTxtRecord extends object> {
 
   protected getHostDetailsFromAnswer(
     answer: multicastDns.ResponsePacket['answers'][number],
-  ): { ip: string; hostname: string } | null {
+  ): MdnsHostDetails | null {
     return hostDetailsOf(answer);
   }
 
@@ -150,7 +151,7 @@ export class MdnsDiscovery<TTxtRecord extends object> {
    */
   protected getHostDetailsFromResponse(
     response: multicastDns.ResponsePacket,
-  ): { ip: string; hostname: string } | null {
+  ): MdnsHostDetails | null {
     const record = findHost(response, this.getFqdnFromResponse(response));
 
     return record ? this.getHostDetailsFromAnswer(record) : null;
