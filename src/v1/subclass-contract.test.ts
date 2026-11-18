@@ -465,6 +465,51 @@ describe('the protected finders that the v1 discovery calls', () => {
     expect(callback).toHaveBeenCalledOnce();
   });
 
+  it('should read the host, the TXT record and a goodbye of the device getFqdnFromResponse() picks', () => {
+    const other = 'energysocket-CCDD02._hwenergy._tcp.local';
+    const otherTxt = [Buffer.from('product_type=HWE-SKT'), Buffer.from('serial=3c39e7ccdd02')];
+    const both = (otherTtl: number) => {
+      const response = packet();
+      response.answers = [
+        { name: '_hwenergy._tcp.local', type: 'PTR', ttl: 4500, class: 'IN', data: fqdn },
+        { name: '_hwenergy._tcp.local', type: 'PTR', ttl: otherTtl, class: 'IN', data: other },
+        ...response.answers.slice(1),
+        {
+          name: other,
+          type: 'SRV',
+          ttl: 120,
+          class: 'IN',
+          data: { priority: 0, weight: 0, port: 80, target: 'energysocket-CCDD02.local' },
+        },
+        { name: other, type: 'TXT', ttl: 4500, class: 'IN', data: otherTxt },
+      ];
+      response.additionals = [
+        ...response.additionals,
+        {
+          name: 'energysocket-CCDD02.local',
+          type: 'A',
+          ttl: 120,
+          class: 'IN',
+          data: '192.168.1.36',
+        },
+      ];
+      return response;
+    };
+    override(discovery, 'getFqdnFromResponse').mockReturnValue(other);
+
+    handle(both(4500));
+    handle(both(0));
+    handle(both(4500));
+
+    const otherDevice = {
+      ip: '192.168.1.36',
+      hostname: 'energysocket-CCDD02.local',
+      fqdn: other,
+      txt: { product_type: 'HWE-SKT', serial: '3c39e7ccdd02' },
+    };
+    expect(vi.mocked(callback).mock.calls).toStrictEqual([[otherDevice], [otherDevice]]);
+  });
+
   it('should call removeCachedResponseByFqdn() only at a goodbye, not when a device changes', () => {
     const remove = override(discovery, 'removeCachedResponseByFqdn');
     const moved = packet();
