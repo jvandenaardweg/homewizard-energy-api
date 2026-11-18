@@ -106,6 +106,6 @@ The response types in `src/types.ts` and `src/v1/types.ts` mirror the upstream d
 ## Tests
 
 - A global undici `MockAgent` (`src/mocks/agent.ts`) answers every request, with the network disabled. The device classes create their own TLS agent, so tests pass the mock agent as `dispatcher`.
-- The certificate checks and the WebSocket need a real TLS handshake, which the mock agent skips. `src/mocks/tls/` has a test CA, a device certificate, and a local HTTPS and WebSocket server that scripts a device.
+- The certificate checks need a real TLS handshake, which the mock agent skips, and so do the WebSocket tests of the certificate, a wrong token and one happy path. The rest of the WebSocket runs on fakes: `DeviceSocket` on a fake `Connection`, and `Connection` on a fake undici `WebSocket`. `src/mocks/tls/` has a test CA, a device certificate, and a local HTTPS and WebSocket server that scripts a device.
 - The fixtures come from the upstream docs, HomeWizard's Python library and Home Assistant, each with a source comment.
 - `npm run test:package` checks the built package as a user gets it: it installs the tarball, loads each entry point, and type-checks the README examples.
