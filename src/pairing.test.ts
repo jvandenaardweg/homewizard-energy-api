@@ -1,9 +1,11 @@
+import { ServerResponse } from 'http';
 import { mockApiAgent } from '@/mocks/agent';
 import { mockV2, mockV2Host, mockV2NetworkError, mockV2Pool } from '@/mocks/api-v2';
 import { mockV2DeviceInformation, mockV2Identifier, mockV2UserCreated } from '@/mocks/data/v2';
 import {
   mockTlsCa,
   mockTlsIdentifier,
+  mockTlsOtherIdentifier,
   MockTlsServer,
   startMockTlsServer,
 } from '@/mocks/tls/server';
@@ -215,15 +217,18 @@ describe('v2/pair', () => {
   describe('with a TLS connection', () => {
     let server: MockTlsServer;
     let attempts = 0;
+    let onButtonNotPressed: (response: ServerResponse) => void;
 
     beforeEach(async () => {
       vi.useRealTimers();
       attempts = 0;
+      onButtonNotPressed = () => undefined;
       server = await startMockTlsServer((_request, response) => {
         attempts++;
         response.setHeader('content-type', 'application/json');
 
         if (attempts === 1) {
+          onButtonNotPressed(response);
           response.statusCode = 403;
           response.end('{"error":"user:creation-not-enabled"}');
           return;
@@ -247,6 +252,25 @@ describe('v2/pair', () => {
         token: mockV2UserCreated.token,
         identifier: mockTlsIdentifier,
       });
+      expect(attempts).toBe(2);
+    });
+
+    it('should refuse the token when different devices answered during pairing', async () => {
+      onButtonNotPressed = response => {
+        // A new connection, so the next attempt meets the other device's certificate
+        response.setHeader('connection', 'close');
+        server.useOtherDevice();
+      };
+
+      const error = await pair(server.host, 'new_user', { ca: mockTlsCa, interval: 10 }).catch(
+        error => error,
+      );
+
+      expect(error).toBeInstanceOf(HomeWizardError);
+      expect(error.kind).toBe('certificate');
+      expect(error.message).toBe(
+        `Different devices answered at this address during pairing (${mockTlsIdentifier}, ${mockTlsOtherIdentifier}), so the token can't be trusted`,
+      );
       expect(attempts).toBe(2);
     });
 
