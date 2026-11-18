@@ -254,9 +254,12 @@ export class MdnsDiscovery<TTxtRecord extends object> {
       }
 
       // Store response in cache, so we don't send multiple events for the same device when not needed. It
-      // replaces the device's old entry, so a device that moves back to an earlier IP address is sent again.
-      this.removeCachedResponseByFqdn(fqdn);
-      this.cachedDiscoveryResponses.push(discoveryResponse);
+      // replaces the device's old entry, so a device that moves back to an earlier IP address is sent again. Not
+      // through removeCachedResponseByFqdn(), which a subclass may take as the device going away.
+      this.cachedDiscoveryResponses = [
+        ...this.cachedDiscoveryResponses.filter(cached => !isSameName(cached.fqdn, fqdn)),
+        discoveryResponse,
+      ];
 
       return callback(discoveryResponse);
     };
