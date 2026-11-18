@@ -12,7 +12,8 @@ import { ErrorCode } from './types';
  *   device announced with another identifier.
  * - `pairing`: the button on the device wasn't pressed in time (`reason: 'timeout'`), or the pairing was
  *   aborted (`reason: 'aborted'`).
- * - `socket`: the WebSocket failed or the device sent an error over it, with its `code`.
+ * - `socket`: the WebSocket failed or the device sent an error over it, with its `code`. A WebSocket connection
+ *   that fails on the certificate is kind `socket` too, because undici doesn't pass on why it failed.
  * - `invalid`: the arguments or options can't work, for example a missing identifier or an `http://` host.
  */
 export type HomeWizardErrorKind = keyof HomeWizardErrorFields;
