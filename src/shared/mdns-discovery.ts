@@ -184,7 +184,8 @@ export class MdnsDiscovery<TTxtRecord extends object> {
    * Returns the listener for mDNS responses. It reads each packet through the protected finders, in this order, so
    * a subclass can override any of them: `isServiceResponse()`, `getFqdnFromResponse()`, `isGoodbyeResponse()`,
    * then for a goodbye `getCachedResponseByFqdn()` and `removeCachedResponseByFqdn()`, and otherwise
-   * `getHostDetailsFromResponse()`, `getTxtRecordFromResponse()` and `isDiscoveryResponseInCache()`.
+   * `getHostDetailsFromResponse()`, `getTxtRecordFromResponse()` and `isDiscoveryResponseInCache()`. The default
+   * `isGoodbyeResponse()` and `getHostDetailsFromResponse()` read the fqdn through `getFqdnFromResponse()` too.
    */
   protected handleMdnsResponse(
     callback: (discoveryResponse: MdnsDiscoveryResponse<TTxtRecord>) => void,

@@ -23,6 +23,7 @@ src/
   tls.ts            # the HomeWizard CA, the certificate check, getCertificateIdentifier(), isSameIdentifier()
   identifier-policy.ts  # IdentifierPolicy (internal): pin, learn or skip the identifier in the certificate
   errors.ts         # HomeWizardError, a union per kind
+  transport-errors.ts  # (internal) a failed request or WebSocket connection as its HomeWizardError, and requestErrors
   api-version.ts    # isApiVersionAtLeast()
   endpoints.ts      # one function per endpoint: (client, ...args) => Promise<T>
   pairing.ts        # pair(): asks for a token until the button is pressed
@@ -38,7 +39,7 @@ src/
   examples/         # scripts to run against a real device
 ```
 
-`src/shared` imports nothing from `src/v1` or the root, and the root imports nothing from `src/v1`. So `src/v1` can be deleted in one piece when HomeWizard removes the API v1. The tests hold to it too: the API v1 mocks and fixtures are in `src/mocks/v1`, which goes with it, and the other tests import from neither.
+`src/shared` imports nothing from `src/v1` or the root, and the root imports nothing from `src/v1`. So `src/v1` can be deleted in one piece when HomeWizard removes the API v1. The tests hold to it too: the API v1 mocks and fixtures are in `src/mocks/v1`, which goes with it, and the other tests import from neither. The examples in `src/examples/v1` go with it too, since the type-check covers them.
 
 ## Devices
 
@@ -82,6 +83,8 @@ Tokens stay out of logs: every logged body goes through `redact()`.
 
 `Client.send()` is the one place every request goes through. It adds the token and the API version, applies the timeout, and retries a `GET` that fails with a timeout or network error (twice by default). Requests that change something are never retried.
 
+`src/transport-errors.ts` decides what a failure is. Its `toHomeWizardError()` turns what `Client.send()` and the WebSocket `Connection` catch into a `HomeWizardError`, with the original as `cause`. A `HomeWizardError` passes through as it is. On a request, a refused certificate becomes kind `certificate`, and anything else kind `network`. On the WebSocket it's always kind `socket`, because undici doesn't pass on why the connection failed. Its `requestErrors` are the errors for a timeout, an error status and invalid JSON, which `Client` passes to `requestWithTimeout()` and `readResponse()` in `src/shared/request.ts`. `readResponse()` checks the status and decodes the body. The API v1 passes its own errors from `src/v1/errors.ts`, and decodes through the protected methods of `BaseApi`, so a subclass can override them.
+
 The device classes, `pair()`, `connect()` and `discover()` throw a `HomeWizardError`, and the WebSocket emits one. Its `kind` says what went wrong (`response`, `timeout`, `network`, `certificate`, `pairing`, `socket`, `invalid`), and `code` has the device's error code. In TypeScript it's a union per kind, so checking `kind` narrows the fields.
 
 ## Pushed data
@@ -113,6 +116,6 @@ The response types in `src/types.ts` and `src/v1/types.ts` mirror the upstream d
 ## Tests
 
 - A global undici `MockAgent` (`src/mocks/agent.ts`) answers every request, with the network disabled. The device classes create their own TLS agent, so tests pass the mock agent as `dispatcher`.
-- The certificate checks need a real TLS handshake, which the mock agent skips, and so do the WebSocket tests of the certificate, a wrong token and one happy path. The rest of the WebSocket runs on fakes: `DeviceSocket` on a fake `Connection`, and `Connection` on a fake undici `WebSocket`. `src/mocks/tls/` has a test CA, a device certificate, and a local HTTPS and WebSocket server that scripts a device.
+- The certificate checks need a real TLS handshake, which the mock agent skips, and so do the WebSocket tests of the certificate, a wrong token and one happy path. The rest of the WebSocket runs on fakes: `DeviceSocket` on a fake `Connection`, and `Connection` on a fake undici `WebSocket`. `src/mocks/tls/` has a test CA, two device certificates with different identifiers, and a local HTTPS and WebSocket server that scripts a device.
 - The fixtures come from the upstream docs, HomeWizard's Python library and Home Assistant, each with a source comment.
 - `npm run test:package` checks the built package as a user gets it: it installs the tarball, loads each entry point, and type-checks the README examples.
