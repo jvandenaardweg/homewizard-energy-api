@@ -549,6 +549,25 @@ describe('telegram', () => {
       consoleErrorSpy.mockRestore();
     });
 
+    it.each(['', ' \r\n \n'])(
+      'should return every field as null for an empty telegram %j',
+      input => {
+        // Every value of the result, with the entries of the logs, which are empty here
+        const values = (value: unknown): unknown[] =>
+          value !== null && typeof value === 'object'
+            ? Object.values(value).flatMap(values)
+            : [value];
+        const log = vi.fn();
+
+        const parsedTelegram = parseTelegram(input, log);
+
+        expect(values(parsedTelegram).length).toBeGreaterThan(0);
+        expect(values(parsedTelegram).every(value => value === null)).toBe(true);
+        expect(parsedTelegram.power.longPowerFailureLog.log).toStrictEqual([]);
+        expect(log).not.toHaveBeenCalled();
+      },
+    );
+
     it('should give a null unit for a value sent without one', () => {
       const parsedTelegram = parseTelegram(
         '/ISK5\\2M550T-1012\n\n1-3:0.2.8(50)\n1-0:1.8.1(000001.000)\n1-0:31.7.0(002)\n' +
