@@ -171,7 +171,8 @@ export class MdnsDiscovery<TTxtRecord extends object> {
     const ofService = records.find(record => normalize(record.name).endsWith(service));
     if (ofService) return ofService;
 
-    return records.find(record => !/\._(tcp|udp)\.local$/.test(normalize(record.name)));
+    // a name with a `_tcp` or `_udp` label belongs to a service, under any domain
+    return records.find(record => !/\._(tcp|udp)(\.|$)/.test(normalize(record.name)));
   }
 
   protected getHostDetailsFromAnswer(
