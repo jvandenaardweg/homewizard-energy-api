@@ -13,8 +13,17 @@ import {
   mockV2Telegram,
   mockV2UserCreated,
   mockV2Users,
+  mockV2Token,
 } from '@/mocks/data/v2';
+import {
+  mockTlsCa,
+  mockTlsIdentifier,
+  MockTlsServer,
+  startMockTlsServer,
+} from '@/mocks/tls/server';
+import { ConnectionOptions } from '../client';
 import { HomeWizardError } from '../errors';
+import { CERTIFICATE_IDENTITY_ERROR_CODE } from '../tls';
 import { KwhMeter1Phase, KwhMeter3Phase } from './kwh-meter';
 import { P1Meter } from './p1-meter';
 import { PlugInBattery } from './plug-in-battery';
@@ -216,6 +225,76 @@ describe.each(devices)('v2.$name', ({ create, Class, cases, missing }) => {
     // http:// is refused before any request, so this doesn't reach the network
     await expect((Class as typeof P1Meter).pair('http://192.168.1.35', 'new_user')).rejects.toThrow(
       'The API v2 only works over HTTPS',
+    );
+  });
+});
+
+describe('v2 device classes with a TLS connection', () => {
+  let server: MockTlsServer;
+
+  const connect = (identifier: string, options: ConnectionOptions = { ca: mockTlsCa }) =>
+    new P1Meter({ host: server.host, token: mockV2Token, identifier }, { retries: 0, ...options });
+
+  beforeEach(async () => {
+    vi.useRealTimers();
+    server = await startMockTlsServer((_request, response) => {
+      response.setHeader('content-type', 'application/json');
+      response.end(JSON.stringify(mockV2DeviceInformation['HWE-P1']));
+    });
+  });
+
+  afterEach(async () => {
+    await server.close();
+    // The global afterEach in vitest.setup.ts runs the fake timers
+    vi.useFakeTimers();
+  });
+
+  it('should connect to the device the certificate is issued to', async () => {
+    const p1 = connect(mockTlsIdentifier);
+
+    await expect(p1.getDevice()).resolves.toStrictEqual(mockV2DeviceInformation['HWE-P1']);
+    await p1.close();
+  });
+
+  it('should accept the identifier in capitals, as typed from the device label', async () => {
+    const p1 = connect(mockTlsIdentifier.toUpperCase());
+
+    await expect(p1.getDevice()).resolves.toMatchObject({ product_type: 'HWE-P1' });
+    await p1.close();
+  });
+
+  it('should refuse a certificate issued to another identifier', async () => {
+    const p1 = connect('appliance/p1dongle/000000000000');
+    const error = await p1.getDevice().catch(error => error);
+
+    expect(error).toBeInstanceOf(HomeWizardError);
+    expect(error.kind).toBe('certificate');
+    expect(error.cause.code).toBe(CERTIFICATE_IDENTITY_ERROR_CODE);
+    await p1.close();
+  });
+
+  it('should check the certificate against the HomeWizard CA by default', async () => {
+    const p1 = connect(mockTlsIdentifier, {});
+    const error = await p1.getDevice().catch(error => error);
+
+    expect(error.kind).toBe('certificate');
+    expect(error.cause.code).toMatch(/CERT|SIGNATURE|ISSUER/);
+    await p1.close();
+  });
+
+  it('should skip the certificate checks when insecure, also without an identifier', async () => {
+    const p1 = connect('', { insecure: true });
+
+    await expect(p1.getDevice()).resolves.toMatchObject({ product_type: 'HWE-P1' });
+    await p1.close();
+  });
+
+  it('should require an identifier unless insecure', () => {
+    expect(() => connect('')).toThrow(
+      expect.objectContaining({
+        kind: 'invalid',
+        message: expect.stringMatching(/"identifier" of the credentials is required/),
+      }),
     );
   });
 });
