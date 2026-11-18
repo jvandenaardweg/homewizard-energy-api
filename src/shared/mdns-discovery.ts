@@ -99,11 +99,14 @@ export class MdnsDiscovery<TTxtRecord extends object> {
     this.mdns.on(event, this.handleMdnsResponse(callback));
   }
 
-  /** Whether the packet says goodbye for the device that its PTR of this service points at. */
+  /**
+   * Whether the packet says goodbye for the device: for the fqdn of `getFqdnFromResponse()`, or the instance the
+   * PTR of this service points at, which is the same unless a subclass changes it.
+   */
   protected isGoodbyeResponse(response: multicastDns.ResponsePacket): boolean {
-    const fqdn = findFqdn(response, this.serviceDomain);
-
-    return fqdn !== null && isGoodbye(response, this.serviceDomain, fqdn);
+    return [this.getFqdnFromResponse(response), findFqdn(response, this.serviceDomain)].some(
+      fqdn => fqdn !== null && isGoodbye(response, this.serviceDomain, fqdn),
+    );
   }
 
   /**
@@ -141,13 +144,14 @@ export class MdnsDiscovery<TTxtRecord extends object> {
   }
 
   /**
-   * Finds the host of the device with `getHostDetailsFromAnswer()`, from the A record of the SRV target of its
-   * fqdn, or without an SRV, the first A record. The additional section wins over the answers.
+   * Finds the host of the device with `getHostDetailsFromAnswer()`, from the A record of the SRV target of the fqdn
+   * of `getFqdnFromResponse()`, or without that SRV, the first A record. The additional section wins over the
+   * answers.
    */
   protected getHostDetailsFromResponse(
     response: multicastDns.ResponsePacket,
   ): { ip: string; hostname: string } | null {
-    const record = findHost(response, findFqdn(response, this.serviceDomain));
+    const record = findHost(response, this.getFqdnFromResponse(response));
 
     return record ? this.getHostDetailsFromAnswer(record) : null;
   }
