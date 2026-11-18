@@ -259,6 +259,19 @@ describe('BaseApi', () => {
   });
 
   describe('parseJsonResponse()', () => {
+    it('should return the JSON body of a response', async () => {
+      apiMocks.getData({
+        response: mockP1MeterDataResponse,
+      });
+
+      const url = 'http://localhost/api/v1/data';
+      const response = await baseApi['request'](url, { method: 'GET' });
+
+      await expect(baseApi['parseJsonResponse'](url, 'GET', response)).resolves.toStrictEqual(
+        mockP1MeterDataResponse,
+      );
+    });
+
     it('should throw a HomeWizardEnergyApiResponseError when the body is not valid JSON', async () => {
       apiMocks.getData({
         response: '<html>Not JSON</html>',

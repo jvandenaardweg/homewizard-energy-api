@@ -1,4 +1,4 @@
-import { InvalidJsonErrorFactory, TimeoutErrorFactory } from '../shared/request';
+import { describeFailure, RequestErrors } from '../shared/request';
 import { ErrorResponse } from './types';
 
 function parseApiError(response: string): ErrorResponse['error'] | undefined {
@@ -64,10 +64,16 @@ export class HomeWizardEnergyApiTimeoutError extends HomeWizardEnergyApiError {
   }
 }
 
-/** Creates the timeout error of the API v1, for `requestWithTimeout()`. */
-export const createTimeoutError: TimeoutErrorFactory = (message, url, timeout) =>
-  new HomeWizardEnergyApiTimeoutError(message, url, timeout);
-
-/** Creates the response error of the API v1 for a body that isn't valid JSON, for `parseJsonResponse()`. */
-export const createInvalidJsonError: InvalidJsonErrorFactory = (message, url, statusCode, body) =>
-  new HomeWizardEnergyApiResponseError(message, url, statusCode, body);
+/** The errors of the API v1 for a failed request, for `requestWithTimeout()` and `readResponse()`. */
+export const requestErrors: RequestErrors = {
+  timeout: (message, url, timeout) => new HomeWizardEnergyApiTimeoutError(message, url, timeout),
+  status: (method, url, statusCode, body) =>
+    new HomeWizardEnergyApiResponseError(
+      describeFailure(method, url, statusCode, body),
+      url,
+      statusCode,
+      body,
+    ),
+  invalidJson: (message, url, statusCode, body) =>
+    new HomeWizardEnergyApiResponseError(message, url, statusCode, body),
+};

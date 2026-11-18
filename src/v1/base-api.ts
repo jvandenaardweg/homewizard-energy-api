@@ -4,17 +4,12 @@ import { log, LoggerOptions } from '../shared/logger';
 import { DEFAULT_POLL_INTERVAL, runPollLoop } from '../shared/poller';
 import {
   DEFAULT_TIMEOUT,
-  describeFailure,
   isResponseOk,
   parseJsonResponse,
   RequestParameters,
   requestWithTimeout,
 } from '../shared/request';
-import {
-  createInvalidJsonError,
-  createTimeoutError,
-  HomeWizardEnergyApiResponseError,
-} from './errors';
+import { requestErrors } from './errors';
 import {
   BasicInformationResponse,
   BaseDataResponse,
@@ -192,7 +187,7 @@ export class BaseApi {
       url,
       { ...this.requestOptions, ...options },
       this.timeout,
-      createTimeoutError,
+      requestErrors,
     );
   }
 
@@ -204,32 +199,26 @@ export class BaseApi {
     return isResponseOk(response);
   }
 
+  /** Throws the `HomeWizardEnergyApiResponseError` of an error status, with the response body. */
   protected async throwResponseError(
     url: string,
     method: string,
     response: Dispatcher.ResponseData<unknown>,
   ): Promise<never> {
-    const { statusCode, body } = response;
-    const text = await body.text();
-
-    throw new HomeWizardEnergyApiResponseError(
-      describeFailure(method, url, statusCode, text),
-      url,
-      statusCode,
-      text,
-    );
+    throw requestErrors.status(method, url, response.statusCode, await response.body.text());
   }
 
   /**
-   * Reads the response body as JSON. A body that isn't valid JSON throws a `HomeWizardEnergyApiResponseError`
-   * instead of a bare `SyntaxError`, so it has the URL and the raw body.
+   * Reads the response body as JSON, whatever its status: the endpoints check that with `isResponseOk()` first. A
+   * body that isn't valid JSON throws a `HomeWizardEnergyApiResponseError` instead of a bare `SyntaxError`, so it
+   * has the URL and the raw body.
    */
   protected async parseJsonResponse<T>(
     url: string,
     method: string,
     response: Dispatcher.ResponseData<unknown>,
   ): Promise<T> {
-    return parseJsonResponse<T>(url, method, response, createInvalidJsonError);
+    return parseJsonResponse<T>(response, { method, url }, requestErrors);
   }
 
   /**

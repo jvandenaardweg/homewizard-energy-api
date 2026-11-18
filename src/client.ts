@@ -2,21 +2,11 @@ import { Agent, Dispatcher } from 'undici';
 import { Backoff } from '@/shared/backoff';
 import { log, LoggerOptions, redact } from '@/shared/logger';
 import { wait } from '@/shared/wait';
-import {
-  DEFAULT_TIMEOUT,
-  isResponseOk,
-  parseJsonResponse,
-  requestWithTimeout,
-} from '@/shared/request';
+import { DEFAULT_TIMEOUT, readResponse, requestWithTimeout } from '@/shared/request';
 import { HomeWizardError, isTransientError } from './errors';
 import { isNewerApiVersion } from './api-version';
 import type { IdentifierPolicy } from './identifier-policy';
-import {
-  createInvalidJsonError,
-  createResponseError,
-  createTimeoutError,
-  toHomeWizardError,
-} from './transport-errors';
+import { requestErrors, toHomeWizardError } from './transport-errors';
 import { API_MAJOR_VERSION, DOCUMENTED_API_VERSION } from './types';
 import type { SocketTarget } from './websocket';
 
@@ -175,9 +165,9 @@ export class Client {
   }
 
   /**
-   * Sends a request and returns what `read` makes of the response. Throws a `HomeWizardError`: a `response`
-   * error for an error status or a body that isn't valid JSON, and a `timeout`, `network` or `certificate` error
-   * when there is no response. A `GET` that times out or fails on the network is retried, see `retries`.
+   * Sends a request and returns what `read` makes of the response, which checks its status with `readResponse()`.
+   * Throws a `HomeWizardError`: a `response` error for an error status or a body that isn't valid JSON, and a
+   * `timeout`, `network` or `certificate` error when there is no response. A `GET` that times out or fails on the network is retried, see `retries`.
    */
   async send<T>(
     method: HttpMethod,
@@ -210,7 +200,7 @@ export class Client {
     }
   }
 
-  /** Sends a request, and throws for an error status. */
+  /** Sends a request. `readResponse()` checks the status of the response. */
   protected async request(
     method: HttpMethod,
     url: string,
@@ -238,16 +228,10 @@ export class Client {
         bodyTimeout: this.timeout || undefined,
       },
       this.timeout,
-      createTimeoutError,
+      requestErrors,
     );
 
     this.checkApiVersion(response.headers['x-api-version']);
-
-    if (!isResponseOk(response)) {
-      const text = await response.body.text();
-
-      throw createResponseError(method, url, response.statusCode, text);
-    }
 
     return response;
   }
@@ -271,7 +255,7 @@ export class Client {
   /** Sends a request and returns the JSON body. */
   async json<T>(method: HttpMethod, path: string, body?: unknown): Promise<T> {
     return this.send(method, path, { body }, async (url, response) => {
-      const data = await parseJsonResponse<T>(url, method, response, createInvalidJsonError);
+      const data = await readResponse<T>(response, { method, url }, requestErrors);
 
       this.log(`Received ${redact(data)} from ${url}`);
 
@@ -281,16 +265,15 @@ export class Client {
 
   /** Sends a request that answers `204 No Content`. */
   async empty(method: HttpMethod, path: string, body?: unknown): Promise<void> {
-    await this.send(method, path, { body }, async (_url, response) => {
-      // Consume the body, so the connection can be reused
-      await response.body.text();
-    });
+    await this.send(method, path, { body }, (url, response) =>
+      readResponse(response, { method, url }, requestErrors, 'text'),
+    );
   }
 
   /** Sends a request and returns the plain-text body. */
   async text(method: HttpMethod, path: string): Promise<string> {
     return this.send(method, path, { accept: 'text/plain' }, async (url, response) => {
-      const text = await response.body.text();
+      const text = await readResponse(response, { method, url }, requestErrors, 'text');
 
       this.log(`Received ${JSON.stringify(text)} from ${url}`);
 
