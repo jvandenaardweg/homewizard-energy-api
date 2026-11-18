@@ -2,6 +2,7 @@ import {
   describeCall,
   describeFailure,
   InvalidJsonErrorFactory,
+  RequestErrors,
   TimeoutErrorFactory,
 } from '@/shared/request';
 import { HomeWizardError } from './errors';
@@ -98,10 +99,17 @@ export function createResponseError(
 export const createTimeoutError: TimeoutErrorFactory = (message, url, timeout) =>
   new HomeWizardError('timeout', message, { url, timeout });
 
-/** Creates the `response` error for a body that isn't valid JSON, for `parseJsonResponse()`. */
+/** Creates the `response` error for a body that isn't valid JSON. */
 export const createInvalidJsonError: InvalidJsonErrorFactory = (
   message,
   url,
   statusCode,
   response,
 ) => new HomeWizardError('response', message, { url, statusCode, response });
+
+/** The errors of a failed request, for `requestWithTimeout()` and `readResponse()` in `src/shared/request.ts`. */
+export const requestErrors: RequestErrors = {
+  timeout: createTimeoutError,
+  status: createResponseError,
+  invalidJson: createInvalidJsonError,
+};
