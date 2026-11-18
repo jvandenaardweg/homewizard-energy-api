@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.0.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/3.0.0...3.0.1) (2026-11-18)
+
+### Bug Fixes
+
+* never fall back to a TXT record of another service under another domain ([b460e63](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b460e63621c91d07102bdce57540df2bb1cb8fcf))
+* read the TXT record of the announced service when a packet holds both services ([b745110](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b7451106d54fbe1159b717547a1e30ca492322bf))
+
+### Documentation
+
+* add a security policy ([84da3c2](https://github.com/jvandenaardweg/homewizard-energy-api/commit/84da3c2c1775c9e9ba0fbf2d7358a76a6d645314))
+
+### Other Changes
+
+* check that a service type ending with this one isn't taken as this service ([725660f](https://github.com/jvandenaardweg/homewizard-energy-api/commit/725660fc5f9778779e284765d430a2a77e7593bc))
+* check what the package holds instead of a fixed file count in the release skill ([de18493](https://github.com/jvandenaardweg/homewizard-energy-api/commit/de18493117cae3bc46c7bb68d28ed36f6848618d))
+* ignore local research output ([b6e29f3](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b6e29f3ff02a836a47572a2393df997a9fb78bc7))
+* name the API v1 records of the both-services fixture instead of slicing them ([32b9110](https://github.com/jvandenaardweg/homewizard-energy-api/commit/32b9110d35969349a8c5d06f87e396a1e70221c4))
+* run the two v1 both-services tests as one table ([d20f17f](https://github.com/jvandenaardweg/homewizard-energy-api/commit/d20f17f8278ec5ab7365007fbf90ddef4442f23c))
+* test the TXT record lookup of the shared mDNS discovery in src/shared ([84099c5](https://github.com/jvandenaardweg/homewizard-energy-api/commit/84099c5ebc4d3dac17234e7018e1d797ad48dbf5))
+
+### Contributors
+
+* [@NebzHB](https://github.com/NebzHB)
+
 ## [3.0.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/2.0.0...3.0.0) (2026-11-17)
 
 **3.0 adds the HomeWizard API v2, and makes it the default.**
