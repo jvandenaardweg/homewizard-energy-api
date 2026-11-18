@@ -155,45 +155,31 @@ describe('the service types', () => {
     await devices.return?.();
   });
 
-  it('should read the TXT record of _hwenergy._tcp in the v1 discovery when a packet announces both services', () => {
-    const callback = vi.fn();
-    const handler = getResponseHandler(new HomeWizardEnergyDiscovery(), callback);
+  it.each([
+    ['the API v1 records come first', mockMdnsBothServicesResponse],
+    ['the API v2 records come first', mockMdnsBothServicesV2FirstResponse],
+  ])(
+    'should read the TXT record of _hwenergy._tcp in the v1 discovery when a packet announces both services and %s',
+    (_order, response) => {
+      const callback = vi.fn();
+      const handler = getResponseHandler(new HomeWizardEnergyDiscovery(), callback);
 
-    handler(mockMdnsBothServicesResponse);
+      handler(response);
 
-    expect(callback).toHaveBeenCalledWith({
-      ip: '192.168.1.35',
-      hostname: 'p1meter-AABB02.local',
-      fqdn: 'p1meter-AABB02._hwenergy._tcp.local',
-      txt: {
-        api_enabled: '1',
-        path: '/api/v1',
-        serial: '3c39e7aabb02',
-        product_name: 'P1 Meter',
-        product_type: 'HWE-P1',
-      },
-    });
-  });
-
-  it('should read the TXT record of _hwenergy._tcp in the v1 discovery when the API v2 records come first', () => {
-    const callback = vi.fn();
-    const handler = getResponseHandler(new HomeWizardEnergyDiscovery(), callback);
-
-    handler(mockMdnsBothServicesV2FirstResponse);
-
-    expect(callback).toHaveBeenCalledWith({
-      ip: '192.168.1.35',
-      hostname: 'p1meter-AABB02.local',
-      fqdn: 'p1meter-AABB02._hwenergy._tcp.local',
-      txt: {
-        api_enabled: '1',
-        path: '/api/v1',
-        serial: '3c39e7aabb02',
-        product_name: 'P1 Meter',
-        product_type: 'HWE-P1',
-      },
-    });
-  });
+      expect(callback).toHaveBeenCalledWith({
+        ip: '192.168.1.35',
+        hostname: 'p1meter-AABB02.local',
+        fqdn: 'p1meter-AABB02._hwenergy._tcp.local',
+        txt: {
+          api_enabled: '1',
+          path: '/api/v1',
+          serial: '3c39e7aabb02',
+          product_name: 'P1 Meter',
+          product_type: 'HWE-P1',
+        },
+      });
+    },
+  );
 
   it('should leave _homewizard._tcp to the v2 discovery in the v1 discovery', () => {
     const callback = vi.fn();
