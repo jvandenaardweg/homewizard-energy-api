@@ -33,11 +33,11 @@ src/
   shared/           # used by the root and by v1: request with timeout, logger, polling loop, mDNS, AsyncQueue, wait
   telegram/         # the telegram parser
   v1/               # the API v1
-  mocks/            # test fixtures, the mocked API and a local TLS and WebSocket server
+  mocks/            # test fixtures, the mock agent, the mocked API and a local TLS and WebSocket server; v1/ holds the API v1 ones
   examples/         # scripts to run against a real device
 ```
 
-`src/shared` imports nothing from `src/v1` or the root, and the root imports nothing from `src/v1`. So `src/v1` can be deleted in one piece when HomeWizard removes the API v1.
+`src/shared` imports nothing from `src/v1` or the root, and the root imports nothing from `src/v1`. So `src/v1` can be deleted in one piece when HomeWizard removes the API v1. The tests hold to it too: the API v1 mocks and fixtures are in `src/mocks/v1`, which goes with it, and the other tests import from neither.
 
 ## Devices
 
@@ -100,7 +100,7 @@ The response types in `src/types.ts` and `src/v1/types.ts` mirror the upstream d
 
 ## Tests
 
-- A global undici `MockAgent` answers every request, with the network disabled. The device classes create their own TLS agent, so tests pass the mock agent as `dispatcher`.
+- A global undici `MockAgent` (`src/mocks/agent.ts`) answers every request, with the network disabled. The device classes create their own TLS agent, so tests pass the mock agent as `dispatcher`.
 - The certificate checks and the WebSocket need a real TLS handshake, which the mock agent skips. `src/mocks/tls/` has a test CA, a device certificate, and a local HTTPS and WebSocket server that scripts a device.
 - The fixtures come from the upstream docs, HomeWizard's Python library and Home Assistant, each with a source comment.
 - `npm run test:package` checks the built package as a user gets it: it installs the tarball, loads each entry point, and type-checks the README examples.
