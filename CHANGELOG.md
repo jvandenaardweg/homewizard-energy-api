@@ -1,5 +1,45 @@
 # Changelog
 
+## [3.0.2](https://github.com/jvandenaardweg/homewizard-energy-api/compare/3.0.1...3.0.2) (2026-11-18)
+
+### Bug Fixes
+
+* end the wait for the next poll at stop(), so no timer is left running after polling stops ([75fbd08](https://github.com/jvandenaardweg/homewizard-energy-api/commit/75fbd08520b100adcf3cfbd459e3fb7c4378a6f4))
+* give a null unit, not undefined, for a telegram value sent without one ([6f63de1](https://github.com/jvandenaardweg/homewizard-energy-api/commit/6f63de1f15f120efea5c6822cedf02f844937d8b))
+* match the mDNS records of a device by exact name, and take the host of its SRV target ([71be43e](https://github.com/jvandenaardweg/homewizard-energy-api/commit/71be43e1eee82f262b39b04839927031cd8affdf))
+* return every field as null for an empty telegram instead of throwing a TypeError ([b827f41](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b827f41cc6e367ca3701f243fcab6477c6f155d2))
+* throw kind invalid at once for a user name that isn't a string, instead of retrying until the pair timeout ([240631a](https://github.com/jvandenaardweg/homewizard-energy-api/commit/240631ababf71324ac96770722d8767508277a40))
+* yield a discovered device again when it moves back to an earlier IP address ([8cf5b67](https://github.com/jvandenaardweg/homewizard-energy-api/commit/8cf5b67fd735c69ccb66fcc4f0671662a54bf0d7))
+
+### Documentation
+
+* describe transport-errors.ts, the second test certificate and the v1 examples that go with src/v1 ([bf039c5](https://github.com/jvandenaardweg/homewizard-energy-api/commit/bf039c551903060c24e8b1d9232458241c208487))
+* name the mock agent and the API v1 mocks in src/mocks/v1 ([ecf341a](https://github.com/jvandenaardweg/homewizard-energy-api/commit/ecf341aaf374d39c59351d27153de74cf1f7ec8a))
+* say that a WebSocket certificate failure is kind socket, and name StreamSet in AGENTS.md ([fcdc504](https://github.com/jvandenaardweg/homewizard-energy-api/commit/fcdc504a9ca2c4f7ed756bd4c840d26f65ea5b63))
+
+### Other Changes
+
+* assert the telegram parser through parseTelegram() instead of its helpers ([1b97449](https://github.com/jvandenaardweg/homewizard-energy-api/commit/1b97449c33c92a73ae1a92589c9382ce5d438a03))
+* check the identifier through pair() and the device classes over a real TLS connection ([6f99596](https://github.com/jvandenaardweg/homewizard-energy-api/commit/6f99596c110becf4201d23331068e673f0878848))
+* check the status and decode the body in one shared readResponse(), with one error map per API ([49e37ea](https://github.com/jvandenaardweg/homewizard-energy-api/commit/49e37ea27bfb13dca619d719a2302c73e2f155fd))
+* decide whether to pin, learn or skip the identifier in one IdentifierPolicy ([0d974a1](https://github.com/jvandenaardweg/homewizard-energy-api/commit/0d974a1496aaaf1f00279aaaf8cd5f4665fb3ede))
+* drive the telegram parser from one OBIS table ([80fda06](https://github.com/jvandenaardweg/homewizard-energy-api/commit/80fda065fb2f545d15e52f2335ec579d5e1e8a56))
+* drop the url of a WebSocket failure, which toHomeWizardError() never read ([831bb86](https://github.com/jvandenaardweg/homewizard-energy-api/commit/831bb867f8b60cdf09d8173eb7317b15bcbeaa0b))
+* keep the API v1 mocks in src/mocks/v1, so the tests survive deleting src/v1 ([adb41e1](https://github.com/jvandenaardweg/homewizard-energy-api/commit/adb41e14707b0a81e682f43936f162513d0c97b8))
+* let a shared PollRun own the run state of a polling loop, which poll() and BaseApi start and stop ([86d225d](https://github.com/jvandenaardweg/homewizard-energy-api/commit/86d225d93b82c11b32cd392bff24db9360a5b25b))
+* let the WebSocket connection own the heartbeat and the authorization ([871532e](https://github.com/jvandenaardweg/homewizard-energy-api/commit/871532e38058263c1f4da43963c76ab794075ddc))
+* map a failed request or WebSocket connection to its kind in one module ([5f35cf4](https://github.com/jvandenaardweg/homewizard-energy-api/commit/5f35cf446f3607ad4767abca0ec61cb78227bae2))
+* open the streams of a poller and a socket topic through one StreamSet ([ca4f026](https://github.com/jvandenaardweg/homewizard-energy-api/commit/ca4f026907aea3d53f3657c9bb4004e861f3f70b))
+* pin the endpoints and serviceDomain getters, log() and pollingOn() for v1 subclasses ([71bda42](https://github.com/jvandenaardweg/homewizard-energy-api/commit/71bda42c0309e84f6aa72373f63c8d5511bd9d1b))
+* pin the protected methods that the v1 endpoints, polling and discovery call, for subclasses ([1afebad](https://github.com/jvandenaardweg/homewizard-energy-api/commit/1afebad561fc105c0724665a510cd32c912c81ef))
+* pin who stops a poller and a topic subscription shared by several streams ([2428bca](https://github.com/jvandenaardweg/homewizard-energy-api/commit/2428bca1642618885a27cc6ed02ae68472987875))
+* read the host and a goodbye of the device that getFqdnFromResponse() picks, so a v1 override of it applies ([b3b2ac5](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b3b2ac5db1c364eaf062c2bfbfc0bcb8c78301e7))
+* release a StreamSet's source from the stream that acquired it, without a releasedBy mode ([56cd20b](https://github.com/jvandenaardweg/homewizard-energy-api/commit/56cd20b28ae5ce615efc81442c65b0df666b359a))
+* replace a device's cache entry without calling removeCachedResponseByFqdn(), which v1 calls only at a goodbye ([25b4455](https://github.com/jvandenaardweg/homewizard-energy-api/commit/25b4455db3cc53d8edb8e24623e21f6268c4529b))
+* retry pairing on the transient kinds only, as every error in its loop is a HomeWizardError ([a5193d0](https://github.com/jvandenaardweg/homewizard-energy-api/commit/a5193d07bf1cebf0114b7e0ae051320f56e05240))
+* run the DeviceSocket logic on a fake connection, with fake timers ([a3d5e2e](https://github.com/jvandenaardweg/homewizard-energy-api/commit/a3d5e2e3c863b5308afeb2c3f6f10187b8686a19))
+* type the host details of the mDNS finders as MdnsHostDetails ([2b1316a](https://github.com/jvandenaardweg/homewizard-energy-api/commit/2b1316ae1bf4f0481d6988f67c6b08aa59f2cab6))
+
 ## [3.0.1](https://github.com/jvandenaardweg/homewizard-energy-api/compare/3.0.0...3.0.1) (2026-11-18)
 
 ### Bug Fixes

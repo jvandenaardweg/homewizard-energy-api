@@ -1,7 +1,7 @@
 {
   "displayName": "HomeWizard Energy API",
   "name": "homewizard-energy-api",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "A typed Node client for the HomeWizard Energy local API. It handles pairing, certificate checks and a live connection that stays up.",
   "license": "MIT",
   "author": {
