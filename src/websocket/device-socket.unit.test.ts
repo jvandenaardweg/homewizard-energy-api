@@ -421,6 +421,44 @@ describe('v2/DeviceSocket', () => {
       expect(sent()[2]).toStrictEqual({ type: 'unsubscribe', data: 'measurement' });
     });
 
+    it('should keep a subscription an on() listener still uses, and unsubscribe once it is gone', async () => {
+      const socket = open();
+      const listener = vi.fn();
+      socket.on('measurement', listener);
+      const first = socket.stream('measurement');
+      FakeConnection.last.authorize();
+
+      await first.return?.();
+      expect(sent()).toStrictEqual([{ type: 'subscribe', data: 'measurement' }]);
+
+      socket.off('measurement', listener);
+      const second = socket.stream('measurement');
+      await second.return?.();
+
+      expect(sent()).toStrictEqual([
+        { type: 'subscribe', data: 'measurement' },
+        { type: 'unsubscribe', data: 'measurement' },
+      ]);
+    });
+
+    it('should subscribe again when the topic was unsubscribed while a stream runs', async () => {
+      const socket = open();
+      const first = socket.stream('measurement');
+      FakeConnection.last.authorize();
+      socket.unsubscribe('measurement');
+
+      const second = socket.stream('measurement');
+      await first.return?.();
+      await second.return?.();
+
+      expect(sent()).toStrictEqual([
+        { type: 'subscribe', data: 'measurement' },
+        { type: 'unsubscribe', data: 'measurement' },
+        { type: 'subscribe', data: 'measurement' },
+        { type: 'unsubscribe', data: 'measurement' },
+      ]);
+    });
+
     it('should not subscribe again when subscribed to everything', async () => {
       const socket = open();
       socket.subscribe('*');

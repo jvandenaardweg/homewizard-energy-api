@@ -154,6 +154,51 @@ describe('v2/poll', () => {
       poller.stop();
     });
 
+    it('should stop polling and end the other streams when the stream that started it ends', async () => {
+      let count = 0;
+      const poller = poll(async () => ++count, { interval: 500 });
+      const first = poller.stream();
+      const second = poller.stream();
+
+      await expect(first.next()).resolves.toStrictEqual({ value: 1, done: false });
+      await expect(second.next()).resolves.toStrictEqual({ value: 1, done: false });
+
+      const next = second.next();
+      await first.return?.();
+
+      expect(poller.isPolling).toBe(false);
+      await expect(next).resolves.toStrictEqual({ value: undefined, done: true });
+    });
+
+    it('should keep polling when a stream that joined ends', async () => {
+      let count = 0;
+      const poller = poll(async () => ++count, { interval: 500 });
+      const first = poller.stream();
+      const second = poller.stream();
+
+      await expect(second.next()).resolves.toStrictEqual({ value: 1, done: false });
+      await second.return?.();
+      await vi.advanceTimersByTimeAsync(500);
+
+      expect(poller.isPolling).toBe(true);
+      await expect(first.next()).resolves.toStrictEqual({ value: 2, done: false });
+      await first.return?.();
+      expect(poller.isPolling).toBe(false);
+    });
+
+    it('should throw a failed call from the stream that started polling, and end the others', async () => {
+      const error = new Error('offline');
+      const poller = poll(async () => {
+        throw error;
+      });
+      const first = poller.stream().next();
+      const second = poller.stream().next();
+
+      await expect(first).rejects.toBe(error);
+      await expect(second).resolves.toStrictEqual({ value: undefined, done: true });
+      expect(poller.isPolling).toBe(false);
+    });
+
     it('should throw a failed call from the loop, and stop polling', async () => {
       const error = new Error('offline');
       const poller = poll(async () => {
