@@ -95,6 +95,21 @@ describe('PollRun', () => {
     expect(emit).not.toHaveBeenCalled();
   });
 
+  it('should end the wait for the next interval at stop(), without a timer left behind', async () => {
+    const { run, call } = createRun();
+
+    const loop = run.start();
+    await flushPromises();
+
+    expect(vi.getTimerCount()).toBe(1);
+
+    run.stop();
+    await loop;
+
+    expect(vi.getTimerCount()).toBe(0);
+    expect(call).toHaveBeenCalledOnce();
+  });
+
   it('should not call after stop() before start()', async () => {
     const { run, call } = createRun();
 

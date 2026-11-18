@@ -90,7 +90,8 @@ export class PollRun {
       if (!this.#isActive) return;
 
       log(`Waiting for next polling interval for "${name}"...`);
-      await wait(interval);
+      // stop() ends the wait, so no timer is left behind
+      await wait(interval, this.#stopped.signal);
     }
   }
 }
