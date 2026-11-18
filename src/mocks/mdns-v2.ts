@@ -69,7 +69,7 @@ export const mockDiscoveryV2Response: DiscoveryResponse = {
   },
 };
 
-/* The API v1 TXT data of the same P1 Meter, on `_hwenergy._tcp`. */
+/** The API v1 TXT data of the same P1 Meter, on `_hwenergy._tcp`. */
 const mockMdnsV1TxtDataOfV2Device = [
   Buffer.from('api_enabled=1'),
   Buffer.from('path=/api/v1'),
@@ -78,43 +78,45 @@ const mockMdnsV1TxtDataOfV2Device = [
   Buffer.from('product_type=HWE-P1'),
 ];
 
+/** The API v1 records of the same P1 Meter: PTR, SRV and TXT on `_hwenergy._tcp`. */
+const mockMdnsV1AnswersOfV2Device: multicastDns.ResponsePacket['answers'] = [
+  {
+    name: '_hwenergy._tcp.local',
+    type: 'PTR',
+    ttl: 4500,
+    class: 'IN',
+    flush: false,
+    data: 'p1meter-AABB02._hwenergy._tcp.local',
+  },
+  {
+    name: 'p1meter-AABB02._hwenergy._tcp.local',
+    type: 'SRV',
+    ttl: 120,
+    class: 'IN',
+    flush: true,
+    data: { priority: 0, weight: 0, port: 80, target: 'p1meter-AABB02.local' },
+  },
+  {
+    name: 'p1meter-AABB02._hwenergy._tcp.local',
+    type: 'TXT',
+    ttl: 4500,
+    class: 'IN',
+    flush: true,
+    data: mockMdnsV1TxtDataOfV2Device,
+  },
+];
+
 /**
  * One packet in which the P1 Meter announces both its services, `_hwenergy._tcp` (API v1) first and
  * `_homewizard._tcp` (API v2), each with its own TXT record.
  */
 export const mockMdnsBothServicesResponse: multicastDns.ResponsePacket = {
   ...mockMdnsV2Response,
-  answers: [
-    {
-      name: '_hwenergy._tcp.local',
-      type: 'PTR',
-      ttl: 4500,
-      class: 'IN',
-      flush: false,
-      data: 'p1meter-AABB02._hwenergy._tcp.local',
-    },
-    {
-      name: 'p1meter-AABB02._hwenergy._tcp.local',
-      type: 'SRV',
-      ttl: 120,
-      class: 'IN',
-      flush: true,
-      data: { priority: 0, weight: 0, port: 80, target: 'p1meter-AABB02.local' },
-    },
-    {
-      name: 'p1meter-AABB02._hwenergy._tcp.local',
-      type: 'TXT',
-      ttl: 4500,
-      class: 'IN',
-      flush: true,
-      data: mockMdnsV1TxtDataOfV2Device,
-    },
-    ...mockMdnsV2Response.answers,
-  ],
+  answers: [...mockMdnsV1AnswersOfV2Device, ...mockMdnsV2Response.answers],
 };
 
 /** The same packet with the API v2 records first, then the API v1 records. */
 export const mockMdnsBothServicesV2FirstResponse: multicastDns.ResponsePacket = {
   ...mockMdnsBothServicesResponse,
-  answers: [...mockMdnsV2Response.answers, ...mockMdnsBothServicesResponse.answers.slice(0, 3)],
+  answers: [...mockMdnsV2Response.answers, ...mockMdnsV1AnswersOfV2Device],
 };
