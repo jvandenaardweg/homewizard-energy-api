@@ -140,6 +140,8 @@ export interface ParsedTelegram {
 
 /**
  * Parses a P1 telegram. Lines it doesn't recognise are passed to `log`, which does nothing by default.
+ *
+ * An empty telegram (no lines, or only whitespace) gives a result with every field `null`.
  */
 export function parseTelegram(
   telegram: string,
@@ -150,9 +152,8 @@ export function parseTelegram(
     .split(/\r\n|\n|\r/)
     .filter(Boolean); // filter out empty lines
 
-  const header = allLines[0].substring(1);
-
-  const [meterBrand, meterModal] = getMeterBrandModelFromHeader(header);
+  const [meterBrand, meterModal] =
+    allLines.length > 0 ? getMeterBrandModelFromHeader(allLines[0].substring(1)) : [null, null];
 
   const linesWithoutHeaderAndFooter = allLines
     .filter((_, index) => index > 0) // filter out header line
@@ -636,7 +637,7 @@ export function parseTelegram(
    */
 
   // If we could not find a version number we assume it's DSMR version 2.2 and add server timestamp, since these are not contained in the packet
-  if (parsedTelegram.version === null) {
+  if (parsedTelegram.version === null && allLines.length > 0) {
     parsedTelegram.version = '22';
 
     // Take the current time but ignore the milliseconds
