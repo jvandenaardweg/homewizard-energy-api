@@ -93,6 +93,12 @@ describe('v2/pair', () => {
     await expect(pair(mockV2Host, 'my.app', options)).rejects.toThrow(/is invalid/);
   });
 
+  it('should throw a name that is not a string straight away, without retrying', async () => {
+    const error = await pair(mockV2Host, undefined as never, options).catch(error => error);
+
+    expect(error).toMatchObject({ kind: 'invalid' });
+  });
+
   it('should retry after a network error', async () => {
     mockV2NetworkError('/api/user', 'POST', 'socket hang up');
     mockV2('/api/user', 'POST', { response: mockV2UserCreated });

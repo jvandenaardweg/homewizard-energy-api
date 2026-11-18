@@ -69,11 +69,13 @@ export function updateBatteries(client: Client, params: BatteriesUpdate): Promis
  * @link https://api-documentation.homewizard.com/docs/v2/authorization#parameters
  */
 export function toLocalUserName(name: string): string {
-  const withoutPrefix = name.startsWith(LOCAL_USER_PREFIX)
-    ? name.slice(LOCAL_USER_PREFIX.length)
-    : name;
+  // Not a TypeError for a name that isn't a string, from JavaScript: pairing would retry it until the pair timeout
+  const withoutPrefix =
+    typeof name === 'string' && name.startsWith(LOCAL_USER_PREFIX)
+      ? name.slice(LOCAL_USER_PREFIX.length)
+      : name;
 
-  if (!USER_NAME_PATTERN.test(withoutPrefix)) {
+  if (typeof withoutPrefix !== 'string' || !USER_NAME_PATTERN.test(withoutPrefix)) {
     throw new HomeWizardError(
       'invalid',
       `The user name "${name}" is invalid: use 1 to 40 characters of a-z, A-Z, 0-9, -, _, \\, /, # and spaces`,
