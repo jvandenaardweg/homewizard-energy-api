@@ -101,6 +101,24 @@ describe('discover', () => {
     expect(querySpy).not.toHaveBeenCalled();
   });
 
+  it('should yield a device again when it moves back to an IP address it had before', async () => {
+    const devices = await startDiscover({ timeout: 10000 });
+    const atIp = (ip: string) => ({
+      ...mockMdnsV2Response,
+      additionals: [{ ...mockMdnsV2Response.additionals[0], data: ip }],
+    });
+
+    lastHandler('response')(atIp('192.168.1.35'));
+    lastHandler('response')(atIp('192.168.1.36'));
+    lastHandler('response')(atIp('192.168.1.35'));
+    await vi.advanceTimersByTimeAsync(10000);
+
+    const ips = [];
+    for await (const found of devices) ips.push(found.ip);
+
+    expect(ips).toStrictEqual(['192.168.1.35', '192.168.1.36', '192.168.1.35']);
+  });
+
   it('should throw a network error when mDNS fails', async () => {
     const next = (await startDiscover()).next();
     const cause = new Error('EADDRINUSE');
