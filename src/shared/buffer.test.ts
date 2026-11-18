@@ -1,17 +1,17 @@
-import { mockMdnsTxtData } from '@/mocks/mdns';
+import { mockMdnsV2TxtData } from '@/mocks/mdns-v2';
 import { bufferArrayToJSON, isBufferArray } from '@/shared/buffer';
 
 describe('utils/buffer', () => {
   describe('bufferArrayToJSON', () => {
     it('should convert a buffer array to a JSON object', () => {
       const expected = {
-        api_enabled: '1',
-        path: '/api/v1',
-        product_name: 'Energy Socket',
-        product_type: 'HWE-SKT',
-        serial: '3c39e7aabb01',
+        serial: '3c39e7aabb02',
+        product_type: 'HWE-P1',
+        product_name: 'P1 Meter',
+        id: 'appliance/p1dongle/3c39e7aabb02',
+        api_version: '2.2.0',
       };
-      const actual = bufferArrayToJSON(mockMdnsTxtData);
+      const actual = bufferArrayToJSON(mockMdnsV2TxtData);
       expect(actual).toEqual(expected);
     });
 
@@ -39,7 +39,7 @@ describe('utils/buffer', () => {
   describe('isBufferArray', () => {
     it('should true if invoked with a buffer array', () => {
       const expected = true;
-      const actual = isBufferArray(mockMdnsTxtData);
+      const actual = isBufferArray(mockMdnsV2TxtData);
       expect(actual).toEqual(expected);
     });
 

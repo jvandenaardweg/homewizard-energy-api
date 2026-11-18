@@ -1,4 +1,4 @@
-import { mockApiAgent } from '@/mocks/api';
+import { mockApiAgent } from '@/mocks/agent';
 import { mockV2, mockV2Credentials, mockV2Host } from '@/mocks/api-v2';
 import {
   mockV2Batteries,

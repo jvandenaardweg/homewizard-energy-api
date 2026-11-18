@@ -1,4 +1,4 @@
-import { mockApiAgent } from '@/mocks/api';
+import { mockApiAgent } from '@/mocks/agent';
 import { mockV2, mockV2Host, mockV2NetworkError, mockV2Pool } from '@/mocks/api-v2';
 import { mockV2DeviceInformation, mockV2Identifier, mockV2UserCreated } from '@/mocks/data/v2';
 import {

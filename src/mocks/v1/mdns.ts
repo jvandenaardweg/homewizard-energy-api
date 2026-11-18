@@ -1,5 +1,10 @@
 import * as multicastDns from 'multicast-dns';
-import { DiscoveryResponse } from '../v1';
+import { DiscoveryResponse } from '@/v1';
+import {
+  mockMdnsBothServicesResponse,
+  mockMdnsV1AnswersOfV2Device,
+  mockMdnsV2Response,
+} from '../mdns-v2';
 
 export const mockMdnsTxtData = [
   Buffer.from('api_enabled=1'),
@@ -182,4 +187,10 @@ export const mockMdnsResponseChromecast: multicastDns.ResponsePacket = {
   ],
   authorities: [],
   additionals: [],
+};
+
+/** The packet of `mockMdnsBothServicesResponse` with the API v2 records first, then the API v1 records. */
+export const mockMdnsBothServicesV2FirstResponse: multicastDns.ResponsePacket = {
+  ...mockMdnsBothServicesResponse,
+  answers: [...mockMdnsV2Response.answers, ...mockMdnsV1AnswersOfV2Device],
 };

@@ -1,4 +1,4 @@
-import { StateResponse } from '../../v1/types';
+import { StateResponse } from '@/v1/types';
 
 export const mockStateResponse: StateResponse = {
   brightness: 0,

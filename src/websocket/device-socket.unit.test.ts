@@ -1,4 +1,4 @@
-import { mockApiAgent } from '@/mocks/api';
+import { mockApiAgent } from '@/mocks/agent';
 import { HomeWizardError } from '../errors';
 import { CommonTopics, DeviceSocket } from '.';
 

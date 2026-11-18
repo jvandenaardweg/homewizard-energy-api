@@ -4,7 +4,7 @@ import {
   KwhMeter3PhaseDataResponse,
   P1MeterDataResponse,
   WaterMeterDataResponse,
-} from '../../v1/types';
+} from '@/v1/types';
 
 // A HWE-SKT on firmware 4.08. It doesn't send the reactive, apparent and power factor values HWE-SKT-21 sends.
 export const mockEnergySocketDataResponse: EnergySocketDataResponse = {

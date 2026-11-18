@@ -1,5 +1,4 @@
 import { mockParsedTelegramResponse, mockTelegramResponse } from '@/mocks/data/telegram';
-import { mockP1MeterDataResponse } from '@/mocks/data/data';
 import {
   convertHexToAscii,
   formatIsoLocal,
@@ -414,7 +413,28 @@ describe('telegram', () => {
 
     it('should parse a real CRLF telegram consistently with the /api/v1/data response', () => {
       const parsedTelegram = parseTelegram(mockTelegramResponse['v50l3_3']);
-      const data = mockP1MeterDataResponse;
+      // The values the device's /api/v1/data sent with this telegram, as in mockP1MeterDataResponse in src/mocks/v1
+      const data = {
+        unique_id: '4530303939303031323334353637383930',
+        active_tariff: 2,
+        total_power_import_t1_kwh: 27968.53,
+        total_power_import_t2_kwh: 29753.732,
+        total_power_export_t1_kwh: 0.013,
+        total_power_export_t2_kwh: 0.02,
+        active_voltage_l1_v: 226,
+        active_voltage_l2_v: 224.2,
+        active_voltage_l3_v: 223.3,
+        voltage_sag_l1_count: 19,
+        voltage_sag_l2_count: 20,
+        voltage_sag_l3_count: 25,
+        voltage_swell_l1_count: 1,
+        voltage_swell_l2_count: 9,
+        voltage_swell_l3_count: 9,
+        any_power_fail_count: 11,
+        long_power_fail_count: 7,
+        total_gas_m3: 11312.684,
+        gas_unique_id: '4730303939303031323334353637383930',
+      };
       const { power, gas } = parsedTelegram;
 
       expect(parsedTelegram.meter).toStrictEqual({ brand: 'ISK5', model: '2M550T-1012' });

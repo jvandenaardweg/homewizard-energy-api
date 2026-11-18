@@ -1,4 +1,4 @@
-import { apiMocks, mockApiPool, mockApiUrl } from '@/mocks/api';
+import { apiMocks, mockApiPool, mockApiUrl } from '@/mocks/v1/api';
 
 import {
   BaseApi,
@@ -11,9 +11,9 @@ import {
   HomeWizardEnergyApiTimeoutError,
 } from '@/v1/base-api';
 import { Dispatcher } from 'undici';
-import { mockP1MeterDataResponse } from '../mocks/data/data';
+import { mockP1MeterDataResponse } from '@/mocks/v1/data/data';
 import EventEmitter from 'events';
-import { mockErrorInvalidValue } from '../mocks/errors';
+import { mockErrorInvalidValue } from '@/mocks/v1/errors';
 import { ErrorCodes } from './types';
 
 let baseApi: BaseApi;

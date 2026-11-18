@@ -1,18 +1,18 @@
-import { mockBasicInformationResponse } from '@/mocks/data/basic';
+import { mockBasicInformationResponse } from '@/mocks/v1/data/basic';
 
-import { apiMocks, HTML_HEADERS, mockApiUrl } from '@/mocks/api';
-import { mockErrorNotFound } from '@/mocks/errors';
+import { apiMocks, HTML_HEADERS, mockApiUrl } from '@/mocks/v1/api';
+import { mockErrorNotFound } from '@/mocks/v1/errors';
 import { HomeWizardEnergyApiResponseError } from '@/v1/base-api';
 import {
   mockP1MeterDataResponse,
   mockP1MeterDataResponseUnusedExports,
   mockP1MeterDataResponseWithExternalPower,
   mockP1MeterDataResponseZeroValues,
-} from '@/mocks/data/data';
+} from '@/mocks/v1/data/data';
 import { mockParsedTelegramResponse, mockTelegramResponse } from '@/mocks/data/telegram';
 import { P1MeterApi } from '@/v1/p1-meter-api';
-import { mockSystemResponse } from '../mocks/data/system';
-import { mockIdentifyResponse } from '../mocks/data/identify';
+import { mockSystemResponse } from '@/mocks/v1/data/system';
+import { mockIdentifyResponse } from '@/mocks/v1/data/identify';
 
 let p1MeterApi: P1MeterApi;
 
