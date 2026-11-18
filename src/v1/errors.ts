@@ -64,7 +64,7 @@ export class HomeWizardEnergyApiTimeoutError extends HomeWizardEnergyApiError {
   }
 }
 
-/** The errors of the API v1 for a failed request, for `requestWithTimeout()` and `readResponse()`. */
+/** The errors of the API v1 for a failed request, for `requestWithTimeout()` and `parseJsonResponse()`, and the status error of `throwResponseError()`. */
 export const requestErrors: RequestErrors = {
   timeout: (message, url, timeout) => new HomeWizardEnergyApiTimeoutError(message, url, timeout),
   status: (method, url, statusCode, body) =>

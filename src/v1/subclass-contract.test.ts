@@ -13,10 +13,11 @@ import { P1MeterApi } from '@/v1/p1-meter-api';
  */
 
 const onSpy = vi.fn();
+const querySpy = vi.fn();
 
 vi.mock('multicast-dns', () => ({
   default: () => ({
-    query: vi.fn(),
+    query: querySpy,
     on: onSpy,
     removeAllListeners: vi.fn(),
     destroy: vi.fn(),
@@ -117,6 +118,26 @@ describe('the protected methods that the v1 endpoints call', () => {
     });
   });
 
+  it('should request the URL of the endpoints getter', async () => {
+    const api = new P1MeterApi(url);
+    const request = override(api, 'request').mockResolvedValue(reply(200, '{"a":1}'));
+    Object.defineProperty(api, 'endpoints', { get: () => ({ data: 'http://other/data' }) });
+
+    await api.getData();
+
+    expect(request).toHaveBeenCalledWith('http://other/data', expect.anything());
+  });
+
+  it('should log through log()', async () => {
+    const api = new P1MeterApi(url);
+    override(api, 'request').mockResolvedValue(reply(200, '{"a":1}'));
+    const log = override(api, 'log');
+
+    await api.getData();
+
+    expect(log).toHaveBeenCalled();
+  });
+
   it('should parse the body in parseJsonResponse() whatever the status', async () => {
     const api = new P1MeterApi(url);
 
@@ -142,6 +163,14 @@ describe('the protected state that v1 polling uses', () => {
 
   afterEach(() => {
     api.polling.getData.stop();
+  });
+
+  it('should take the on() of polling from pollingOn()', () => {
+    const on = vi.fn();
+    const pollingOn = override(api, 'pollingOn').mockReturnValue(on);
+
+    expect(api.polling.getData.on).toBe(on);
+    expect(pollingOn).toHaveBeenCalledWith('getData');
   });
 
   it('should start and stop through startPolling() and stopPolling()', () => {
@@ -280,6 +309,14 @@ describe('the protected finders that the v1 discovery calls', () => {
 
   afterEach(() => {
     discovery.stop();
+  });
+
+  it('should query the domain of the serviceDomain getter', () => {
+    Object.defineProperty(discovery, 'serviceDomain', { get: () => '_other._tcp.local' });
+
+    discovery.start();
+
+    expect(querySpy).toHaveBeenLastCalledWith('_other._tcp.local', 'PTR');
   });
 
   it('should call back with the device without overrides', () => {
