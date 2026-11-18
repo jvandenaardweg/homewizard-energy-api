@@ -1,4 +1,5 @@
 import { IncomingHttpHeaders } from 'http';
+import { IdentifierPolicy } from '../identifier-policy';
 import { mockApiAgent } from './agent';
 import { mockV2Identifier, mockV2Token } from './data/v2';
 
@@ -78,10 +79,10 @@ export const mockV2Credentials = {
   token: mockV2Token,
 };
 
-/** The options for the internal `Client`: the credentials without the host, and the mock dispatcher. */
+/** The options for the internal `Client`: the token, the policy for the identifier, and the mock dispatcher. */
 export const mockV2DeviceOptions = {
   dispatcher: mockApiAgent,
   retries: 0,
-  identifier: mockV2Credentials.identifier,
   token: mockV2Credentials.token,
+  policy: IdentifierPolicy.forDevice(mockV2Credentials.identifier),
 };

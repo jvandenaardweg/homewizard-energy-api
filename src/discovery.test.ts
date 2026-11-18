@@ -5,6 +5,8 @@ import {
   mockMdnsV1OnlyResponse,
   mockMdnsV2Response,
 } from '@/mocks/mdns-v2';
+import { mockV2DeviceInformation } from '@/mocks/data/v2';
+import { mockTlsCa, mockTlsIdentifier, startMockTlsServer } from '@/mocks/tls/server';
 import { KwhMeter1Phase, KwhMeter3Phase } from './devices/kwh-meter';
 import { P1Meter } from './devices/p1-meter';
 import { PlugInBattery } from './devices/plug-in-battery';
@@ -188,15 +190,42 @@ describe('connect', () => {
     expect(device).toBeInstanceOf(DeviceClass);
   });
 
-  it('should use the discovered IP instead of the stored host, and the stored identifier', () => {
+  it('should use the discovered IP instead of the stored host', () => {
     const device = connect(mockDiscoveryV2Response, credentials, options);
-    const { client } = device as unknown as {
-      client: { baseUrl: string; options: { identifier: string } };
-    };
+    const { client } = device as unknown as { client: { baseUrl: string } };
 
     expect(device.host).toBe('192.168.1.35');
     expect(client.baseUrl).toBe('https://192.168.1.35');
-    expect(client.options.identifier).toBe('appliance/p1dongle/3c39e7aabb02');
+  });
+
+  it('should still check the certificate when the txt record announces the stored identifier', async () => {
+    vi.useRealTimers();
+    const server = await startMockTlsServer((_request, response) => {
+      response.setHeader('content-type', 'application/json');
+      response.end(JSON.stringify(mockV2DeviceInformation['HWE-P1']));
+    });
+    const found = {
+      ip: server.host,
+      txt: { ...mockDiscoveryV2Response.txt, id: mockTlsIdentifier },
+    };
+    const connectToFound = () =>
+      connect(found, { token: 'x', identifier: mockTlsIdentifier }, { ca: mockTlsCa, retries: 0 });
+
+    try {
+      const paired = connectToFound();
+      await expect(paired.getDevice()).resolves.toMatchObject({ product_type: 'HWE-P1' });
+      await paired.close();
+
+      // Anyone can announce the identifier: another device at the address fails the certificate check
+      server.useOtherDevice();
+      const other = connectToFound();
+      await expect(other.getDevice()).rejects.toMatchObject({ kind: 'certificate' });
+      await other.close();
+    } finally {
+      await server.close();
+      // The global afterEach in vitest.setup.ts runs the fake timers
+      vi.useFakeTimers();
+    }
   });
 
   it('should refuse a txt record that names a property of Object, or announces no identifier', () => {

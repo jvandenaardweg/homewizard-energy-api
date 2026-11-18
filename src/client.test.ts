@@ -1,4 +1,3 @@
-import { PeerCertificate } from 'tls';
 import { Agent } from 'undici';
 import {
   mockV2,
@@ -11,7 +10,6 @@ import {
 import { DEFAULT_TIMEOUT } from '@/shared/request';
 import { Client, toBaseUrl } from './client';
 import { HomeWizardError } from './errors';
-import { HOMEWIZARD_CA_CERT } from './tls';
 
 describe('v2/Client', () => {
   describe('toBaseUrl', () => {
@@ -34,43 +32,14 @@ describe('v2/Client', () => {
   });
 
   describe('constructor', () => {
-    it('should require an identifier', () => {
-      expect(() => new Client(mockV2Host, { token: 'x' })).toThrow(HomeWizardError);
-      expect(() => new Client(mockV2Host)).toThrow(/"identifier" of the credentials is required/);
-    });
-
-    it('should not require an identifier when insecure or pairing', () => {
-      expect(() => new Client(mockV2Host, { insecure: true })).not.toThrow();
-      expect(() => new Client(mockV2Host, { allowMissingIdentifier: true })).not.toThrow();
-    });
-
-    it('should create its own agent with the HomeWizard certificate checks', async () => {
-      const client = new Client(mockV2Host, { identifier: 'appliance/p1dongle/aa' });
+    // The certificate checks of its own agent are tested over TLS, through pair() and the device classes
+    it('should create its own agent without a dispatcher', async () => {
+      const client = new Client(mockV2Host, { ...mockV2DeviceOptions, dispatcher: undefined });
 
       expect(client.dispatcher).toBeInstanceOf(Agent);
       expect(client.baseUrl).toBe(mockV2Url);
-      expect(client.tlsOptions.ca).toBe(HOMEWIZARD_CA_CERT);
-      expect(client.tlsOptions.rejectUnauthorized).toBe(true);
 
       await client.close();
-    });
-
-    it('should use the given CA', () => {
-      const client = new Client(mockV2Host, { ...mockV2DeviceOptions, ca: 'pem' });
-
-      expect(client.tlsOptions.ca).toBe('pem');
-    });
-
-    it('should skip the certificate checks when insecure', () => {
-      const client = new Client(mockV2Host, {
-        insecure: true,
-        dispatcher: mockV2DeviceOptions.dispatcher,
-      });
-      const { tlsOptions } = client;
-
-      expect(tlsOptions.rejectUnauthorized).toBe(false);
-      expect('ca' in tlsOptions).toBe(false);
-      expect(tlsOptions.checkServerIdentity('x', {} as PeerCertificate)).toBeUndefined();
     });
   });
 
@@ -325,7 +294,7 @@ describe('v2/Client', () => {
 
   describe('close', () => {
     it('should close its own agent, but not a given dispatcher', async () => {
-      const own = new Client(mockV2Host, { identifier: 'appliance/p1dongle/aa' });
+      const own = new Client(mockV2Host, { ...mockV2DeviceOptions, dispatcher: undefined });
       const closeOwn = vi.spyOn(own.dispatcher, 'close');
       await own.close();
       expect(closeOwn).toHaveBeenCalled();
