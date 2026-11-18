@@ -1,4 +1,4 @@
-export type TelegramParsedLine = { obisCode: string; value: string; unit: TelegramUnit };
+export type TelegramParsedLine = { obisCode: string; value: string; unit: TelegramUnit | null };
 
 export type TelegramUnit = 'kWh' | 'kW' | 'A' | 'V' | 's' | 'm3';
 
@@ -581,7 +581,7 @@ export function parseTelegram(
         // oxlint-disable-next-line no-case-declarations
         const split = parsedLine.value.split(')(');
         parsedTelegram.gas.timestamp = parseTimestamp(split[0]);
-        parsedTelegram.gas.unit = split[5] as TelegramUnit;
+        parsedTelegram.gas.unit = (split[5] as TelegramUnit | undefined) ?? null;
         break;
 
       /*
@@ -672,6 +672,7 @@ export function parseLine(line: string): TelegramParsedLine {
       output.unit = value.split('*')[1] as TelegramUnit;
     } else {
       output.value = value;
+      output.unit = null;
     }
   }
 
@@ -769,7 +770,7 @@ export function parsePowerFailureEventLog(value: string): TelegramPowerFailureLo
           startOfFailure,
           endOfFailure,
           duration,
-          unit: log[i + 1].split('*')[1],
+          unit: log[i + 1].split('*')[1] ?? null,
         } as TelegramPowerFailureLogItem;
 
         output.log.push(logEntry);

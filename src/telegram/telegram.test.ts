@@ -549,6 +549,39 @@ describe('telegram', () => {
       consoleErrorSpy.mockRestore();
     });
 
+    it('should give a null unit for a value sent without one', () => {
+      const parsedTelegram = parseTelegram(
+        '/ISK5\\2M550T-1012\n\n1-3:0.2.8(50)\n1-0:1.8.1(000001.000)\n1-0:31.7.0(002)\n' +
+          '1-0:99.97.0(1)(0-0:96.7.19)(171130183027W)(0000000944)\n!',
+      );
+
+      expect(parsedTelegram.power.import.t1).toStrictEqual({ value: 1, unit: null });
+      expect(parsedTelegram.power.instantaneous.current.l1).toStrictEqual({ value: 2, unit: null });
+      expect(parsedTelegram.power.longPowerFailureLog.log).toStrictEqual([
+        {
+          startOfFailure: '2017-11-30T18:14:43+01:00',
+          endOfFailure: '2017-11-30T18:30:27+01:00',
+          duration: 944,
+          unit: null,
+        },
+      ]);
+    });
+
+    it('should give a null unit for a DSMR 2.2 gas reading sent without one', () => {
+      const parsedTelegram = parseTelegram(
+        '/ISK5\\2M550T-1012\n\n0-1:24.3.0(180902110000)(00)(60)(1)(0-1:24.2.1)\n(12345.678)\n!',
+      );
+
+      expect(parsedTelegram.gas).toStrictEqual({
+        deviceType: null,
+        equipmentId: null,
+        timestamp: '2018-09-02T11:00:00+02:00',
+        value: 12345.678,
+        unit: null,
+        valvePosition: null,
+      });
+    });
+
     it('should default an empty hourly gas reading to 0 without a unit', () => {
       const parsedTelegram = parseTelegram('/ISK5\\2M550T-1012\n\n1-3:0.2.8(50)\n0-1:24.2.1()\n!');
 
