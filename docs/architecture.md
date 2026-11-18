@@ -94,6 +94,8 @@ Data can be read with events or with `for await`: `socket.on()` and `socket.stre
 
 `discover()` loads `multicast-dns` on its first call, so apps that never discover don't load it.
 
+`discover()` and the v1 `HomeWizardEnergyDiscovery` both use `MdnsDiscovery` in `src/shared/`. Its response handler reads a packet through its protected finders, so a v1 subclass can override any of them, and each finder calls a pure step in `src/shared/mdns-discovery-packet.ts`. A device announces `_hwenergy._tcp` and `_homewizard._tcp` in one packet, so it matches every record by its full name, without case and with or without the trailing dot: the PTR by the service domain, and the SRV and TXT by the fqdn the PTR points at. The host is the A record of the SRV target. `MdnsDiscovery` keeps one cache entry per fqdn, so a device is yielded again when its IP address or TXT record changes.
+
 ## Types
 
 The response types in `src/types.ts` and `src/v1/types.ts` mirror the upstream docs: snake_case field names, and optional data points, because devices leave out what they don't have. The library passes responses through without converting them, so the upstream docs stay the reference for every field. Each field's JSDoc names the devices that send it, and those comments ship as editor docs.

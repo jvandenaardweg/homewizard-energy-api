@@ -1,16 +1,21 @@
 import * as multicastDns from 'multicast-dns';
 import util from 'util';
-import { bufferArrayToJSON, isBufferArray } from '@/shared/buffer';
 import { log, LoggerOptions } from './logger';
+import {
+  findFqdn,
+  findHost,
+  findServicePtr,
+  findTxtRecord,
+  hostDetailsOf,
+  isGoodbye,
+  isSameName,
+  MdnsDiscoveryResponse,
+  parseTxtRecord,
+} from './mdns-discovery-packet';
+
+export type { MdnsDiscoveryResponse } from './mdns-discovery-packet';
 
 export const MDNS_QUERY_TYPE = 'PTR';
-
-export interface MdnsDiscoveryResponse<TTxtRecord> {
-  ip: string;
-  hostname: string;
-  fqdn: string;
-  txt: TTxtRecord;
-}
 
 /**
  * Discovers the devices that announce one mDNS service type, such as `hwenergy` or `homewizard`.
@@ -94,136 +99,72 @@ export class MdnsDiscovery<TTxtRecord extends object> {
     this.mdns.on(event, this.handleMdnsResponse(callback));
   }
 
+  /** Whether the packet says goodbye for the device that its PTR of this service points at. */
   protected isGoodbyeResponse(response: multicastDns.ResponsePacket): boolean {
-    return response.answers.some(answer => {
-      if ('ttl' in answer) {
-        return (
-          answer.type === MDNS_QUERY_TYPE &&
-          answer.ttl === 0 &&
-          answer.data.includes(this.serviceType)
-        );
-      }
+    const fqdn = findFqdn(response, this.serviceDomain);
 
-      return false;
-    });
+    return fqdn !== null && isGoodbye(response, this.serviceDomain, fqdn);
   }
 
   /**
-   * Find out if the response is about the service type of this discovery.
+   * Find out if the response is about the service type of this discovery: it has a PTR answer named for it.
    */
   protected isServiceResponse(response: multicastDns.ResponsePacket): boolean {
-    return (
-      response.answers?.filter(answer => {
-        if ('data' in answer && typeof answer.data === 'string') {
-          return answer.data.includes(this.serviceType);
-        }
-
-        return false;
-      }).length > 0
-    );
+    return findServicePtr(response, this.serviceDomain) !== undefined;
   }
 
   protected getTxtRecordFromResponse(
     response: multicastDns.ResponsePacket,
     fqdn?: string,
   ): TTxtRecord | null {
-    const txt = this.findTxtRecord(response, fqdn);
-
-    // no txt record found
-    if (!txt) return null;
-
-    // no data property found
-    if (!('data' in txt)) return null;
-
-    // data is not an array of buffers
-    if (!isBufferArray(txt.data)) return null;
-
-    // txt.data must be an Array of Buffers when we end up here
-
-    return bufferArrayToJSON<TTxtRecord>(txt.data);
+    return parseTxtRecord<TTxtRecord>(this.findTxtRecord(response, fqdn));
   }
 
   /**
-   * Finds the TXT record of the service in the answer or additional section.
-   *
-   * A device can announce both its services in one packet, `_hwenergy._tcp` (API v1) and `_homewizard._tcp`
-   * (API v2), each with its own TXT record. So the TXT record of the fqdn wins, then one of this service type. A
-   * TXT record of another service is never used, as it would mix the two services' data. A TXT record that names no
+   * Finds the TXT record of the device in the answer or additional section: the one of the fqdn, else the one of
+   * the instance the PTR of this service points at, which is the fqdn unless a subclass changes it. A device can
+   * announce both its services in one packet, `_hwenergy._tcp` (API v1) and `_homewizard._tcp` (API v2), each with
+   * its own TXT record, so a TXT record of another service or device is never used. A TXT record that names no
    * service is still used, as before.
    */
   protected findTxtRecord(
     response: multicastDns.ResponsePacket,
     fqdn?: string,
   ): multicastDns.ResponsePacket['answers'][number] | undefined {
-    const records = [...(response.answers ?? []), ...(response.additionals ?? [])].filter(
-      record => record.type === 'TXT',
-    );
-    // mDNS names compare without case, and with or without the trailing dot of the root
-    const normalize = (name: unknown) =>
-      typeof name === 'string' ? name.toLowerCase().replace(/\.$/, '') : '';
-    const service = `.${normalize(this.serviceDomain)}`;
-
-    if (fqdn) {
-      const own = records.find(record => normalize(record.name) === normalize(fqdn));
-      if (own) return own;
-    }
-
-    const ofService = records.find(record => normalize(record.name).endsWith(service));
-    if (ofService) return ofService;
-
-    // a name with a `_tcp` or `_udp` label belongs to a service, under any domain
-    return records.find(record => !/\._(tcp|udp)(\.|$)/.test(normalize(record.name)));
+    return findTxtRecord(response, [fqdn, findFqdn(response, this.serviceDomain)]);
   }
 
   protected getHostDetailsFromAnswer(
     answer: multicastDns.ResponsePacket['answers'][number],
   ): { ip: string; hostname: string } | null {
-    if (!('data' in answer)) return null;
-    if (typeof answer.data !== 'string') return null;
-
-    return { ip: answer.data, hostname: answer.name };
+    return hostDetailsOf(answer);
   }
 
+  /**
+   * Finds the host of the device with `getHostDetailsFromAnswer()`, from the A record of the SRV target of its
+   * fqdn, or without an SRV, the first A record. The additional section wins over the answers.
+   */
   protected getHostDetailsFromResponse(
     response: multicastDns.ResponsePacket,
   ): { ip: string; hostname: string } | null {
-    // We can find the host details in the answer or additional section
-    const answer = response.answers.find(answer => answer.type === 'A');
-    const additional = response.additionals.find(additional => additional.type === 'A');
+    const record = findHost(response, findFqdn(response, this.serviceDomain));
 
-    // Prefer the additional section when both have an A record
-    const hostRecord = additional || answer;
-
-    if (!hostRecord) return null;
-
-    return this.getHostDetailsFromAnswer(hostRecord);
+    return record ? this.getHostDetailsFromAnswer(record) : null;
   }
 
   protected getFqdnFromResponse(response: multicastDns.ResponsePacket): string | null {
-    const ptr = response.answers.find(a => a.type === 'PTR' && a.name?.includes(this.serviceType));
-
-    if (!ptr) {
-      return null;
-    }
-
-    if (ptr && !('data' in ptr)) {
-      return null;
-    }
-
-    if (typeof ptr.data !== 'string') {
-      return null;
-    }
-
-    return ptr.data;
+    return findFqdn(response, this.serviceDomain);
   }
 
   protected getCachedResponseByFqdn(fqdn: string): MdnsDiscoveryResponse<TTxtRecord> | undefined {
-    return this.cachedDiscoveryResponses.find(cachedResponse => cachedResponse.fqdn === fqdn);
+    return this.cachedDiscoveryResponses.find(cachedResponse =>
+      isSameName(cachedResponse.fqdn, fqdn),
+    );
   }
 
   protected removeCachedResponseByFqdn(fqdn: string): void {
     this.cachedDiscoveryResponses = this.cachedDiscoveryResponses.filter(
-      cachedResponse => cachedResponse.fqdn !== fqdn,
+      cachedResponse => !isSameName(cachedResponse.fqdn, fqdn),
     );
   }
 
@@ -235,6 +176,12 @@ export class MdnsDiscovery<TTxtRecord extends object> {
     );
   }
 
+  /**
+   * Returns the listener for mDNS responses. It reads each packet through the protected finders, in this order, so
+   * a subclass can override any of them: `isServiceResponse()`, `getFqdnFromResponse()`, `isGoodbyeResponse()`,
+   * then for a goodbye `getCachedResponseByFqdn()` and `removeCachedResponseByFqdn()`, and otherwise
+   * `getHostDetailsFromResponse()`, `getTxtRecordFromResponse()` and `isDiscoveryResponseInCache()`.
+   */
   protected handleMdnsResponse(
     callback: (discoveryResponse: MdnsDiscoveryResponse<TTxtRecord>) => void,
   ) {
