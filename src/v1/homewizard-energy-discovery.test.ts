@@ -291,13 +291,17 @@ describe('HomeWizardEnergyDiscovery', () => {
       ).toBeNull();
       expect(
         discoveryService['findTxtRecord'](named('x._hwenergy._tcp.example.com')),
-      ).toMatchObject({ name: 'x._hwenergy._tcp.example.com' });
+      ).toBeUndefined();
       expect(
         discoveryService['findTxtRecord'](
           named('x._hwenergy._tcp.example.com'),
           'energysocket-AABB01._hwenergy._tcp.local',
         ),
-      ).toMatchObject({ name: 'x._hwenergy._tcp.example.com' });
+      ).toBeUndefined();
+      expect(
+        discoveryService['findTxtRecord'](named('x._homewizard._tcp.example.com')),
+      ).toBeUndefined();
+      expect(discoveryService['findTxtRecord'](named('energysocket-AABB01.local'))).toBeDefined();
     });
 
     it('should not use the TXT record of another service', () => {
