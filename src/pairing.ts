@@ -113,11 +113,14 @@ export async function pair(
 
       try {
         user = await createUser(client, name);
-      } catch (error) {
-        const isWaitingForButton =
-          error instanceof HomeWizardError && error.code === 'user:creation-not-enabled';
+      } catch (caught) {
+        // Client.send() wraps every failure in a HomeWizardError, and the name check throws one too
+        const error = caught as HomeWizardError;
+        const isWaitingForButton = error.code === 'user:creation-not-enabled';
 
-        if (!isWaitingForButton && !isRetryable(error)) throw error;
+        // Network errors and timeouts can go away (a reboot, bad Wi-Fi), so they are retried until the pair
+        // timeout. Errors from the device (no storage), an invalid name and certificate errors won't.
+        if (!isWaitingForButton && !isTransientError(error)) throw error;
 
         client.log(
           isWaitingForButton
@@ -167,12 +170,4 @@ async function learnIdentifier(
   }
 
   return built ?? '';
-}
-
-/**
- * Network errors and timeouts can go away (a reboot, bad Wi-Fi), so they are retried until the pair timeout.
- * Errors from the device (an invalid name, no storage), an invalid name and certificate errors won't.
- */
-export function isRetryable(error: unknown): boolean {
-  return !(error instanceof HomeWizardError) || isTransientError(error);
 }

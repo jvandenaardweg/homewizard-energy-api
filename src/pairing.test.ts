@@ -10,7 +10,7 @@ import {
   startMockTlsServer,
 } from '@/mocks/tls/server';
 import { HomeWizardError } from './errors';
-import { isRetryable, pair } from './pairing';
+import { pair } from './pairing';
 import { CERTIFICATE_IDENTITY_ERROR_CODE } from './tls';
 
 const identifier = mockV2Identifier;
@@ -175,27 +175,6 @@ describe('v2/pair', () => {
     expect(logged).toContain('Paired as local/new_user');
     expect(logged).toContain('[redacted]');
     expect(logged).not.toContain(mockV2UserCreated.token);
-  });
-
-  describe('isRetryable', () => {
-    it('should retry network errors and timeouts only', () => {
-      expect(isRetryable(new Error('ECONNRESET'))).toBe(true);
-      expect(isRetryable(new HomeWizardError('network', 'ECONNRESET'))).toBe(true);
-      expect(
-        isRetryable(new HomeWizardError('timeout', 'slow', { url: 'https://x', timeout: 5000 })),
-      ).toBe(true);
-      expect(isRetryable(new HomeWizardError('invalid', 'invalid name'))).toBe(false);
-      expect(
-        isRetryable(
-          new HomeWizardError('response', 'no storage', {
-            url: 'https://x',
-            statusCode: 507,
-            response: '',
-          }),
-        ),
-      ).toBe(false);
-      expect(isRetryable(new HomeWizardError('certificate', 'another device'))).toBe(false);
-    });
   });
 
   describe('with a TLS connection', () => {
