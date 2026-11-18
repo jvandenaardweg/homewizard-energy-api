@@ -1,11 +1,4 @@
-import {
-  describeCall,
-  describeFailure,
-  InvalidJsonErrorFactory,
-  TimeoutErrorFactory,
-} from '@/shared/request';
-import { isCertificateError } from './tls';
-import { ErrorCode, ErrorResponse } from './types';
+import { ErrorCode } from './types';
 
 /**
  * What went wrong:
@@ -92,21 +85,6 @@ interface HomeWizardErrorConstructor {
   readonly prototype: HomeWizardError;
 }
 
-/** Reads the error code from a JSON body (`{"error": "user:unauthorized"}`) or a plain-text body. */
-export function parseErrorCode(body: string): ErrorCode | undefined {
-  try {
-    const parsed = JSON.parse(body) as Partial<ErrorResponse> | null;
-
-    if (typeof parsed?.error === 'string') return parsed.error;
-  } catch {
-    // Not JSON: the telegram endpoint sends the code as plain text
-  }
-
-  const text = body.trim();
-
-  return /^[a-z]+:[a-z0-9-]+(:\S+)?$/.test(text) ? text : undefined;
-}
-
 /**
  * The one error the library throws, and the WebSocket emits. `kind` says what went wrong, and `code` has the
  * error code the device sent, when it sent one. Checking `kind` narrows the error to the fields of that kind:
@@ -147,51 +125,4 @@ export const HomeWizardError = class HomeWizardError extends Error {
 /** Returns `true` for the errors that can go away on their own, such as a reboot or bad Wi-Fi: timeouts and network errors. */
 export function isTransientError(error: HomeWizardError): boolean {
   return error.kind === 'timeout' || error.kind === 'network';
-}
-
-/** Returns a `response` error for an error status, with the code from the body. */
-export function createResponseError(
-  method: string,
-  url: string,
-  statusCode: number,
-  body: string,
-): HomeWizardError {
-  return new HomeWizardError('response', describeFailure(method, url, statusCode, body), {
-    url,
-    statusCode,
-    response: body,
-    code: parseErrorCode(body),
-  });
-}
-
-/** Creates the `timeout` error for `requestWithTimeout()`. */
-export const createTimeoutError: TimeoutErrorFactory = (message, url, timeout) =>
-  new HomeWizardError('timeout', message, { url, timeout });
-
-/** Creates the `response` error for a body that isn't valid JSON, for `parseJsonResponse()`. */
-export const createInvalidJsonError: InvalidJsonErrorFactory = (
-  message,
-  url,
-  statusCode,
-  response,
-) => new HomeWizardError('response', message, { url, statusCode, response });
-
-/** Wraps a network or certificate error from a request in a `HomeWizardError`, and keeps a `HomeWizardError`. */
-export function toHomeWizardError(error: unknown, method: string, url: string): HomeWizardError {
-  if (error instanceof HomeWizardError) return error;
-
-  const detail = error instanceof Error ? error.message : String(error);
-
-  if (isCertificateError(error)) {
-    return new HomeWizardError(
-      'certificate',
-      `The certificate of the device at ${url} was refused: ${detail}`,
-      { url, cause: error },
-    );
-  }
-
-  return new HomeWizardError('network', `${describeCall(method, url)} failed: ${detail}`, {
-    url,
-    cause: error,
-  });
 }

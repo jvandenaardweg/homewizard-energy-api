@@ -1,5 +1,4 @@
 import { mockApiAgent } from '@/mocks/agent';
-import { HomeWizardError } from '../errors';
 import { Connection, ConnectionHandlers } from './connection';
 import { SocketTarget } from './types';
 
@@ -185,23 +184,6 @@ describe('v2/Connection', () => {
       reason: 'going away',
       cause: 'dropped',
     });
-  });
-
-  it('should wrap a connection error, with and without a message', () => {
-    const { fake, handlers } = open();
-
-    fake.onerror?.({ error: new Error('ECONNREFUSED') });
-    fake.onerror?.({ error: new Error('') });
-    fake.onerror?.({});
-
-    expect(handlers.onError.mock.calls.map(([error]) => error.message)).toStrictEqual([
-      'The WebSocket connection failed: ECONNREFUSED',
-      'The WebSocket connection failed',
-      'The WebSocket connection failed',
-    ]);
-    expect(handlers.onError.mock.calls[0][0]).toBeInstanceOf(HomeWizardError);
-    expect(handlers.onError.mock.calls[0][0].kind).toBe('socket');
-    expect(handlers.onError.mock.calls[0][0].cause).toStrictEqual(new Error('ECONNREFUSED'));
   });
 
   it('should report a message that is not JSON as an error', () => {

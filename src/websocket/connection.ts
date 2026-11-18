@@ -1,6 +1,7 @@
 import { WebSocket } from 'undici';
 import { log, redact } from '@/shared/logger';
 import { HomeWizardError } from '../errors';
+import { toHomeWizardError } from '../transport-errors';
 import { Message, SocketTarget } from './types';
 
 /**
@@ -93,11 +94,8 @@ export class Connection implements SocketConnection {
       if (this.closed) return;
 
       const cause = (event as unknown as { error?: unknown }).error;
-      const detail = cause instanceof Error && cause.message ? `: ${cause.message}` : '';
 
-      handlers.onError(
-        new HomeWizardError('socket', `The WebSocket connection failed${detail}`, { cause }),
-      );
+      handlers.onError(toHomeWizardError(cause, { type: 'websocket', url: target.url }));
     };
     this.socket.onclose = event => {
       if (this.closed) return;

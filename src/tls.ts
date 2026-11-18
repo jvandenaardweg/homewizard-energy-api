@@ -59,16 +59,6 @@ export function getCertificateIdentifier(productType: string, serial: string): s
 export const CERTIFICATE_IDENTITY_ERROR_CODE = 'ERR_HOMEWIZARD_CERTIFICATE_IDENTITY';
 
 /**
- * Returns `true` for a failed certificate check: a certificate not signed by the CA (OpenSSL codes such as
- * `UNABLE_TO_VERIFY_LEAF_SIGNATURE` or `SELF_SIGNED_CERT_IN_CHAIN`), or one issued to another identifier.
- */
-export function isCertificateError(error: unknown): boolean {
-  const code = (error as { code?: unknown } | null)?.code;
-
-  return typeof code === 'string' && /CERT|SIGNATURE|ISSUER/.test(code);
-}
-
-/**
  * Returns `true` when two identifiers name the same device. Case doesn't matter, like in a certificate's name, so
  * an identifier typed from the serial on the device label, in capitals, still matches. Use it to pick your paired
  * device from the discovered ones.
