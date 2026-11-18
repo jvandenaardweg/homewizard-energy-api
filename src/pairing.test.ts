@@ -10,7 +10,7 @@ import {
   startMockTlsServer,
 } from '@/mocks/tls/server';
 import { HomeWizardError } from './errors';
-import { getIdentifier, isRetryable, pair } from './pairing';
+import { isRetryable, pair } from './pairing';
 import { CERTIFICATE_IDENTITY_ERROR_CODE } from './tls';
 
 const identifier = mockV2Identifier;
@@ -192,28 +192,6 @@ describe('v2/pair', () => {
     });
   });
 
-  describe('getIdentifier', () => {
-    it('should prefer the given identifier', () => {
-      expect(getIdentifier('a', new Set(['b']))).toBe('a');
-    });
-
-    it('should use the one identifier seen', () => {
-      expect(getIdentifier(undefined, new Set(['b']))).toBe('b');
-    });
-
-    it('should refuse when no certificate was seen', () => {
-      expect(() => getIdentifier(undefined, new Set())).toThrow(
-        /could not be read from its certificate/,
-      );
-    });
-
-    it('should refuse when different devices answered', () => {
-      expect(() => getIdentifier(undefined, new Set(['a', 'b']))).toThrow(
-        /Different devices answered at this address during pairing \(a, b\)/,
-      );
-    });
-  });
-
   describe('with a TLS connection', () => {
     let server: MockTlsServer;
     let attempts = 0;
@@ -282,6 +260,17 @@ describe('v2/pair', () => {
           identifier: mockTlsIdentifier,
         }),
       ).resolves.toMatchObject({ identifier: mockTlsIdentifier });
+    });
+
+    it('should return the given identifier without checking the certificate when insecure', async () => {
+      await expect(
+        pair(server.host, 'new_user', {
+          insecure: true,
+          interval: 10,
+          identifier: mockTlsOtherIdentifier,
+        }),
+      ).resolves.toMatchObject({ identifier: mockTlsOtherIdentifier });
+      expect(attempts).toBe(2);
     });
 
     it('should stop straight away for a certificate of another identifier', async () => {

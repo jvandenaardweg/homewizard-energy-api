@@ -3,6 +3,7 @@ import { wait } from '@/shared/wait';
 import { Client, Credentials, ConnectionOptions } from './client';
 import { createUser, getDevice } from './endpoints';
 import { HomeWizardError, isTransientError } from './errors';
+import { IdentifierPolicy } from './identifier-policy';
 import { getCertificateIdentifier } from './tls';
 import { UserCreated } from './types';
 
@@ -76,26 +77,14 @@ export async function pair(
     connectionOptions,
   } = splitPairOptions(options);
 
-  // Checked before the token is created: a token without an identifier can't be used, and the button would need
-  // another press. Your own dispatcher doesn't run the certificate check that learns the identifier.
-  if (connectionOptions.dispatcher && !identifier && !connectionOptions.insecure) {
-    throw new HomeWizardError(
-      'invalid',
-      'Pairing with your own "dispatcher" can\'t read the identifier from the certificate. Pass the "identifier" option, or set "insecure: true".',
-    );
-  }
-
-  const seenIdentifiers = new Set<string>();
+  // Decided before the token is created: a token without an identifier can't be used, and the button would need
+  // another press.
+  const policy = IdentifierPolicy.forPairing(identifier, connectionOptions);
 
   // createUser() is a POST, which the client never retries: pair() retries it until the pair timeout. The GET for
   // the device information after an insecure pairing does get the client's retries, so a Wi-Fi blip there doesn't
   // lose the new token.
-  const client = new Client(host, {
-    ...connectionOptions,
-    identifier,
-    allowMissingIdentifier: true,
-    onCertificate: commonName => seenIdentifiers.add(commonName),
-  });
+  const client = new Client(host, { ...connectionOptions, policy });
 
   const startedAt = Date.now();
   const timeLeft = () => pairTimeout - (Date.now() - startedAt);
@@ -146,7 +135,7 @@ export async function pair(
       return {
         host,
         token: user.token,
-        identifier: await learnIdentifier(client, user, seenIdentifiers),
+        identifier: await learnIdentifier(client, policy, user),
       };
     }
   } finally {
@@ -161,16 +150,14 @@ export async function pair(
  */
 async function learnIdentifier(
   client: Client,
+  policy: IdentifierPolicy,
   user: UserCreated,
-  seen: Set<string>,
 ): Promise<string> {
-  const { identifier, insecure } = client.options;
+  const identifier = policy.identifier();
 
-  if (identifier || !insecure) {
-    return getIdentifier(identifier, seen);
-  }
+  if (identifier !== undefined) return identifier;
 
-  client.token = user.token;
+  client.useToken(user.token);
 
   const device = await getDevice(client);
   const built = getCertificateIdentifier(device.product_type, device.serial);
@@ -188,27 +175,4 @@ async function learnIdentifier(
  */
 export function isRetryable(error: unknown): boolean {
   return !(error instanceof HomeWizardError) || isTransientError(error);
-}
-
-/** Returns the given identifier, or the one seen in the certificate. */
-export function getIdentifier(expected: string | undefined, seen: Set<string>): string {
-  if (expected) return expected;
-
-  if (seen.size > 1) {
-    throw new HomeWizardError(
-      'certificate',
-      `Different devices answered at this address during pairing (${[...seen].join(', ')}), so the token can't be trusted`,
-    );
-  }
-
-  const [identifier] = seen;
-
-  if (!identifier) {
-    throw new HomeWizardError(
-      'certificate',
-      'The identifier of the device could not be read from its certificate. Pass the "identifier" option, built with getCertificateIdentifier() from the serial on the device label.',
-    );
-  }
-
-  return identifier;
 }

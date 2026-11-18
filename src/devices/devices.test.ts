@@ -273,7 +273,7 @@ describe('v2 device classes with a TLS connection', () => {
     await p1.close();
   });
 
-  it('should check the certificate against the HomeWizard CA by default', async () => {
+  it('should refuse a certificate the HomeWizard CA did not sign', async () => {
     const p1 = connect(mockTlsIdentifier, {});
     const error = await p1.getDevice().catch(error => error);
 

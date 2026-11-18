@@ -17,7 +17,7 @@ import {
   toHomeWizardError,
 } from './errors';
 import { isNewerApiVersion } from './api-version';
-import { createCheckServerIdentity, HOMEWIZARD_CA_CERT } from './tls';
+import type { IdentifierPolicy } from './identifier-policy';
 import { API_MAJOR_VERSION, DOCUMENTED_API_VERSION } from './types';
 import type { SocketTarget } from './websocket';
 
@@ -80,15 +80,11 @@ export interface ConnectionOptions {
 }
 
 /** @internal */
-export interface ClientOptions extends ConnectionOptions {
+export interface ClientOptions extends Omit<ConnectionOptions, 'insecure'> {
   /** Missing while pairing, which creates it. */
   token?: string;
-  /** Missing while pairing, which learns it from the certificate. */
-  identifier?: string;
-  /** Allows a missing `identifier` without `insecure`, so pairing can learn it. */
-  allowMissingIdentifier?: boolean;
-  /** Receives the Common Name of each certificate that passes the check. */
-  onCertificate?: (commonName: string) => void;
+  /** How to check the identifier in the certificate, which replaces `insecure`. */
+  policy: IdentifierPolicy;
 }
 
 export type HttpMethod = 'GET' | 'PUT' | 'POST' | 'DELETE';
@@ -138,8 +134,7 @@ export class Client {
   readonly baseUrl: string;
   readonly dispatcher: Dispatcher;
   readonly loggerOptions: LoggerOptions | undefined;
-  readonly options: ClientOptions;
-  token: string | undefined;
+  protected token: string | undefined;
   protected readonly timeout: number;
   protected readonly retries: number;
   /** Aborted by `close()`, so a read that waits to retry stops instead. */
@@ -147,37 +142,23 @@ export class Client {
   protected readonly ownsDispatcher: boolean;
   protected warnedAboutApiVersion = false;
 
-  constructor(host: string, options: ClientOptions = {}) {
-    if (!options.identifier && !options.insecure && !options.allowMissingIdentifier) {
-      throw new HomeWizardError(
-        'invalid',
-        'The "identifier" of the credentials is required to check the certificate of the device. Use the identifier that pair() returned, or getCertificateIdentifier() with the serial on the device label. Set "insecure: true" to skip the check.',
-      );
-    }
-
+  /**
+   * A given `dispatcher` replaces the agent, and with it the certificate checks of the policy.
+   */
+  constructor(host: string, options: ClientOptions) {
     this.baseUrl = toBaseUrl(host);
-    this.options = options;
     this.token = options.token;
     this.loggerOptions = options.logger;
     this.timeout = options.timeout ?? DEFAULT_TIMEOUT;
     this.retries = options.retries ?? DEFAULT_RETRIES;
     this.ownsDispatcher = !options.dispatcher;
-    this.dispatcher = options.dispatcher ?? new Agent({ connect: this.tlsOptions });
+    this.dispatcher =
+      options.dispatcher ?? new Agent({ connect: options.policy.tlsOptions(options.ca) });
   }
 
-  /** The TLS options for the HTTPS requests and the WebSocket. */
-  get tlsOptions() {
-    const { insecure, ca, identifier, onCertificate } = this.options;
-
-    if (insecure) {
-      return { rejectUnauthorized: false, checkServerIdentity: () => undefined };
-    }
-
-    return {
-      ca: ca ?? HOMEWIZARD_CA_CERT,
-      rejectUnauthorized: true,
-      checkServerIdentity: createCheckServerIdentity(identifier, onCertificate),
-    };
+  /** Sends the token with the next requests, for example the one pairing just created. */
+  useToken(token: string): void {
+    this.token = token;
   }
 
   /** What the WebSocket needs to connect to this device: the same TLS agent, token and logger. */

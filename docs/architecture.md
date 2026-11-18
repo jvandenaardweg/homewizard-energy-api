@@ -21,6 +21,7 @@ src/
   index.ts          # the root entry point
   client.ts         # Client (internal): base URL, TLS agent, token, X-Api-Version, retries, logging
   tls.ts            # the HomeWizard CA, the certificate check, getCertificateIdentifier(), isSameIdentifier()
+  identifier-policy.ts  # IdentifierPolicy (internal): pin, learn or skip the identifier in the certificate
   errors.ts         # HomeWizardError, a union per kind
   api-version.ts    # isApiVersionAtLeast()
   endpoints.ts      # one function per endpoint: (client, ...args) => Promise<T>
@@ -72,6 +73,8 @@ The identifier (`appliance/<type>/<serial>`) is what the device's certificate is
 - `pair()` is the only call that connects without an identifier. It checks the certificate chain and reads the identifier from the certificate.
 - After that, the identifier is required. `insecure: true` skips all checks, for debugging.
 - mDNS is unauthenticated, so an identifier from discovery is never trusted. `connect()` compares the discovered `id` with the stored identifier, and the certificate check still runs on the connection.
+
+`IdentifierPolicy` (`src/identifier-policy.ts`) holds these rules, decided once before the client connects: `pinned` (the identifier is given), `learn` (only `pair()` without one, which keeps the Common Name of each certificate that passes) or `insecure`. It gives the TLS options for the client's agent, and refuses to learn with your own `dispatcher`, which replaces that agent. After the button press, `pair()` asks it for the identifier: the given one, the one learned, or none when insecure, and then it's built from `GET /api`.
 
 Tokens stay out of logs: every logged body goes through `redact()`.
 

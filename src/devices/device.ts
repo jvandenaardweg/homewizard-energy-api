@@ -1,5 +1,6 @@
 import { Client, Credentials, ConnectionOptions } from '../client';
 import * as endpoints from '../endpoints';
+import { IdentifierPolicy } from '../identifier-policy';
 import { pair, PairOptions, splitPairOptions } from '../pairing';
 import { DeviceInformation, System, User } from '../types';
 import { SocketTarget, WebSocketOptions } from '../websocket';
@@ -60,9 +61,10 @@ export abstract class Device<TSpec extends DeviceSpec> {
    */
   constructor(credentials: Credentials, options: ConnectionOptions = {}) {
     const { host, token, identifier } = credentials;
+    const policy = IdentifierPolicy.forDevice(identifier, options?.insecure);
 
     this.host = host;
-    this.client = new Client(host, { ...options, token, identifier });
+    this.client = new Client(host, { ...options, token, policy });
   }
 
   /**
