@@ -46,7 +46,8 @@ The change is done when every applicable item is covered:
 - The API v1 mocks and fixtures live in `src/mocks/v1/`, and go with `src/v1/`. Tests outside `src/v1/` import from neither and use a v2 or neutral fixture, so they keep passing once both are deleted.
 - Discovery tests replace `multicast-dns` with `vi.mock`, using helpers from `src/mocks/mdns-v2.ts`, and from `src/mocks/v1/mdns.ts` in v1.
 - The device classes create their own TLS agent, which bypasses the global `MockAgent`, so tests pass it as `dispatcher`: `new P1Meter(mockV2Credentials, { dispatcher: mockApiAgent })`. The internal `Client` takes `mockV2DeviceOptions`.
-- The certificate checks and the WebSocket need a real TLS handshake, which `MockAgent` skips. Those tests use the local server in `src/mocks/tls/` (a test CA with two device certificates, `useOtherDevice()` to switch between them, and a minimal WebSocket server that scripts a device) with real timers: call `vi.useRealTimers()` in `beforeEach` and `vi.useFakeTimers()` again in `afterEach`, because the global `afterEach` runs the fake timers.
+- The WebSocket logic is tested on fakes with fake timers: `DeviceSocket` on `FakeConnection` (`src/mocks/websocket-connection.ts`, set as `connectionClass` in a subclass), and `Connection` on a fake undici `WebSocket` in `connection.test.ts`.
+- The certificate checks, and the WebSocket tests of the certificate, a wrong token and one happy path, need a real TLS handshake, which `MockAgent` skips. Those tests use the local server in `src/mocks/tls/` (a test CA with two device certificates, `useOtherDevice()` to switch between them, and a minimal WebSocket server that scripts a device) with real timers: call `vi.useRealTimers()` in `beforeEach` and `vi.useFakeTimers()` again in `afterEach`, because the global `afterEach` runs the fake timers.
 
 ## Commits and releases
 
