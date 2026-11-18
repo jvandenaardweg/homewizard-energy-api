@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
-import { AsyncQueue } from '@/shared/async-queue';
 import { log, LoggerOptions } from '@/shared/logger';
 import { DEFAULT_POLL_INTERVAL, runPollLoop } from '@/shared/poller';
+import { StreamSet } from '@/shared/stream-set';
 import type { StreamOptions } from './websocket';
 
 export interface PollOptions {
@@ -55,8 +55,33 @@ export interface Poller<T> {
 export function poll<T>(fn: () => Promise<T>, options: PollOptions = {}): Poller<T> {
   const emitter = new EventEmitter();
   const name = fn.name || 'poll';
-  const streams = new Set<AsyncQueue<T>>();
   let activeRun: object | undefined;
+
+  const streams = new StreamSet<T>({
+    // Each result replaces the one before: a slow loop only needs the latest
+    maxBuffered: 1,
+    listen: stream => {
+      const onResponse = (response: T) => stream.push(response);
+      const onError = (error: unknown) => stream.end(error);
+
+      emitter.on('response', onResponse);
+      emitter.on('error', onError);
+
+      return () => {
+        emitter.off('response', onResponse);
+        emitter.off('error', onError);
+      };
+    },
+    acquire: () => {
+      const started = !activeRun;
+
+      poller.start();
+      return started;
+    },
+    release: () => poller.stop(),
+    // The stream that started polling stops it, which ends the streams that joined, as stream() documents
+    releasedBy: 'acquirer',
+  });
 
   const poller = {
     start() {
@@ -78,8 +103,7 @@ export function poll<T>(fn: () => Promise<T>, options: PollOptions = {}): Poller
     },
     stop() {
       activeRun = undefined;
-
-      for (const stream of [...streams]) stream.end();
+      streams.end();
     },
     get isPolling() {
       return !!activeRun;
@@ -94,33 +118,8 @@ export function poll<T>(fn: () => Promise<T>, options: PollOptions = {}): Poller
       emitter.off(event, listener);
       return poller;
     },
-    stream({ signal }: StreamOptions = {}) {
-      // An aborted signal ends the stream before it starts
-      if (signal?.aborted) return new AsyncQueue<T>({ signal });
-
-      const startedHere = !activeRun;
-      const onResponse = (response: T) => queue.push(response);
-      const onError = (error: unknown) => queue.end(error);
-
-      const queue: AsyncQueue<T> = new AsyncQueue<T>({
-        signal,
-        // Each result replaces the one before: a slow loop only needs the latest
-        maxBuffered: 1,
-        onDone: () => {
-          streams.delete(queue);
-          emitter.off('response', onResponse);
-          emitter.off('error', onError);
-
-          if (startedHere) poller.stop();
-        },
-      });
-
-      streams.add(queue);
-      emitter.on('response', onResponse);
-      emitter.on('error', onError);
-      poller.start();
-
-      return queue;
+    stream(streamOptions?: StreamOptions) {
+      return streams.open(streamOptions);
     },
   };
 

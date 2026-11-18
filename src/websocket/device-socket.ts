@@ -2,6 +2,7 @@ import { EventEmitter } from 'events';
 import { AsyncQueue } from '@/shared/async-queue';
 import { Backoff } from '@/shared/backoff';
 import { log } from '@/shared/logger';
+import { StreamSet } from '@/shared/stream-set';
 import { HomeWizardError } from '../errors';
 import {
   Connection,
@@ -54,10 +55,10 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
   protected stopped = false;
   /** The error the socket stopped for: a missing or rejected token. */
   protected stopError: HomeWizardError | undefined;
-  /** The running `stream()` iterators, which end when the socket stops. */
-  protected readonly streams = new Set<Pick<AsyncQueue<unknown>, 'end'>>();
+  /** The `stream()` iterators of each topic, which end when the socket stops. */
+  private readonly topicStreams = new Map<string, StreamSet<unknown>>();
   /** The topics a `stream()` subscribed to, which it unsubscribes when the last listener stops. */
-  protected readonly streamSubscriptions = new Set<string>();
+  private readonly streamSubscriptions = new Set<string>();
   protected reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   protected readonly reconnectBackoff: Backoff;
   /** The connection class `connect()` opens. The tests replace it with a fake. */
@@ -161,8 +162,8 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
       this.emitter.emit('close', 1000, 'closed');
     }
 
-    for (const stream of [...this.streams]) {
-      stream.end(error);
+    for (const streams of this.topicStreams.values()) {
+      streams.end(error);
     }
   }
 
@@ -183,43 +184,52 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
     topic: K,
     options: StreamOptions = {},
   ): AsyncIterableIterator<TTopics[K]> {
-    const { signal } = options;
-
-    // An aborted signal ends the stream before it starts
-    if (signal?.aborted) return new AsyncQueue({ signal });
-
-    const onData = (data: TTopics[K]) => queue.push(data);
-
-    const queue: AsyncQueue<TTopics[K]> = new AsyncQueue<TTopics[K]>({
-      signal,
-      // Every topic is state: a slow loop only needs the latest
-      maxBuffered: 1,
-      onDone: () => {
-        this.streams.delete(queue);
-        this.off(topic, onData);
-
-        if (this.streamSubscriptions.has(topic) && this.emitter.listenerCount(topic) === 0) {
-          this.streamSubscriptions.delete(topic);
-          this.unsubscribe(topic);
-        }
-      },
-    });
-
-    // A socket that stopped emits no more events, so the stream ends straight away
+    // A socket that stopped emits no more events, so the stream ends straight away. An aborted signal ends it first
     if (this.stopped) {
+      const queue = new AsyncQueue<TTopics[K]>({ signal: options.signal });
+
       queue.end(this.stopError);
       return queue;
     }
 
-    this.streams.add(queue);
-    this.on(topic, onData);
+    return this.streamsOf(topic).open(options);
+  }
 
-    if (!this.subscriptions.has(topic) && !this.subscriptions.has('*')) {
-      this.streamSubscriptions.add(topic);
-      this.subscribe(topic);
+  /** The streams of a topic: the first subscribes, when you haven't, and the last unsubscribes. */
+  private streamsOf<K extends keyof TTopics & string>(topic: K): StreamSet<TTopics[K]> {
+    let streams = this.topicStreams.get(topic) as StreamSet<TTopics[K]> | undefined;
+
+    if (!streams) {
+      streams = new StreamSet<TTopics[K]>({
+        // Every topic is state: a slow loop only needs the latest
+        maxBuffered: 1,
+        listen: stream => {
+          const onData = (data: TTopics[K]) => stream.push(data);
+
+          this.on(topic, onData);
+          return () => this.off(topic, onData);
+        },
+        acquire: () => {
+          if (!this.subscriptions.has(topic) && !this.subscriptions.has('*')) {
+            this.streamSubscriptions.add(topic);
+            this.subscribe(topic);
+          }
+
+          return this.streamSubscriptions.has(topic);
+        },
+        release: () => {
+          // A listener of on() still uses the subscription
+          if (this.emitter.listenerCount(topic) > 0) return;
+
+          this.streamSubscriptions.delete(topic);
+          this.unsubscribe(topic);
+        },
+        releasedBy: 'last',
+      });
+      this.topicStreams.set(topic, streams as StreamSet<unknown>);
     }
 
-    return queue;
+    return streams;
   }
 
   /** Subscribes to a topic, or to all with `*`. The device sends the current data, then each change. */
