@@ -19,7 +19,7 @@ This is a typed Node client for the HomeWizard Energy local API: API v2 over HTT
 
 ## Architecture
 
-- The package root is the API v2, which talks HTTPS with a token. `src/v1/` is the API v1 (HTTP to `/api/v1`), frozen until HomeWizard removes it: it gets fixes, and no new endpoints or devices. Both build on `src/shared/` (request with timeout, logger, polling loop, mDNS discovery, `AsyncQueue`), which keeps the v1 classes' public and protected API unchanged. `src/shared/` imports nothing from `src/v1/` or the root, so `src/v1/` can be deleted in one piece when HomeWizard removes the API v1. The telegram parser in `src/telegram/` serves both.
+- The package root is the API v2, which talks HTTPS with a token. `src/v1/` is the API v1 (HTTP to `/api/v1`), frozen until HomeWizard removes it: it gets fixes, and no new endpoints or devices. Both build on `src/shared/` (request with timeout, logger, polling loop, mDNS discovery, `AsyncQueue`), which keeps the v1 classes' public and protected API unchanged. `src/shared/` imports nothing from `src/v1/` or the root, so `src/v1/` can be deleted in one piece when HomeWizard removes the API v1, together with its mocks in `src/mocks/v1/`. The telegram parser in `src/telegram/` serves both.
 - `src/endpoints.ts` has one function per endpoint, taking the internal `Client` (`src/client.ts`: TLS agent, token, `X-Api-Version`). The device classes in `src/devices/` extend `Device`, which holds what every device supports, and add only the endpoints their device supports, following the capability matrix in `docs/architecture.md`. A device without an endpoint has no method for it.
 - The device classes take `(credentials, options?)`: `Credentials` (`{ host, token, identifier }`) is what `pair()` returns and users store as one value, and `ConnectionOptions` holds how to connect (timeout, logger, insecure, dispatcher, ca).
 - The device classes, `pair()`, `connect()` and `discover()` throw, and the WebSocket emits, one `HomeWizardError` (`src/errors.ts`) with a `kind` and the device's `code`. `Client.send()` passes `HomeWizardError` factories to `requestWithTimeout()` and `parseJsonResponse()` in `src/shared/request.ts`, as `BaseApi` passes the v1 ones from `src/v1/errors.ts`, and wraps network and certificate errors through `toHomeWizardError()`, with the original as `cause`. A `GET` that fails with a `timeout` or `network` error is retried, per the `retries` option. `discover()` wraps the mDNS errors of the shared `MdnsDiscovery` too. Pairing retries the `timeout` and `network` kinds, and any error that isn't a `HomeWizardError`.
@@ -41,9 +41,10 @@ The change is done when every applicable item is covered:
 
 ## Tests
 
-- `vitest.setup.ts` installs a global undici `MockAgent` with real network disabled, and it turns on fake timers before every test.
-- Each request needs its own interceptor (`mockV2()`, or `apiMocks.<name>()` in v1), because an interceptor is used up after one reply.
-- Discovery tests replace `multicast-dns` with `vi.mock`, using helpers from `src/mocks/mdns.ts` and `src/mocks/mdns-v2.ts`.
+- `vitest.setup.ts` installs the global undici `MockAgent` from `src/mocks/agent.ts`, with real network disabled, and it turns on fake timers before every test.
+- Each request needs its own interceptor (`mockV2()` from `src/mocks/api-v2.ts`, or `apiMocks.<name>()` from `src/mocks/v1/api.ts` in v1), because an interceptor is used up after one reply.
+- The API v1 mocks and fixtures live in `src/mocks/v1/`, and go with `src/v1/`. Tests outside `src/v1/` import from neither and use a v2 or neutral fixture, so they keep passing once both are deleted.
+- Discovery tests replace `multicast-dns` with `vi.mock`, using helpers from `src/mocks/mdns-v2.ts`, and from `src/mocks/v1/mdns.ts` in v1.
 - The device classes create their own TLS agent, which bypasses the global `MockAgent`, so tests pass it as `dispatcher`: `new P1Meter(mockV2Credentials, { dispatcher: mockApiAgent })`. The internal `Client` takes `mockV2DeviceOptions`.
 - The certificate checks and the WebSocket need a real TLS handshake, which `MockAgent` skips. Those tests use the local server in `src/mocks/tls/` (a test CA, and a minimal WebSocket server that scripts a device) with real timers: call `vi.useRealTimers()` in `beforeEach` and `vi.useFakeTimers()` again in `afterEach`, because the global `afterEach` runs the fake timers.
 
