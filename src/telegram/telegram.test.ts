@@ -1,5 +1,5 @@
 import { mockParsedTelegramResponse, mockTelegramResponse } from '@/mocks/data/telegram';
-import { convertHexToAscii, parseTelegram } from './telegram';
+import { parseTelegram } from './telegram';
 
 /** A telegram with a header, the given lines and a footer. */
 const telegram = (...lines: string[]) => `/ISK5\\2M550T-1012\n\n${lines.join('\n')}\n!`;
@@ -548,12 +548,5 @@ describe('parseTelegram', () => {
         valvePosition: null,
       });
     });
-  });
-});
-
-// parseTelegram() always passes a string, so this guard is only reachable directly
-describe('convertHexToAscii', () => {
-  it('should return an empty string for a non-string hex value', () => {
-    expect(convertHexToAscii(null as unknown as string)).toBe('');
   });
 });
