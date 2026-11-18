@@ -27,7 +27,7 @@ src/
   endpoints.ts      # one function per endpoint: (client, ...args) => Promise<T>
   pairing.ts        # pair(): asks for a token until the button is pressed
   poll.ts           # poll(fn): polls any method, with events or stream()
-  websocket/        # DeviceSocket (subscriptions, reconnect, stream()), on a Connection and a Heartbeat
+  websocket/        # DeviceSocket (subscriptions, reconnect, stream()), on a Connection (authorization, heartbeat)
   discovery.ts      # discover() on _homewizard._tcp, and connect()
   types.ts          # the response types, mirroring the upstream docs
   devices/          # Device, and one class per device
@@ -86,10 +86,10 @@ The device classes, `pair()`, `connect()` and `discover()` throw a `HomeWizardEr
 
 ## Pushed data
 
-The WebSocket (`DeviceSocket`) authorizes with the token, subscribes again after a reconnect, and queues commands until it's authorized. In `src/websocket/` it's three parts: a `Connection` is one connection with its authorization, the `Heartbeat` watches it for silence, and `DeviceSocket` opens a new `Connection` for each reconnect and decides when to give up. Two things came out of testing on a real P1:
+The WebSocket (`DeviceSocket`) authorizes with the token, subscribes again after a reconnect, and queues commands until it's authorized. In `src/websocket/` it's two parts. A `Connection` is one connection, from opening it to its close: it answers the request for the token, runs the heartbeat once the device accepted it, and reports why it closed. `DeviceSocket` opens a new `Connection` for each reconnect, and keeps the subscriptions, the queue, the backoff and the decision to give up. Two things came out of testing on a real P1:
 
-- A wrong token gets no error message: the device drops the connection. Two drops in a row between sending the token and `authorized` count as a rejected token, and the socket stops. A single drop reconnects, because a network drop looks the same.
-- undici has no pong event, so liveness is a heartbeat of its own: after a silent interval the socket asks for the device information, and after two it reconnects.
+- A wrong token gets no error message: the device drops the connection. A `Connection` that closes between sending the token and `authorized` reports a probably rejected token. Two of those in a row make `DeviceSocket` stop. A single one reconnects, because a network drop looks the same.
+- undici has no pong event, so liveness is a heartbeat of its own: after a silent interval the connection asks for the device information, and after two it closes as `no response`, which reconnects like any drop. The answer is only shown as `device` data when the user subscribed to it.
 
 It uses undici's `WebSocket` with the same TLS agent as the requests, so there's no extra dependency.
 
