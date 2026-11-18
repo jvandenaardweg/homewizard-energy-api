@@ -10,18 +10,15 @@ export interface StreamSetOptions<T> {
   /** Adds the listeners that feed one stream, and returns a function that removes them. */
   listen: (stream: StreamSink<T>) => () => void;
   /**
-   * Runs as each stream opens, after `listen`: start the source here when it isn't running. Returns `true` when the
-   * streams own the source, so a stream releases it, and `false` when something else started it.
+   * Runs as each stream opens, after `listen`: start the source here when it isn't running. Returns `true` when this
+   * stream calls `release()` as it ends, and `false` when something else owns the source.
    */
   acquire: () => boolean;
-  /** Stops the source the streams own. */
-  release: () => void;
   /**
-   * Which stream calls `release()`:
-   * - `last`: the last open stream to end, when one of the streams since the set was empty owned the source.
-   * - `acquirer`: a stream whose `acquire()` returned `true`, when it ends, even while others are open.
+   * Runs as a stream whose `acquire()` returned `true` ends, even while others are open. To stop the source only
+   * with the last stream, return from it while other listeners remain.
    */
-  releasedBy: 'last' | 'acquirer';
+  release: () => void;
   /** The most values a stream keeps while its loop is busy. Unlimited by default. */
   maxBuffered?: number;
 }
@@ -29,12 +26,10 @@ export interface StreamSetOptions<T> {
 /**
  * The streams of one event source, as async iterators for `for await`. Each stream gets its own listeners, which
  * are removed when it ends: at `break`, when `signal` aborts, or at `end()`, which the source calls when it stops.
- * The streams acquire the source as they open, and release it as `releasedBy` says.
+ * The streams acquire the source as they open, and a stream that acquired it releases it as it ends.
  */
 export class StreamSet<T> {
   private readonly streams = new Set<AsyncQueue<T>>();
-  /** `true` once a stream acquired the source, until it's released. */
-  private owned = false;
 
   constructor(private readonly options: StreamSetOptions<T>) {}
 
@@ -42,7 +37,7 @@ export class StreamSet<T> {
     // An aborted signal ends the stream before it starts
     if (signal?.aborted) return new AsyncQueue<T>({ signal });
 
-    const { listen, acquire, release, releasedBy, maxBuffered } = this.options;
+    const { listen, acquire, release, maxBuffered } = this.options;
     let acquired = false;
 
     const queue: AsyncQueue<T> = new AsyncQueue<T>({
@@ -52,19 +47,13 @@ export class StreamSet<T> {
         this.streams.delete(queue);
         unlisten();
 
-        const releases = releasedBy === 'acquirer' ? acquired : this.owned && !this.streams.size;
-
-        if (releases) {
-          this.owned = false;
-          release();
-        }
+        if (acquired) release();
       },
     });
 
     this.streams.add(queue);
     const unlisten = listen(queue);
     acquired = acquire();
-    this.owned ||= acquired;
 
     return queue;
   }

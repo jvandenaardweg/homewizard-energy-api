@@ -98,7 +98,7 @@ It uses undici's `WebSocket` with the same TLS agent as the requests, so there's
 
 Data can be read with events or with `for await`: `socket.on()` and `socket.stream()`, `poller.on()` and `poller.stream()`, and `discover()`. The iterators are an `AsyncQueue` fed by the events. A stream keeps only the latest value while the loop is busy, because every topic is a current state.
 
-`poller.stream()` and `socket.stream()` open their streams through a `StreamSet` (`src/shared/stream-set.ts`), one per poller and one per topic of a socket. It ends a stream at once for an aborted signal, gives each stream its own listeners and removes them when it ends, and ends every open stream when the source stops. Each stream acquires the source as it opens: the poller starts polling, and the socket subscribes to the topic when nobody did. Who releases it differs:
+`poller.stream()` and `socket.stream()` open their streams through a `StreamSet` (`src/shared/stream-set.ts`), one per poller and one per topic of a socket. It ends a stream at once for an aborted signal, gives each stream its own listeners and removes them when it ends, and ends every open stream when the source stops. Each stream acquires the source as it opens: the poller starts polling, and the socket subscribes to the topic when nobody did. A stream that acquired it releases it as it ends, and what that does differs:
 
 - A poller is stopped by the stream that started it, which ends the streams that joined, as `stream()` documents. A poller started with `start()` keeps running.
 - A topic is unsubscribed by the last stream to end, and only when no `on()` listener still uses it. A topic the user subscribed to stays subscribed.

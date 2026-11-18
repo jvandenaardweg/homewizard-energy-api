@@ -215,16 +215,16 @@ export class DeviceSocket<TTopics extends object, TUpdates extends object = obje
             this.subscribe(topic);
           }
 
+          // Every stream on a subscription a stream made releases it, and the last one unsubscribes
           return this.streamSubscriptions.has(topic);
         },
         release: () => {
-          // A listener of on() still uses the subscription
+          // Another stream, or a listener of on(), still uses the subscription
           if (this.emitter.listenerCount(topic) > 0) return;
 
           this.streamSubscriptions.delete(topic);
           this.unsubscribe(topic);
         },
-        releasedBy: 'last',
       });
       this.topicStreams.set(topic, streams as StreamSet<unknown>);
     }

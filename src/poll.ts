@@ -78,9 +78,8 @@ export function poll<T>(fn: () => Promise<T>, options: PollOptions = {}): Poller
       poller.start();
       return started;
     },
-    release: () => poller.stop(),
     // The stream that started polling stops it, which ends the streams that joined, as stream() documents
-    releasedBy: 'acquirer',
+    release: () => poller.stop(),
   });
 
   const poller = {
