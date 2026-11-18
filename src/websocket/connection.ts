@@ -95,7 +95,7 @@ export class Connection implements SocketConnection {
 
       const cause = (event as unknown as { error?: unknown }).error;
 
-      handlers.onError(toHomeWizardError(cause, { type: 'websocket', url: target.url }));
+      handlers.onError(toHomeWizardError(cause, { type: 'websocket' }));
     };
     this.socket.onclose = event => {
       if (this.closed) return;

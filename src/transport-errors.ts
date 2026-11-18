@@ -16,8 +16,7 @@ import { ErrorCode, ErrorResponse } from './types';
  */
 
 /** Where a transport failure happened: a request, or the WebSocket connection. */
-export type Transport =
-  { type: 'request'; method: string; url: string } | { type: 'websocket'; url: string };
+export type Transport = { type: 'request'; method: string; url: string } | { type: 'websocket' };
 
 /**
  * Returns `true` for a failed certificate check: a certificate not signed by the CA (OpenSSL codes such as
