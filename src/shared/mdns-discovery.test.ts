@@ -67,6 +67,12 @@ describe('MdnsDiscovery TXT record lookup', () => {
     ).toBeUndefined();
   });
 
+  it('should not take a service type that ends with this one as this service', () => {
+    expect(
+      discovery['getTxtRecordFromResponse'](withTxtName('x._xhomewizard._tcp.local')),
+    ).toBeNull();
+  });
+
   it('should not use the TXT record of another service', () => {
     expect(
       discovery['getTxtRecordFromResponse'](withTxtName('p1meter-AABB02._hwenergy._tcp.local')),
