@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events';
-import { StreamSet, StreamSetOptions } from './stream-set';
+import { StreamSet } from './stream-set';
 
 /** A source that emits a count at an interval while it runs, like a poller. */
-function createSource(releasedBy: StreamSetOptions<number>['releasedBy']) {
+function createSource() {
   const emitter = new EventEmitter();
   let timer: ReturnType<typeof setInterval> | undefined;
   let count = 0;
@@ -45,7 +45,6 @@ function createSource(releasedBy: StreamSetOptions<number>['releasedBy']) {
       return started;
     },
     release,
-    releasedBy,
   });
 
   return { source, streams, release };
@@ -56,7 +55,7 @@ const listeners = (emitter: EventEmitter) =>
 
 describe('shared/StreamSet', () => {
   it('should give every open stream each value, and remove its listeners when it ends', async () => {
-    const { source, streams } = createSource('last');
+    const { source, streams } = createSource();
     const first = streams.open();
     const second = streams.open();
 
@@ -66,14 +65,14 @@ describe('shared/StreamSet', () => {
     await expect(second.next()).resolves.toStrictEqual({ value: 1, done: false });
     expect(listeners(source.emitter)).toBe(4);
 
-    await first.return?.();
-    expect(listeners(source.emitter)).toBe(2);
     await second.return?.();
+    expect(listeners(source.emitter)).toBe(2);
+    await first.return?.();
     expect(listeners(source.emitter)).toBe(0);
   });
 
   it('should keep only the newest values up to maxBuffered', async () => {
-    const { source } = createSource('last');
+    const { source } = createSource();
     const streams = new StreamSet<number>({
       listen: stream => {
         const onValue = (value: number) => stream.push(value);
@@ -83,7 +82,6 @@ describe('shared/StreamSet', () => {
       },
       acquire: () => false,
       release: () => undefined,
-      releasedBy: 'last',
       maxBuffered: 1,
     });
     const stream = streams.open();
@@ -95,82 +93,62 @@ describe('shared/StreamSet', () => {
     source.stop();
   });
 
-  describe("releasedBy: 'last'", () => {
-    it('should acquire with the first stream and release with the last', async () => {
-      const { source, streams, release } = createSource('last');
-      const first = streams.open();
-      const second = streams.open();
-      expect(source.isRunning).toBe(true);
+  it('should release when the stream that acquired ends, which ends the others', async () => {
+    const { source, streams, release } = createSource();
+    const first = streams.open();
+    const second = streams.open();
+    const next = second.next();
 
-      await first.return?.();
-      expect(release).not.toHaveBeenCalled();
-      expect(source.isRunning).toBe(true);
+    await first.return?.();
 
-      await vi.advanceTimersByTimeAsync(100);
-      await expect(second.next()).resolves.toStrictEqual({ value: 1, done: false });
-
-      await second.return?.();
-      expect(release).toHaveBeenCalledTimes(1);
-      expect(source.isRunning).toBe(false);
-    });
-
-    it('should acquire again after the release', async () => {
-      const { source, streams, release } = createSource('last');
-
-      await streams.open().return?.();
-      const stream = streams.open();
-      expect(source.isRunning).toBe(true);
-
-      await stream.return?.();
-      expect(release).toHaveBeenCalledTimes(2);
-    });
-
-    it('should not release a source that something else started', async () => {
-      const { source, streams, release } = createSource('last');
-      source.start();
-
-      await streams.open().return?.();
-
-      expect(release).not.toHaveBeenCalled();
-      expect(source.isRunning).toBe(true);
-      source.stop();
-    });
+    expect(release).toHaveBeenCalledTimes(1);
+    expect(source.isRunning).toBe(false);
+    await expect(next).resolves.toStrictEqual({ value: undefined, done: true });
+    expect(listeners(source.emitter)).toBe(0);
   });
 
-  describe("releasedBy: 'acquirer'", () => {
-    it('should release when the stream that acquired ends, which ends the others', async () => {
-      const { source, streams, release } = createSource('acquirer');
-      const first = streams.open();
-      const second = streams.open();
-      const next = second.next();
+  it('should not release when a stream that joined ends', async () => {
+    const { source, streams, release } = createSource();
+    const first = streams.open();
 
-      await first.return?.();
+    await streams.open().return?.();
+    expect(release).not.toHaveBeenCalled();
+    expect(source.isRunning).toBe(true);
 
-      expect(release).toHaveBeenCalledTimes(1);
-      expect(source.isRunning).toBe(false);
-      await expect(next).resolves.toStrictEqual({ value: undefined, done: true });
-      expect(listeners(source.emitter)).toBe(0);
-    });
+    await first.return?.();
+    expect(release).toHaveBeenCalledTimes(1);
+  });
 
-    it('should not release when a stream that joined ends', async () => {
-      const { source, streams, release } = createSource('acquirer');
-      const first = streams.open();
+  it('should acquire again after the release', async () => {
+    const { source, streams, release } = createSource();
 
-      await streams.open().return?.();
-      expect(release).not.toHaveBeenCalled();
-      expect(source.isRunning).toBe(true);
+    await streams.open().return?.();
+    const stream = streams.open();
+    expect(source.isRunning).toBe(true);
 
-      await first.return?.();
-      expect(release).toHaveBeenCalledTimes(1);
-    });
+    await stream.return?.();
+    expect(release).toHaveBeenCalledTimes(2);
+  });
+
+  it('should not release a source that something else started', async () => {
+    const { source, streams, release } = createSource();
+    source.start();
+
+    await streams.open().return?.();
+
+    expect(release).not.toHaveBeenCalled();
+    expect(source.isRunning).toBe(true);
+    source.stop();
   });
 
   it('should end every open stream at end(), or make each throw the error', async () => {
-    const { source, streams } = createSource('last');
+    const { source, streams } = createSource();
     const ended = streams.open().next();
     source.stop();
     await expect(ended).resolves.toStrictEqual({ value: undefined, done: true });
 
+    // Started elsewhere, so ending a stream doesn't stop it and end the other stream first
+    source.start();
     const error = new Error('offline');
     const first = streams.open().next();
     const second = streams.open().next();
@@ -179,10 +157,11 @@ describe('shared/StreamSet', () => {
     await expect(first).rejects.toBe(error);
     await expect(second).rejects.toBe(error);
     expect(listeners(source.emitter)).toBe(0);
+    source.stop();
   });
 
   it('should end a stream that throws an error from the source', async () => {
-    const { source, streams } = createSource('last');
+    const { source, streams } = createSource();
     const next = streams.open().next();
     const error = new Error('offline');
 
@@ -193,7 +172,7 @@ describe('shared/StreamSet', () => {
   });
 
   it('should end a stream when its signal aborts, and release the source', async () => {
-    const { source, streams, release } = createSource('last');
+    const { source, streams, release } = createSource();
     const controller = new AbortController();
     const other = streams.open();
     const next = streams.open({ signal: controller.signal }).next();
@@ -209,7 +188,7 @@ describe('shared/StreamSet', () => {
   });
 
   it('should end a stream with an aborted signal before it listens or acquires', async () => {
-    const { source, streams } = createSource('last');
+    const { source, streams } = createSource();
     const stream = streams.open({ signal: AbortSignal.abort() });
 
     await expect(stream.next()).resolves.toStrictEqual({ value: undefined, done: true });
