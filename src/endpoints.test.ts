@@ -204,6 +204,16 @@ describe('v2/endpoints', () => {
       expect(() => endpoints.toLocalUserName('my.app')).toThrow(/is invalid/);
     });
 
+    it('should refuse a name that is not a string, as JavaScript can pass', () => {
+      expect(() => endpoints.toLocalUserName(undefined as never)).toThrow(
+        expect.objectContaining({
+          kind: 'invalid',
+          message: expect.stringMatching(/"undefined" is invalid/),
+        }),
+      );
+      expect(() => endpoints.toLocalUserName(42 as never)).toThrow(/"42" is invalid/);
+    });
+
     it('should not send a request for an invalid name', async () => {
       await expect(endpoints.createUser(client(), 'my.app')).rejects.toThrow(/is invalid/);
     });
