@@ -93,21 +93,29 @@ describe('v2/DeviceSocket', () => {
     expect(socket.isAuthorized).toBe(false);
   });
 
-  it('should report a certificate of another identifier and not authorize', async () => {
-    const p1 = new P1Meter(
-      { host: server.host, identifier: 'appliance/p1dongle/000000000000', token: mockV2Token },
-      { ca: mockTlsCa },
-    );
-    const socket = p1.openWebSocket({ reconnect: false });
-    sockets.push(socket as DeviceSocket<object>);
-    const onError = vi.fn();
-    socket.on('error', onError);
+  // undici's WebSocket reports a failed connection as an empty TypeError, without the TLS error, so a refused
+  // certificate is a socket error here, where a request has a certificate error
+  it.each([
+    ['of another identifier', 'appliance/p1dongle/000000000000', mockTlsCa],
+    ["the CA didn't sign", mockTlsIdentifier, undefined],
+  ])(
+    'should report a certificate %s as a socket error and not authorize',
+    async (_, identifier, ca) => {
+      const p1 = new P1Meter({ host: server.host, identifier, token: mockV2Token }, { ca });
+      const socket = p1.openWebSocket({ reconnect: false });
+      sockets.push(socket as DeviceSocket<object>);
+      const onError = vi.fn<(error: HomeWizardError) => void>();
+      socket.on('error', onError);
 
-    await waitFor(() => onError.mock.calls.length > 0);
+      await waitFor(() => onError.mock.calls.length > 0);
 
-    expect(onError.mock.calls[0][0].message).toMatch(/^The WebSocket connection failed/);
-    expect(server.connections).toHaveLength(0);
-  });
+      expect(onError.mock.calls[0][0]).toMatchObject({
+        kind: 'socket',
+        message: 'The WebSocket connection failed',
+      });
+      expect(server.connections).toHaveLength(0);
+    },
+  );
 
   it('should only offer the commands each device supports', () => {
     const credentials = { host: server.host, identifier: mockTlsIdentifier, token: mockV2Token };

@@ -5,7 +5,6 @@ import {
   getCertificateIdentifier,
   getCommonName,
   HOMEWIZARD_CA_CERT,
-  isCertificateError,
 } from './tls';
 
 const certificate = (CN?: string | string[]) => ({ subject: { CN } }) as unknown as PeerCertificate;
@@ -89,22 +88,6 @@ describe('v2/tls', () => {
 
     it('should accept any Common Name without an identifier', () => {
       expect(createCheckServerIdentity()('192.168.1.35', certificate('x'))).toBeUndefined();
-    });
-  });
-
-  describe('isCertificateError', () => {
-    it('should recognise certificate errors by their code', () => {
-      expect(isCertificateError({ code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' })).toBe(true);
-      expect(isCertificateError({ code: 'SELF_SIGNED_CERT_IN_CHAIN' })).toBe(true);
-      expect(isCertificateError({ code: 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY' })).toBe(true);
-      expect(isCertificateError({ code: CERTIFICATE_IDENTITY_ERROR_CODE })).toBe(true);
-    });
-
-    it('should not treat other errors as certificate errors', () => {
-      expect(isCertificateError({ code: 'ECONNREFUSED' })).toBe(false);
-      expect(isCertificateError({ code: 1 })).toBe(false);
-      expect(isCertificateError(new Error('x'))).toBe(false);
-      expect(isCertificateError(null)).toBe(false);
     });
   });
 });

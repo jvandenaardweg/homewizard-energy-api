@@ -8,16 +8,15 @@ import {
   parseJsonResponse,
   requestWithTimeout,
 } from '@/shared/request';
+import { HomeWizardError, isTransientError } from './errors';
+import { isNewerApiVersion } from './api-version';
+import type { IdentifierPolicy } from './identifier-policy';
 import {
   createInvalidJsonError,
   createResponseError,
   createTimeoutError,
-  HomeWizardError,
-  isTransientError,
   toHomeWizardError,
-} from './errors';
-import { isNewerApiVersion } from './api-version';
-import type { IdentifierPolicy } from './identifier-policy';
+} from './transport-errors';
 import { API_MAJOR_VERSION, DOCUMENTED_API_VERSION } from './types';
 import type { SocketTarget } from './websocket';
 
@@ -193,7 +192,7 @@ export class Client {
       try {
         return await read(url, await this.request(method, url, options));
       } catch (error) {
-        const wrapped = toHomeWizardError(error, method, url);
+        const wrapped = toHomeWizardError(error, { type: 'request', method, url });
         const canRetry =
           method === 'GET' &&
           attempt < this.retries &&
