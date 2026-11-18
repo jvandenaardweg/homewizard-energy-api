@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { Dispatcher } from 'undici';
 import { log, LoggerOptions } from '../shared/logger';
-import { DEFAULT_POLL_INTERVAL, runPollLoop } from '../shared/poller';
+import { PollRun } from '../shared/poller';
 import {
   DEFAULT_TIMEOUT,
   isResponseOk,
@@ -114,7 +114,8 @@ export class BaseApi {
 
   /**
    * The active polling run per method, or `undefined` when the method isn't polling. Each start gets a new run,
-   * so a loop from before a stop() can't continue after a quick start() again.
+   * so a loop from before a stop() can't continue after a quick start() again. A loop runs while its run is the
+   * entry of its method, so clearing or replacing the entry stops it.
    */
   protected activePollingRuns: Record<string, object | undefined> = {};
 
@@ -375,12 +376,16 @@ export class BaseApi {
    * Stops polling for a specific method.
    */
   protected stopPolling(method: string): void {
-    if (!this.activePollingRuns[method]) {
+    const run = this.activePollingRuns[method];
+
+    if (!run) {
       this.log(`Polling for "${method}" is not started or already stopped.`);
       return;
     }
 
     this.activePollingRuns[method] = undefined;
+
+    if (run instanceof PollRun) run.stop();
 
     this.log(`Stopping polling for "${method}".`);
   }
@@ -415,21 +420,19 @@ export class BaseApi {
       return;
     }
 
-    const interval = this.pollingOptions?.interval || DEFAULT_POLL_INTERVAL;
-    const stopOnError = !!this.pollingOptions?.stopOnError;
-
-    const run = {};
-    this.activePollingRuns[method] = run;
-
-    return runPollLoop({
+    const run = new PollRun({
       name: method,
-      interval,
-      stopOnError,
+      interval: this.pollingOptions?.interval,
+      stopOnError: this.pollingOptions?.stopOnError,
       call: apiMethod,
       isActive: () => this.activePollingRuns[method] === run,
       stop: () => this.stopPolling(method),
       emit: (event, payload) => this.emitPollingEvent(method, event, payload),
       log: (...args) => this.log(...args),
     });
+
+    this.activePollingRuns[method] = run;
+
+    return run.start();
   }
 }

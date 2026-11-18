@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { log, LoggerOptions } from '@/shared/logger';
-import { DEFAULT_POLL_INTERVAL, runPollLoop } from '@/shared/poller';
+import { PollRun } from '@/shared/poller';
 import { StreamSet } from '@/shared/stream-set';
 import type { StreamOptions } from './websocket';
 
@@ -55,7 +55,7 @@ export interface Poller<T> {
 export function poll<T>(fn: () => Promise<T>, options: PollOptions = {}): Poller<T> {
   const emitter = new EventEmitter();
   const name = fn.name || 'poll';
-  let activeRun: object | undefined;
+  let run: PollRun | undefined;
 
   const streams = new StreamSet<T>({
     // Each result replaces the one before: a slow loop only needs the latest
@@ -73,7 +73,7 @@ export function poll<T>(fn: () => Promise<T>, options: PollOptions = {}): Poller
       };
     },
     acquire: () => {
-      const started = !activeRun;
+      const started = !run;
 
       poller.start();
       return started;
@@ -85,28 +85,26 @@ export function poll<T>(fn: () => Promise<T>, options: PollOptions = {}): Poller
 
   const poller = {
     start() {
-      if (activeRun) return;
+      if (run) return;
 
-      const run = {};
-      activeRun = run;
-
-      void runPollLoop({
+      run = new PollRun({
         name,
-        interval: options.interval || DEFAULT_POLL_INTERVAL,
-        stopOnError: !!options.stopOnError,
+        interval: options.interval,
+        stopOnError: options.stopOnError,
         call: fn,
-        isActive: () => activeRun === run,
         stop: () => poller.stop(),
         emit: (event, payload) => emitter.emit(event, payload),
         log: (...args) => log(options.logger, ...args),
       });
+      void run.start();
     },
     stop() {
-      activeRun = undefined;
+      run?.stop();
+      run = undefined;
       streams.end();
     },
     get isPolling() {
-      return !!activeRun;
+      return !!run;
     },
     // oxlint-disable-next-line typescript/no-explicit-any
     on(event: 'response' | 'error', listener: (...args: any[]) => void) {
