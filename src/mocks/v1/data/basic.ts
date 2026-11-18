@@ -1,4 +1,4 @@
-import { BasicInformationResponse, SupportedDevices } from '../../v1/types';
+import { BasicInformationResponse, SupportedDevices } from '@/v1/types';
 
 // The entries with a source comment come from home-assistant/core (Apache-2.0) at commit 0dd1492, tests/components/homewizard/fixtures
 export const mockBasicInformationResponse: Record<SupportedDevices, BasicInformationResponse> = {

@@ -1,4 +1,4 @@
-import { IdentifyResponse } from '../../v1/types';
+import { IdentifyResponse } from '@/v1/types';
 
 export const mockIdentifyResponse: IdentifyResponse = {
   identify: 'ok',

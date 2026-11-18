@@ -1,12 +1,14 @@
 import { HomeWizardEnergyDiscovery } from '@/v1/homewizard-energy-discovery';
 import { MDNS_DISCOVERY_DOMAIN, MDNS_DISCOVERY_QUERY_TYPE } from '@/v1/types';
 import * as multicastDns from 'multicast-dns';
+import { mockMdnsBothServicesResponse, mockMdnsV2Response } from '@/mocks/mdns-v2';
 import {
   mockDiscoveryResponse,
+  mockMdnsBothServicesV2FirstResponse,
   mockMdnsGoodbyeResponse,
   mockMdnsResponse,
   mockMdnsResponseChromecast,
-} from '../mocks/mdns';
+} from '@/mocks/v1/mdns';
 
 let discoveryService: HomeWizardEnergyDiscovery;
 
@@ -593,6 +595,51 @@ describe('HomeWizardEnergyDiscovery', () => {
           answers: [...mockMdnsResponse.answers, { ...aRecord, data: '10.0.0.1' } as Answer],
         }),
       ).toStrictEqual({ ip: '192.168.1.34', hostname: 'energysocket-AABB01.local' });
+    });
+  });
+
+  describe('the service types', () => {
+    /** Starts the discovery and returns its mDNS response handler. */
+    function getResponseHandler(callback: () => void) {
+      discoveryService.start();
+      discoveryService.on('response', callback);
+
+      return onSpy.mock.calls.at(-1)?.[1] as (response: multicastDns.ResponsePacket) => void;
+    }
+
+    it.each([
+      ['the API v1 records come first', mockMdnsBothServicesResponse],
+      ['the API v2 records come first', mockMdnsBothServicesV2FirstResponse],
+    ])(
+      'should read the TXT record of _hwenergy._tcp when a packet announces both services and %s',
+      (_order, response) => {
+        const callback = vi.fn();
+        const handler = getResponseHandler(callback);
+
+        handler(response);
+
+        expect(callback).toHaveBeenCalledWith({
+          ip: '192.168.1.35',
+          hostname: 'p1meter-AABB02.local',
+          fqdn: 'p1meter-AABB02._hwenergy._tcp.local',
+          txt: {
+            api_enabled: '1',
+            path: '/api/v1',
+            serial: '3c39e7aabb02',
+            product_name: 'P1 Meter',
+            product_type: 'HWE-P1',
+          },
+        });
+      },
+    );
+
+    it('should leave _homewizard._tcp to the v2 discovery', () => {
+      const callback = vi.fn();
+      const handler = getResponseHandler(callback);
+
+      handler(mockMdnsV2Response);
+
+      expect(callback).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,5 +1,5 @@
 import { IncomingHttpHeaders } from 'http';
-import { mockApiAgent } from './api';
+import { mockApiAgent } from './agent';
 import { mockV2Identifier, mockV2Token } from './data/v2';
 
 /*

@@ -1,6 +1,6 @@
 import { setGlobalDispatcher } from 'undici';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
-import { mockApiAgent } from './src/mocks/api';
+import { mockApiAgent } from './src/mocks/agent';
 
 beforeAll(() => {
   setGlobalDispatcher(mockApiAgent);

@@ -79,7 +79,7 @@ const mockMdnsV1TxtDataOfV2Device = [
 ];
 
 /** The API v1 records of the same P1 Meter: PTR, SRV and TXT on `_hwenergy._tcp`. */
-const mockMdnsV1AnswersOfV2Device: multicastDns.ResponsePacket['answers'] = [
+export const mockMdnsV1AnswersOfV2Device: multicastDns.ResponsePacket['answers'] = [
   {
     name: '_hwenergy._tcp.local',
     type: 'PTR',
@@ -115,8 +115,8 @@ export const mockMdnsBothServicesResponse: multicastDns.ResponsePacket = {
   answers: [...mockMdnsV1AnswersOfV2Device, ...mockMdnsV2Response.answers],
 };
 
-/** The same packet with the API v2 records first, then the API v1 records. */
-export const mockMdnsBothServicesV2FirstResponse: multicastDns.ResponsePacket = {
-  ...mockMdnsBothServicesResponse,
-  answers: [...mockMdnsV2Response.answers, ...mockMdnsV1AnswersOfV2Device],
+/** A packet in which the P1 Meter announces only `_hwenergy._tcp` (API v1). */
+export const mockMdnsV1OnlyResponse: multicastDns.ResponsePacket = {
+  ...mockMdnsV2Response,
+  answers: mockMdnsV1AnswersOfV2Device,
 };

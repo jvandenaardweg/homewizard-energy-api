@@ -1,10 +1,10 @@
-import { mockBasicInformationResponse } from '@/mocks/data/basic';
+import { mockBasicInformationResponse } from '@/mocks/v1/data/basic';
 
-import { apiMocks, mockApiUrl } from '@/mocks/api';
-import { mockWaterMeterDataResponse } from '@/mocks/data/data';
+import { apiMocks, mockApiUrl } from '@/mocks/v1/api';
+import { mockWaterMeterDataResponse } from '@/mocks/v1/data/data';
 import { WaterMeterApi } from '@/v1/water-meter-api';
-import { mockSystemResponse } from '@/mocks/data/system';
-import { mockIdentifyResponse } from '@/mocks/data/identify';
+import { mockSystemResponse } from '@/mocks/v1/data/system';
+import { mockIdentifyResponse } from '@/mocks/v1/data/identify';
 
 let waterMeterApi: WaterMeterApi;
 

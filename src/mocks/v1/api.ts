@@ -1,5 +1,5 @@
-import { MockAgent } from 'undici';
-import { SupportedDevices } from '../v1/types';
+import { SupportedDevices } from '@/v1/types';
+import { mockApiAgent } from '../agent';
 
 export const mockHostname = 'localhost';
 export const mockApiUrl = `http://${mockHostname}`;
@@ -8,14 +8,6 @@ export const mockFirmwareVersion = '4.08';
 export const mockProductType: SupportedDevices = 'HWE-SKT';
 export const mockProductName = 'Energy Socket';
 export const mockApiVersion = 'v1';
-
-export const mockApiAgent = new MockAgent({
-  bodyTimeout: 10,
-  keepAliveTimeout: 10,
-  keepAliveMaxTimeout: 10,
-});
-
-mockApiAgent.disableNetConnect();
 
 export const mockApiPool = mockApiAgent.get(mockApiUrl);
 

@@ -1,12 +1,12 @@
-import { mockBasicInformationResponse } from '@/mocks/data/basic';
-import { mockStateResponse } from '@/mocks/data/state';
-import { mockIdentifyResponse } from '@/mocks/data/identify';
-import { apiMocks, HTML_HEADERS, mockApiUrl } from '@/mocks/api';
+import { mockBasicInformationResponse } from '@/mocks/v1/data/basic';
+import { mockStateResponse } from '@/mocks/v1/data/state';
+import { mockIdentifyResponse } from '@/mocks/v1/data/identify';
+import { apiMocks, HTML_HEADERS, mockApiUrl } from '@/mocks/v1/api';
 import { HomeWizardEnergyApiResponseError } from '@/v1/base-api';
-import { mockEnergySocket21DataResponse, mockEnergySocketDataResponse } from '@/mocks/data/data';
-import { mockSystemResponse } from '@/mocks/data/system';
+import { mockEnergySocket21DataResponse, mockEnergySocketDataResponse } from '@/mocks/v1/data/data';
+import { mockSystemResponse } from '@/mocks/v1/data/system';
 import { EnergySocketApi } from '@/v1/energy-socket-api';
-import { mockErrorMethodNotAllowed, mockErrorSwitchLockEnabled } from '@/mocks/errors';
+import { mockErrorMethodNotAllowed, mockErrorSwitchLockEnabled } from '@/mocks/v1/errors';
 
 let energySocketApi: EnergySocketApi;
 

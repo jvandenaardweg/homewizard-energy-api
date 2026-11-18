@@ -1,10 +1,10 @@
-import { mockBasicInformationResponse } from '@/mocks/data/basic';
+import { mockBasicInformationResponse } from '@/mocks/v1/data/basic';
 
-import { apiMocks, mockApiUrl } from '@/mocks/api';
-import { mockKwhMeter3PhaseResponse } from '@/mocks/data/data';
+import { apiMocks, mockApiUrl } from '@/mocks/v1/api';
+import { mockKwhMeter3PhaseResponse } from '@/mocks/v1/data/data';
 import { KwhMeter3PhaseApi } from '@/v1/kwh-meter-3-phase-api';
-import { mockSystemResponse } from '../mocks/data/system';
-import { mockIdentifyResponse } from '@/mocks/data/identify';
+import { mockSystemResponse } from '@/mocks/v1/data/system';
+import { mockIdentifyResponse } from '@/mocks/v1/data/identify';
 
 let kwhMeter3PhaseApi: KwhMeter3PhaseApi;
 
