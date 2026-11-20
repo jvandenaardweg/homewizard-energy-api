@@ -36,7 +36,7 @@ It needs Node 22.19 or higher (version 1.x supports Node 14.18), and works with 
 
 ## Quick start
 
-Pair once, and press the button on the device within 2 minutes. On the kWh meters, hold it for 1 to 3 seconds.
+Before your app can read a device, you pair it. The button press proves you have the device in your hands, so nobody else on the network can get a token. Press it within 2 minutes of calling `pair()`; on the kWh meters, hold it for 1 to 3 seconds.
 
 ```typescript
 import { pair } from 'homewizard-energy-api';
@@ -283,6 +283,8 @@ const credentials = await pair('192.168.1.35', 'my-app', {
 - When the button isn't pressed in time, or the pairing is aborted, `pair()` throws a `HomeWizardError` with kind `pairing` and a `reason` of `'timeout'` or `'aborted'`.
 
 ### Storing the credentials
+
+You pair a device once, by pressing its button, and `pair()` gives you everything you need from then on. Store the credentials it returns, so your app can connect again after a restart without anyone walking to the device.
 
 | Value        | Store it? | Why                                                                                                                                 |
 | ------------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------- |
