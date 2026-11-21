@@ -48,30 +48,50 @@ const credentials = await pair('192.168.1.35', 'my-app');
 
 **2. Press the button on the device.** `pair()` waits up to 2 minutes for the press. On the kWh meters, hold the button for 1 to 3 seconds.
 
-**3. Store the credentials.** `pair()` returns everything your app needs to connect from then on:
+**3. Store the credentials per device.** `pair()` returns everything your app needs to connect from then on. Save them under a name for the device, such as `p1`, because the credentials don't say which class to create for it:
+
+```typescript
+import { writeFile } from 'node:fs/promises';
+
+await writeFile('devices.json', JSON.stringify({ p1: credentials }, null, 2));
+```
+
+Pair your other devices the same way, and add each one under its own name:
 
 ```json
 {
-  "host": "192.168.1.35",
-  "token": "0123456789ABCDEF0123456789ABCDEF",
-  "identifier": "appliance/p1dongle/5c2fafaabbcc"
+  "p1": {
+    "host": "192.168.1.35",
+    "token": "0123456789ABCDEF0123456789ABCDEF",
+    "identifier": "appliance/p1dongle/5c2fafaabbcc"
+  },
+  "heatPump": {
+    "host": "192.168.1.36",
+    "token": "FEDCBA9876543210FEDCBA9876543210",
+    "identifier": "appliance/energymeter/5c2fafddeeff"
+  }
 }
 ```
 
-The token gives full access to the device, so keep it secret, and the device can't give it to you again. See [Storing the credentials](#storing-the-credentials).
+A token gives full access to its device, so keep the file secret and out of version control, and the device can't give a token to you again. See [Storing the credentials](#storing-the-credentials).
 
-**4. Read the device.** Each time your app starts, create the device with the stored credentials. You don't pair again:
+**4. Read the devices.** Each time your app starts, create each device with its stored credentials. You don't pair again:
 
 ```typescript
-import { P1Meter } from 'homewizard-energy-api';
+import { readFile } from 'node:fs/promises';
+import { KwhMeter3Phase, P1Meter } from 'homewizard-energy-api';
 
-const p1 = new P1Meter(credentials);
+const devices = JSON.parse(await readFile('devices.json', 'utf8'));
 
-const measurement = await p1.getMeasurement();
-console.log(`${measurement.power_w} W`); // -543 W
+const p1 = new P1Meter(devices.p1);
+const heatPump = new KwhMeter3Phase(devices.heatPump);
+
+const grid = await p1.getMeasurement();
+const heating = await heatPump.getMeasurement();
+console.log(`Grid ${grid.power_w} W, heat pump ${heating.power_w} W`); // Grid -543 W, heat pump 1250 W
 ```
 
-A negative `power_w` means the home delivers more power to the grid than it uses, for example from solar panels.
+A negative `power_w` on the P1 meter means the home delivers more power to the grid than it uses, for example from solar panels.
 
 ## Supported devices
 
