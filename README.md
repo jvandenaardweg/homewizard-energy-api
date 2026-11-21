@@ -38,60 +38,38 @@ It needs Node 22.19 or higher (version 1.x supports Node 14.18), and works with 
 
 Every request to the device needs a token. The device only creates one after someone presses its button, so only a person with the device in their hands can give an app access, and nobody else on your network can read or control it. That step is called pairing. You pair once, store what you get back, and use it from then on.
 
-**1. Pair with the device.** Call `pair()` with the device's IP address and a name for your app:
-
 ```typescript
-import { pair } from 'homewizard-energy-api';
+import { createFileStore, pair, P1Meter } from 'homewizard-energy-api';
 
-const credentials = await pair('192.168.1.35', 'my-app');
+const store = createFileStore('devices.json');
+
+// The first run pairs: press the button on the device within 2 minutes
+const credentials = (await store.get('p1')) ?? (await pair('192.168.1.35', 'my-app'));
+await store.set('p1', credentials);
+
+const p1 = new P1Meter(credentials);
+const measurement = await p1.getMeasurement();
+console.log(`${measurement.power_w} W`); // -543 W
 ```
 
-**2. Press the button on the device.** `pair()` waits up to 2 minutes for the press. On the kWh meters, hold the button for 1 to 3 seconds.
+1. **Pair.** On the first run nothing is stored under `p1` yet, so `pair()` waits for you to press the button on the device. On the kWh meters, hold it for 1 to 3 seconds.
+2. **Store.** `store.set()` saves what `pair()` returns in `devices.json`, under the key `p1`:
 
-**3. Store the credentials per device.** `pair()` returns everything your app needs to connect from then on. Save them under a name for the device, such as `p1`, because the credentials don't say which class to create for it:
+   ```json
+   {
+     "p1": {
+       "host": "192.168.1.35",
+       "token": "0123456789ABCDEF0123456789ABCDEF",
+       "identifier": "appliance/p1dongle/5c2fafaabbcc"
+     }
+   }
+   ```
 
-```typescript
-import { writeFile } from 'node:fs/promises';
+3. **Read.** Every run after that, `store.get()` returns the stored credentials, so your app connects without pairing again.
 
-await writeFile('devices.json', JSON.stringify({ p1: credentials }, null, 2));
-```
+With more devices, give each one its own key, such as `heatPump`. The tokens give full access to the devices, so keep the file secret and out of version control. See [Storing the credentials](#storing-the-credentials).
 
-Pair your other devices the same way, and add each one under its own name:
-
-```json
-{
-  "p1": {
-    "host": "192.168.1.35",
-    "token": "0123456789ABCDEF0123456789ABCDEF",
-    "identifier": "appliance/p1dongle/5c2fafaabbcc"
-  },
-  "heatPump": {
-    "host": "192.168.1.36",
-    "token": "FEDCBA9876543210FEDCBA9876543210",
-    "identifier": "appliance/energymeter/5c2fafddeeff"
-  }
-}
-```
-
-A token gives full access to its device, so keep the file secret and out of version control, and the device can't give a token to you again. See [Storing the credentials](#storing-the-credentials).
-
-**4. Read the devices.** Each time your app starts, create each device with its stored credentials. You don't pair again:
-
-```typescript
-import { readFile } from 'node:fs/promises';
-import { KwhMeter3Phase, P1Meter } from 'homewizard-energy-api';
-
-const devices = JSON.parse(await readFile('devices.json', 'utf8'));
-
-const p1 = new P1Meter(devices.p1);
-const heatPump = new KwhMeter3Phase(devices.heatPump);
-
-const grid = await p1.getMeasurement();
-const heating = await heatPump.getMeasurement();
-console.log(`Grid ${grid.power_w} W, heat pump ${heating.power_w} W`); // Grid -543 W, heat pump 1250 W
-```
-
-A negative `power_w` on the P1 meter means the home delivers more power to the grid than it uses, for example from solar panels.
+A negative `power_w` means the home delivers more power to the grid than it uses, for example from solar panels.
 
 ## Supported devices
 
@@ -319,7 +297,21 @@ You pair a device once, by pressing its button, and `pair()` gives you everythin
 | `identifier` | Yes       | The token is only sent to a device whose certificate is issued to it. It can't be learned safely later.                             |
 | `host`       | Optional  | The IP address can change. Without it, [`discover()` and `connect()`](#find-a-device-after-its-ip-address-changed) find the device. |
 
-Use your platform's secret store: environment variables or a `.env` file for scripts, the config store of Homebridge or Node-RED, or a secret manager on servers. The library never logs the token. To revoke a token, delete its user with `users.delete('local/my-app')`.
+`createFileStore(path)` keeps them in a JSON file that only its owner can read, with an object per key, and `createMemoryStore()` keeps them in memory for tests. Both have `get(key)`, `set(key, credentials)` and `delete(key)`. On a platform with its own storage, such as the config store of Homebridge or Node-RED, a keychain or a secret manager on a server, implement the `CredentialsStore` interface with those three methods:
+
+```typescript
+const store: CredentialsStore = {
+  get: async key => config.devices[key],
+  set: async (key, credentials) => {
+    config.devices[key] = credentials;
+  },
+  delete: async key => {
+    delete config.devices[key];
+  },
+};
+```
+
+The library never logs the token. To revoke a token, delete its user with `users.delete('local/my-app')`.
 
 ### Methods per device
 
@@ -388,6 +380,7 @@ Commands sent before the connection is authorized wait until it is. A rejected t
 | `certificate` | The certificate isn't from HomeWizard, or is issued to another identifier, so the token wasn't sent. `connect()` throws it for a device announced with another identifier | `url`, `cause`                          |
 | `pairing`     | The button wasn't pressed in time, or the pairing was aborted                                                                                                             | `reason`                                |
 | `socket`      | The WebSocket failed, or the device sent an error over it                                                                                                                 | `code`, `cause`                         |
+| `storage`     | A credentials store couldn't read or write its file, or the file isn't one it wrote                                                                                       | `path`, `cause`                         |
 | `invalid`     | The arguments or options can't work, for example a missing host or identifier, or an `http://` host                                                                       |                                         |
 
 In TypeScript, checking `kind` narrows the fields: after `error.kind === 'response'`, `error.statusCode` is a number. See the [HomeWizard docs](https://api-documentation.homewizard.com/docs/v2/error-handling) for the error codes.
