@@ -71,7 +71,7 @@ console.log(`${measurement.power_w} W`); // -543 W
 
 3. **Read.** Every run after that, `credentialsStore.get()` returns the stored credentials, so your app connects without pairing again.
 
-With more devices, give each one its own key, such as `heatPump`. The tokens give full access to the devices, so keep the file secret and out of version control. See [Storing the credentials](#storing-the-credentials).
+With more devices, give each one its own key, such as `battery`. The tokens give full access to the devices, so keep the file secret and out of version control. See [Storing the credentials](#storing-the-credentials).
 
 A negative `power_w` means the home delivers more power to the grid than it uses, for example from solar panels.
 
@@ -311,7 +311,7 @@ A credentials store keeps them per device, under a key you choose, such as `p1`.
 const credentialsStore = createFileStore('devices.json');
 
 await credentialsStore.set('p1', await pair('192.168.1.35', 'my-app'));
-await credentialsStore.set('heatPump', await pair('192.168.1.36', 'my-app'));
+await credentialsStore.set('battery', await pair('192.168.1.36', 'my-app'));
 ```
 
 On every start after that, get each device by its key. `get()` returns `undefined` for a key that isn't stored:
@@ -319,10 +319,10 @@ On every start after that, get each device by its key. `get()` returns `undefine
 ```typescript
 const credentialsStore = createFileStore('devices.json');
 
-const credentials = await credentialsStore.get('heatPump');
-if (!credentials) throw new Error('Pair the heat pump first');
+const credentials = await credentialsStore.get('battery');
+if (!credentials) throw new Error('Pair the battery first');
 
-const heatPump = new KwhMeter3Phase(credentials);
+const battery = new PlugInBattery(credentials);
 ```
 
 The file store replaces the file in one step, so a crash or a power loss never leaves half a file, and the calls on one file take turns within a process. Keep the file out of version control.
