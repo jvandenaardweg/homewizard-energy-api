@@ -240,6 +240,8 @@ The measurement already has the parsed values; the telegram is the raw data from
 
 These devices only have the API v1 for now. It uses plain HTTP without a token: turn on the `Local API` setting for the device in the HomeWizard app.
 
+### Switch an Energy Socket
+
 ```typescript
 import { EnergySocketApi } from 'homewizard-energy-api/v1';
 
@@ -248,7 +250,27 @@ const socket = new EnergySocketApi('http://192.168.1.10');
 await socket.updateState({ power_on: false });
 ```
 
-[docs/v1.md](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/docs/v1.md) has the recipes, with a full script each: switching an Energy Socket, reading and following its usage, the Watermeter, and finding the API v1 devices on your network.
+[Full script](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/v1/switch-energy-socket.ts)
+
+### Get live updates from an Energy Socket
+
+The API v1 has no WebSocket, so poll the socket instead. `poll()` works with any method, and here asks for the usage and the switch together:
+
+```typescript
+import { poll } from 'homewizard-energy-api';
+
+const updates = poll(() => Promise.all([socket.getData(), socket.getState()]), { interval: 1000 });
+
+for await (const [data, state] of updates.stream()) {
+  console.log(state.power_on, data.active_power_w); // true 543.312, each second
+}
+```
+
+The loop stops polling at `break`. [Full script](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/v1/energy-socket-live-updates.ts)
+
+### More for the API v1
+
+[docs/v1.md](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/docs/v1.md) has the other recipes, with a full script each: reading what an Energy Socket uses, the Watermeter, and finding the API v1 devices on your network.
 
 ## Reference
 
