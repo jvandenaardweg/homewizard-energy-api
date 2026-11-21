@@ -14,12 +14,23 @@ try {
     `${batteries.battery_count} batteries in mode ${batteries.mode}, at ${batteries.power_w} W`,
   );
 
-  // Charge, but don't discharge
-  const updated = await p1.updateBatteries({ permissions: ['charge_allowed'] });
-  console.log(`Permissions: ${updated.permissions?.join(', ')}`);
+  const { mode, permissions } = batteries;
 
-  // Back to what the batteries were allowed before
-  await p1.updateBatteries({ permissions: batteries.permissions });
+  // Changing the permissions in another mode, such as predictive, would switch the batteries to mode zero
+  if (mode !== 'zero' || !permissions) {
+    console.log(
+      'Leaves the permissions alone: this example only changes them in mode zero, from API 2.2.0',
+    );
+  } else {
+    try {
+      // Charge, but don't discharge
+      const updated = await p1.updateBatteries({ permissions: ['charge_allowed'] });
+      console.log(`Permissions: ${updated.permissions?.join(', ')}`);
+    } finally {
+      // Back to what the batteries were allowed before, also when the change failed
+      await p1.updateBatteries({ permissions });
+    }
+  }
 } finally {
   await p1.close();
 }

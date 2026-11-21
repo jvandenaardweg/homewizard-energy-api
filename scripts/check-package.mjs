@@ -125,7 +125,8 @@ void [parseTelegram, ErrorCodes, HomeWizardEnergyApiResponseError, HomeWizardEne
     for (const line of example.split('\n')) {
       if (line.startsWith('import ')) inImport = true;
       (inImport ? imports : body).push(inImport ? line : `  ${line}`);
-      if (inImport && /['"];?$/.test(line)) inImport = false;
+      // The line with the module ends the import, also with a comment after it
+      if (inImport && /(\bfrom\s+|^import\s+)['"][^'"]+['"]/.test(line)) inImport = false;
     }
 
     if (imports.length) {

@@ -251,12 +251,14 @@ describe('examples of the API v1', () => {
   });
 
   it('polling-p1-meter-telegram.ts prints the first line of the telegram each second, for 10 seconds', async () => {
-    const raw = mockTelegramResponse['v50l3_2'];
+    // A real meter ends its lines with CRLF
+    const raw = mockTelegramResponse['v50l3_2'].replace(/\r?\n/g, '\r\n');
     mockDevice('192.168.1.35', '/api/v1/telegram', 'GET', raw, { times: 10 });
 
     await untilTimersStop(import('./polling-p1-meter-telegram'));
 
-    expect(printed()).toStrictEqual(Array(10).fill(raw.split('\n')[0]));
+    expect(printed()).toStrictEqual(Array(10).fill(raw.split('\r\n')[0]));
+    expect(printed()[0]).not.toContain('\r');
   });
 
   it('kwh-meter-1-phase.ts prints what the kWh meter measures', async () => {

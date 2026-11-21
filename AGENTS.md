@@ -43,7 +43,7 @@ The change is done when every applicable item is covered:
 
 - `vitest.setup.ts` installs the global undici `MockAgent` from `src/mocks/agent.ts`, with real network disabled, and it turns on fake timers before every test.
 - Each request needs its own interceptor (`mockV2()` from `src/mocks/api-v2.ts`, or `apiMocks.<name>()` from `src/mocks/v1/api.ts` in v1), because an interceptor is used up after one reply.
-- The API v1 mocks and fixtures live in `src/mocks/v1/`, and go with `src/v1/`. Tests outside `src/v1/` import from neither and use a v2 or neutral fixture, so they keep passing once both are deleted.
+- The API v1 mocks and fixtures live in `src/mocks/v1/`, and go with `src/v1/` and `src/examples/v1/`, which are deleted together. Tests outside those folders import from neither and use a v2 or neutral fixture, so they keep passing once all three are deleted.
 - Discovery tests replace `multicast-dns` with `vi.mock`, using helpers from `src/mocks/mdns-v2.ts`, and from `src/mocks/v1/mdns.ts` in v1.
 - The device classes create their own TLS agent, which bypasses the global `MockAgent`, so tests pass it as `dispatcher`: `new P1Meter(mockV2Credentials, { dispatcher: mockApiAgent })`. The internal `Client` takes `mockV2DeviceOptions`.
 - The WebSocket logic is tested on fakes with fake timers: `DeviceSocket` on `FakeConnection` (`src/mocks/websocket-connection.ts`, set as `connectionClass` in a subclass), and `Connection` on a fake undici `WebSocket` in `connection.test.ts`.
