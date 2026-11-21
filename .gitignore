@@ -123,3 +123,6 @@ dist
 # Local research output
 reports/
 research_notes/
+
+# Credentials the examples store (tokens give full access to the devices)
+devices.json

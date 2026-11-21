@@ -1,14 +1,9 @@
-import { KwhMeter1PhaseApi } from '../../v1';
+import { KwhMeter1PhaseApi } from 'homewizard-energy-api/v1';
 
-const kwhMeter1Phase = new KwhMeter1PhaseApi('http://192.168.1.45');
+// Turn on the Local API setting for the kWh meter in the HomeWizard app first. The kWh meters also have the API
+// v2: see src/examples/kwh-meter.ts
+const kwhMeter = new KwhMeter1PhaseApi('http://192.168.1.45');
 
-(async () => {
-  try {
-    // Get the power usage
-    const data = await kwhMeter1Phase.getData();
+const data = await kwhMeter.getData();
 
-    console.log(data);
-  } catch (err) {
-    console.error(err);
-  }
-})();
+console.log(`Using ${data.active_power_w} W, ${data.total_power_import_t1_kwh} kWh in total`);

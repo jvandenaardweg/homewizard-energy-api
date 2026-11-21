@@ -32,7 +32,7 @@ A typed Node client for the HomeWizard Energy local API. It handles the parts of
 npm install homewizard-energy-api
 ```
 
-It needs Node 22.19 or higher (version 1.x supports Node 14.18), and works with or without TypeScript. The package is ESM; CommonJS code can `require()` it on Node 22.12 and later.
+It needs Node 22.19 or higher (version 1.x supports Node 14.18), and works with or without TypeScript. The package is ESM; CommonJS code can `require()` it on Node 22.12 and later. The examples use top-level `await`, which needs an ES module: a `.mjs` or `.mts` file, or `"type": "module"` in your `package.json`.
 
 ## Quick start
 
@@ -73,6 +73,8 @@ console.log(`${measurement.power_w} W`); // -543 W
 
 With more devices, give each one its own key, such as `battery`. The tokens give full access to the devices, so keep the file secret and out of version control. See [Storing the credentials](#storing-the-credentials).
 
+Full script: [`src/examples/pair.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/pair.ts) pairs a device and stores it, for the other examples.
+
 A negative `power_w` means the home delivers more power to the grid than it uses, for example from solar panels.
 
 ## Supported devices
@@ -90,6 +92,24 @@ Use the API v2 where the device has it. HomeWizard [no longer develops the API v
 
 ## Recipes
 
+Every recipe starts from the device you paired in the [quick start](#quick-start), and closes it at the end:
+
+```typescript
+import { createFileStore, P1Meter } from 'homewizard-energy-api';
+
+const credentialsStore = createFileStore('devices.json');
+const credentials = await credentialsStore.get('p1');
+if (!credentials) throw new Error('Pair the P1 meter first: see the quick start');
+
+const p1 = new P1Meter(credentials);
+
+// … the recipe goes here …
+
+await p1.close(); // Closes the connections, so your script can exit
+```
+
+Each recipe links to its full script in [`src/examples/`](https://github.com/jvandenaardweg/homewizard-energy-api/tree/main/src/examples). To run one from a clone of this repository, pair first with `npx tsx src/examples/pair.ts`, then run the script the same way.
+
 ### Read your energy usage
 
 ```typescript
@@ -106,18 +126,23 @@ const measurement = await p1.getMeasurement();
 
 The fields depend on the device and the smart meter: see the [full P1 meter example](https://api-documentation.homewizard.com/docs/v2/measurement#hwe-p1-full) in the HomeWizard docs, and `P1MeterMeasurement` in your editor.
 
+Full script: [`src/examples/read-energy-usage.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/read-energy-usage.ts)
+
 ### Get live updates
 
 ```typescript
-for await (const measurement of p1.openWebSocket().stream('measurement')) {
-  console.log(measurement.power_w);
+const socket = p1.openWebSocket();
+
+for await (const measurement of socket.stream('measurement')) {
+  console.log(measurement.power_w); // -543, each time the device pushes a measurement
 }
-// Prints a line each time the device pushes a measurement:
-//   -543
-//   -678
+
+socket.close();
 ```
 
-The stream subscribes for you, keeps going while the socket reconnects, and stops at `break`. It throws a `HomeWizardError` when the token is missing or rejected. Prefer events? See [WebSocket](#websocket).
+The stream subscribes for you, keeps going while the socket reconnects, and stops at `break`. When the loop is slower than the device, it skips to the newest measurement. Close the socket before `p1.close()`, or the connection keeps your script running. It throws a `HomeWizardError` when the token is missing or rejected. Prefer events? See [WebSocket](#websocket).
+
+Full script: [`src/examples/live-updates.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/live-updates.ts)
 
 ### Poll over HTTP instead
 
@@ -131,6 +156,8 @@ for await (const measurement of poll(() => p1.getMeasurement(), { interval: 1000
 
 The loop stops polling at `break`, and a failed call throws from it. With events instead, `poller.on('response', …)`, `poller.on('error', …)` and `poller.start()` keep polling through errors. HomeWizard advises not to request data more often than every 500ms.
 
+Full script: [`src/examples/poll.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/poll.ts)
+
 ### Find a device after its IP address changed
 
 ```typescript
@@ -139,12 +166,15 @@ import { connect, discover, isSameIdentifier } from 'homewizard-energy-api';
 for await (const found of discover({ timeout: 10000 })) {
   if (!isSameIdentifier(found.txt.id, credentials.identifier)) continue;
 
-  const device = connect(found, credentials); // device.host is the new address: store it for next time
+  const device = connect(found, credentials);
+  await credentialsStore.set('p1', { ...credentials, host: device.host }); // The next start connects straight away
   break;
 }
 ```
 
 Anyone on the network can announce a device, so `connect()` only accepts the device you paired with: your token is never sent anywhere else.
+
+Full script: [`src/examples/find-device.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/find-device.ts)
 
 ### Handle an expired token
 
@@ -155,12 +185,14 @@ try {
   await p1.getMeasurement();
 } catch (error) {
   if (error instanceof HomeWizardError && error.code === 'user:unauthorized') {
-    // The token was deleted on the device: pair again
+    await credentialsStore.delete('p1'); // The next start pairs again, as in the quick start
   }
 }
 ```
 
 Every error is a `HomeWizardError`, with a `kind` and the device's error `code`. See [Errors](#errors) for the kinds.
+
+Full script: [`src/examples/expired-token.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/expired-token.ts)
 
 ### Control your Plug-In Batteries
 
@@ -179,6 +211,8 @@ await p1.updateBatteries({ charge_to_full: true }); // charge to 100%, then go b
 
 `permissions` and `battery_count` need API 2.2.0, and `predictive` and `charge_to_full` need 2.3.0: check with `isApiVersionAtLeast((await p1.getDevice()).api_version, '2.3.0')`. A battery's own charge is in its measurement: `(await battery.getMeasurement()).state_of_charge_pct`.
 
+Full script: [`src/examples/batteries.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/batteries.ts)
+
 ### Change device settings
 
 ```typescript
@@ -190,6 +224,8 @@ await p1.identify(); // blinks the status LED
 - **`api_v1_enabled: false`** turns off the API v1 on the P1 meter and kWh meters, so only paired apps can reach the device.
 - **`status_led_brightness_pct`** isn't available on the kWh meters.
 
+Full script: [`src/examples/settings.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/settings.ts)
+
 ### Read the P1 telegram
 
 ```typescript
@@ -200,6 +236,8 @@ console.log(telegram.power.import.t1); // { value: 10830.511, unit: 'kWh' }
 ```
 
 The measurement already has the parsed values; the telegram is the raw data from the smart meter.
+
+Full script: [`src/examples/telegram.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/telegram.ts)
 
 ## Recipes for the API v1
 
@@ -220,6 +258,8 @@ await socket.updateState({ brightness: 128 }); // the LED ring at 50%
 
 With `switch_lock: true` the socket stays on, and can't be turned off until you set it back to `false`.
 
+Full script: [`src/examples/v1/switch-energy-socket.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/v1/switch-energy-socket.ts)
+
 ### Read what an Energy Socket uses
 
 ```typescript
@@ -234,6 +274,8 @@ const data = await socket.getData();
 // }
 ```
 
+Full script: [`src/examples/v1/energy-socket.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/v1/energy-socket.ts)
+
 ### Follow an Energy Socket's usage
 
 ```typescript
@@ -246,6 +288,8 @@ socket.polling.getData.start();
 
 `socket.polling.getState` follows the switch the same way.
 
+Full script: [`src/examples/v1/polling-energy-socket-data.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/v1/polling-energy-socket-data.ts), and [`polling-energy-socket-state.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/v1/polling-energy-socket-state.ts) for the switch
+
 ### Read the Watermeter
 
 ```typescript
@@ -257,6 +301,8 @@ const { total_liter_m3, active_liter_lpm } = await water.getData(); // 123.456, 
 ```
 
 The Watermeter only has a local API when it's powered over USB.
+
+Full script: [`src/examples/v1/water-meter.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/v1/water-meter.ts)
 
 ### Find the API v1 devices on your network
 
@@ -272,6 +318,8 @@ discovery.on('response', found => {
 ```
 
 It finds every device with the API v1 turned on, including the P1 and kWh meters. Call `discovery.stop()` when you're done.
+
+Full script: [`src/examples/v1/discovery.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/v1/discovery.ts)
 
 ## Reference
 
@@ -427,6 +475,22 @@ const p1 = new P1Meter(credentials, { timeout: 3000, logger: { method: console.l
 
 With a `logger`, a device logs once when it answers with a newer API version than the 2.3.0 these types follow. It keeps working, but the fields added since aren't typed yet.
 
+### Closing a device
+
+A device keeps its HTTPS connections open for the next request. Close what you opened when you're done, so a script can exit:
+
+```typescript
+const socket = p1.openWebSocket();
+const poller = poll(() => p1.getMeasurement());
+poller.start();
+
+// …
+
+socket.close(); // Each WebSocket you opened
+poller.stop(); // Each poller you started
+await p1.close();
+```
+
 ### WebSocket
 
 The topics are `measurement`, `system`, `device`, `user`, and on the P1 meter and kWh meters `batteries`. `system` only pushes `cloud_enabled` and `status_led_brightness_pct`, and `batteries` only `mode`, `permissions` and `target_power_w`.
@@ -450,6 +514,8 @@ socket.close();
 ```
 
 Commands sent before the connection is authorized wait until it is. A rejected token is reported as an `error` with code `user:unauthorized`, and then the socket stops reconnecting.
+
+Full script with events: [`src/examples/websocket.ts`](https://github.com/jvandenaardweg/homewizard-energy-api/blob/main/src/examples/websocket.ts)
 
 ### Errors
 

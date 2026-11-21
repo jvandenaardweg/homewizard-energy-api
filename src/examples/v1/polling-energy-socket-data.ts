@@ -1,33 +1,11 @@
-import { EnergySocketApi } from '../../v1';
+import { EnergySocketApi } from 'homewizard-energy-api/v1';
 
-const energySocket = new EnergySocketApi('http://192.168.1.32', {
-  polling: {
-    interval: 1000,
-  },
-});
+// Turn on the Local API setting for the Energy Socket in the HomeWizard app first
+const socket = new EnergySocketApi('http://192.168.1.10', { polling: { interval: 1000 } });
 
-(() => {
-  energySocket.polling.getData.start();
+// Prints what the socket uses each second, for 10 seconds
+socket.polling.getData.on('response', data => console.log(`${data.active_power_w} W`));
+socket.polling.getData.on('error', error => console.error(error));
+socket.polling.getData.start();
 
-  energySocket.polling.getData.on('response', response => {
-    // Receive the latest data of this Energy Socket from the /api/v1/data endpoint each second:
-    // {
-    //   wifi_ssid: 'SOME_WIFI_SSID',
-    //   wifi_strength: 52,
-    //   total_power_import_t1_kwh: 395.612,
-    //   total_power_export_t1_kwh: 0,
-    //   active_power_w: 0,
-    //   active_power_l1_w: 0
-    // }
-
-    console.log('response', response);
-  });
-
-  energySocket.polling.getData.on('error', error => {
-    console.log('error', error);
-  });
-
-  setTimeout(() => {
-    energySocket.polling.getData.stop();
-  }, 10000); // stop after 10 seconds for the purpose of this example
-})();
+setTimeout(() => socket.polling.getData.stop(), 10000);

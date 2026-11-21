@@ -1,19 +1,18 @@
-import { P1Meter } from '..';
-import { credentialsFromEnv } from './credentials';
+import { createFileStore, P1Meter } from 'homewizard-energy-api';
 
-// Run src/examples/pair.ts first for the credentials
-const p1 = new P1Meter(credentialsFromEnv('192.168.1.35'));
+// Run src/examples/pair.ts first, to pair the P1 meter and store its credentials
+const credentialsStore = createFileStore('devices.json');
+const credentials = await credentialsStore.get('p1');
+if (!credentials) throw new Error('Pair the P1 meter first: npx tsx src/examples/pair.ts');
 
-(async () => {
-  try {
-    console.log(await p1.getDevice());
-    console.log(await p1.getMeasurement());
-    console.log(await p1.getSystem());
-    console.log(await p1.getTelegram());
-    console.log(await p1.users.list());
-  } catch (err) {
-    console.error(err);
-  } finally {
-    await p1.close();
-  }
-})();
+const p1 = new P1Meter(credentials);
+
+try {
+  console.log(await p1.getDevice());
+  console.log(await p1.getMeasurement());
+  console.log(await p1.getSystem());
+  console.log(await p1.getTelegram());
+  console.log(await p1.users.list());
+} finally {
+  await p1.close();
+}

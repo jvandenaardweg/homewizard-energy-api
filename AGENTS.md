@@ -7,7 +7,7 @@ This is a typed Node client for the HomeWizard Energy local API: API v2 over HTT
 - `npm test` is the full gate: lint (including Prettier formatting), type-check, then vitest with coverage. Aim for 100% coverage, so new code comes with tests for each branch. It's a target, and the config doesn't enforce a threshold. The husky pre-commit hook runs lint-staged to format staged files, then `npm test`, whose `prettier --check .` also reads unstaged files, so format those first or the commit fails.
 - To run a single test file: `TZ=Europe/Amsterdam npx vitest run src/telegram/telegram.test.ts`. Always set `TZ=Europe/Amsterdam`, because telegram timestamps are formatted in local time and the expected test values are hard-coded to Amsterdam offsets.
 - `npm run test:package` checks what `npm test` can't, because the tests run from `src`: it builds and packs the package, installs the tarball into an empty project, loads each entry point with `import` and `require()`, type-checks them with `nodenext` and `bundler` resolution, and type-checks the TypeScript examples in `README.md` (`scripts/check-package.mjs`). Run it after changing `package.json` exports, the build, an export or a README example. CI runs it.
-- Scripts in `src/examples/` call hard-coded LAN IPs and need a real device, so tests are the way to verify behaviour.
+- The scripts in `src/examples/` are the full versions of the README recipes, and each recipe ends with a link to its script. They import the package by its name, as users do (the `paths` in `tsconfig.json` for tsc and tsx, and the aliases in `vitest.config.mts`), read the credentials from the `devices.json` that `src/examples/pair.ts` writes (git-ignored), and run with `npx tsx` against a real device. `src/examples/examples.test.ts` runs each one against the mocks, through a mock of the package that adds the mock dispatcher (or the test CA for the WebSocket) and a memory store, and checks that each recipe links a script that exists; `src/examples/v1/examples.test.ts` does the same for the API v1. A new recipe needs a script and a test there.
 
 ## Compatibility
 
@@ -37,7 +37,7 @@ The change is done when every applicable item is covered:
 2. Types go in `src/types.ts`, and a new WebSocket topic in `src/websocket/types.ts`.
 3. Fixtures go in `src/mocks/data/v2.ts`, mocked with `mockV2()` from `src/mocks/api-v2.ts`.
 4. Tests go in `src/endpoints.test.ts` and the table in `src/devices/devices.test.ts`, including the device's `missing` methods.
-5. For a new device, add an example to `src/examples/`, and its product type to `ProductTypeList` in `src/types.ts`, `CERTIFICATE_PRODUCT_TYPES` in `src/tls.ts` and `DEVICE_CLASSES` in `src/discovery.ts`, export it from `src/devices/index.ts`, and add it to the README's method table. When the device also has a v1 class, that class stays in `src/v1/` until upstream removes the API v1.
+5. For a new device, add an example to `src/examples/` with its test in `src/examples/examples.test.ts`, and its product type to `ProductTypeList` in `src/types.ts`, `CERTIFICATE_PRODUCT_TYPES` in `src/tls.ts` and `DEVICE_CLASSES` in `src/discovery.ts`, export it from `src/devices/index.ts`, and add it to the README's method table. When the device also has a v1 class, that class stays in `src/v1/` until upstream removes the API v1.
 
 ## Tests
 
