@@ -19,6 +19,19 @@ export default defineConfig({
   },
   resolve: {
     alias: [
+      // The examples import the package by its name, as users do
+      {
+        find: /^homewizard-energy-api$/,
+        replacement: fileURLToPath(new URL('./src/index.ts', import.meta.url)),
+      },
+      {
+        find: /^homewizard-energy-api\/v1$/,
+        replacement: fileURLToPath(new URL('./src/v1/index.ts', import.meta.url)),
+      },
+      {
+        find: /^homewizard-energy-api\/telegram$/,
+        replacement: fileURLToPath(new URL('./src/telegram/index.ts', import.meta.url)),
+      },
       {
         find: '@',
         replacement: fileURLToPath(new URL('./src', import.meta.url)),

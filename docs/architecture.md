@@ -37,7 +37,7 @@ src/
   telegram/         # the telegram parser
   v1/               # the API v1
   mocks/            # test fixtures, the mock agent, the mocked API and a local TLS and WebSocket server; v1/ holds the API v1 ones
-  examples/         # scripts to run against a real device
+  examples/         # the full script of each README recipe, run against a real device; examples.test.ts runs them on the mocks
 ```
 
 `src/shared` imports nothing from `src/v1` or the root, and the root imports nothing from `src/v1`. So `src/v1` can be deleted in one piece when HomeWizard removes the API v1. The tests hold to it too: the API v1 mocks and fixtures are in `src/mocks/v1`, which goes with it, and the other tests import from neither. The examples in `src/examples/v1` go with it too, since the type-check covers them.

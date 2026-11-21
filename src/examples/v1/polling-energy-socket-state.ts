@@ -1,30 +1,11 @@
-import { EnergySocketApi } from '../../v1';
+import { EnergySocketApi } from 'homewizard-energy-api/v1';
 
-const energySocket = new EnergySocketApi('http://192.168.1.32', {
-  polling: {
-    interval: 1000,
-  },
-});
+// Turn on the Local API setting for the Energy Socket in the HomeWizard app first
+const socket = new EnergySocketApi('http://192.168.1.10', { polling: { interval: 1000 } });
 
-(() => {
-  energySocket.polling.getState.start();
+// Prints whether the socket is on each second, for 10 seconds
+socket.polling.getState.on('response', state => console.log(state.power_on ? 'On' : 'Off'));
+socket.polling.getState.on('error', error => console.error(error));
+socket.polling.getState.start();
 
-  energySocket.polling.getState.on('response', response => {
-    // Receive the latest state of this Energy Socket from the /api/v1/state endpoint each second:
-    // {
-    //   power_on: false,
-    //   switch_lock: false,
-    //   brightness: 0
-    // }
-
-    console.log('response', response);
-  });
-
-  energySocket.polling.getState.on('error', error => {
-    console.log('error', error);
-  });
-
-  setTimeout(() => {
-    energySocket.polling.getState.stop();
-  }, 10000); // stop after 10 seconds for the purpose of this example
-})();
+setTimeout(() => socket.polling.getState.stop(), 10000);

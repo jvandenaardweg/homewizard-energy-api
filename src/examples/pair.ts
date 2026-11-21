@@ -1,26 +1,18 @@
-import { pair } from '..';
+import { createFileStore, pair } from 'homewizard-energy-api';
 
-// Pairs with a device and prints the credentials to store, for the other examples:
-// HOMEWIZARD_HOST=<host> HOMEWIZARD_TOKEN=<token> HOMEWIZARD_IDENTIFIER=<identifier> npx tsx src/examples/p1-meter.ts
-const host = process.env.HOMEWIZARD_HOST || '192.168.1.35';
+// Pairs with a device and stores its credentials in devices.json, where the other examples read them.
+// Set the host to your device's IP address. To pair another device, change the key too, such as to 'battery'.
+const host = '192.168.1.35';
+const key = 'p1';
 
-(async () => {
-  try {
-    const name = 'homewizard-energy-api-example';
-    const {
-      host: pairedHost,
-      token,
-      identifier,
-    } = await pair(host, name, {
-      onAttempt: remainingMs =>
-        console.log(`Press the button on the device (${Math.round(remainingMs / 1000)}s left)`),
-    });
+const credentialsStore = createFileStore('devices.json');
 
-    console.log(`Paired as local/${name}. Keep the token secret:`);
-    console.log(
-      `HOMEWIZARD_HOST=${pairedHost} HOMEWIZARD_TOKEN=${token} HOMEWIZARD_IDENTIFIER=${identifier}`,
-    );
-  } catch (err) {
-    console.error(err);
-  }
-})();
+const credentials = await pair(host, 'homewizard-energy-api-example', {
+  // On the kWh meters, hold the button for 1 to 3 seconds
+  onAttempt: remainingMs =>
+    console.log(`Press the button on the device (${Math.round(remainingMs / 1000)}s left)`),
+});
+
+await credentialsStore.set(key, credentials);
+
+console.log(`Paired with ${credentials.identifier}, stored as "${key}" in devices.json`);
