@@ -165,6 +165,23 @@ describe('examples of the API v1', () => {
     ]);
   });
 
+  it('energy-socket-live-updates.ts prints the switch and the usage each second, and stops after 10', async () => {
+    mockDevice('192.168.1.10', '/api/v1/data', 'GET', mockEnergySocketDataResponse, { times: 10 });
+    mockDevice(
+      '192.168.1.10',
+      '/api/v1/state',
+      'GET',
+      { ...mockStateResponse, power_on: true },
+      { times: 10 },
+    );
+
+    await runWithTimers(import('./energy-socket-live-updates'));
+
+    expect(printed()).toStrictEqual(
+      Array(10).fill(`On, using ${mockEnergySocketDataResponse.active_power_w} W`),
+    );
+  });
+
   it('polling-energy-socket-data.ts prints what the socket uses each second, for 10 seconds', async () => {
     mockDevice('192.168.1.10', '/api/v1/data', 'GET', mockEnergySocketDataResponse, { times: 10 });
 
