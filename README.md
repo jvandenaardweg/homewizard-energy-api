@@ -41,11 +41,11 @@ Every request to the device needs a token. The device only creates one after som
 ```typescript
 import { createFileStore, pair, P1Meter } from 'homewizard-energy-api';
 
-const store = createFileStore('devices.json');
+const credentialsStore = createFileStore('devices.json');
 
 // The first run pairs: press the button on the device within 2 minutes
-const credentials = (await store.get('p1')) ?? (await pair('192.168.1.35', 'my-app'));
-await store.set('p1', credentials);
+const credentials = (await credentialsStore.get('p1')) ?? (await pair('192.168.1.35', 'my-app'));
+await credentialsStore.set('p1', credentials);
 
 const p1 = new P1Meter(credentials);
 const measurement = await p1.getMeasurement();
@@ -53,7 +53,7 @@ console.log(`${measurement.power_w} W`); // -543 W
 ```
 
 1. **Pair.** On the first run nothing is stored under `p1` yet, so `pair()` waits for you to press the button on the device. On the kWh meters, hold it for 1 to 3 seconds.
-2. **Store.** `store.set()` saves what `pair()` returns in `devices.json`, under the key `p1`:
+2. **Store.** `credentialsStore.set()` saves what `pair()` returns in `devices.json`, under the key `p1`:
 
    ```json
    {
@@ -65,7 +65,7 @@ console.log(`${measurement.power_w} W`); // -543 W
    }
    ```
 
-3. **Read.** Every run after that, `store.get()` returns the stored credentials, so your app connects without pairing again.
+3. **Read.** Every run after that, `credentialsStore.get()` returns the stored credentials, so your app connects without pairing again.
 
 With more devices, give each one its own key, such as `heatPump`. The tokens give full access to the devices, so keep the file secret and out of version control. See [Storing the credentials](#storing-the-credentials).
 
@@ -300,7 +300,7 @@ You pair a device once, by pressing its button, and `pair()` gives you everythin
 `createFileStore(path)` keeps them in a JSON file that only its owner can read, with an object per key, and `createMemoryStore()` keeps them in memory for tests. Both have `get(key)`, `set(key, credentials)` and `delete(key)`. On a platform with its own storage, such as the config store of Homebridge or Node-RED, a keychain or a secret manager on a server, implement the `CredentialsStore` interface with those three methods:
 
 ```typescript
-const store: CredentialsStore = {
+const credentialsStore: CredentialsStore = {
   get: async key => config.devices[key],
   set: async (key, credentials) => {
     config.devices[key] = credentials;

@@ -10,10 +10,10 @@ import { HomeWizardError } from './errors';
  * as the config store of Homebridge or Node-RED or a keychain, implement these three methods.
  *
  * @example
- * const store = createFileStore('devices.json');
+ * const credentialsStore = createFileStore('devices.json');
  *
- * const credentials = (await store.get('p1')) ?? (await pair('192.168.1.35', 'my-app'));
- * await store.set('p1', credentials);
+ * const credentials = (await credentialsStore.get('p1')) ?? (await pair('192.168.1.35', 'my-app'));
+ * await credentialsStore.set('p1', credentials);
  *
  * const p1 = new P1Meter(credentials);
  */
@@ -53,7 +53,7 @@ export function createMemoryStore(): CredentialsStore {
  * wrote. Keep the file out of version control: its tokens give full access to the devices.
  *
  * @example
- * const store = createFileStore('devices.json');
+ * const credentialsStore = createFileStore('devices.json');
  * // {
  * //   "p1": {
  * //     "host": "192.168.1.35",
