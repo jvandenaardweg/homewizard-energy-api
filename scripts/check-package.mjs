@@ -59,7 +59,16 @@ const typeCheck = (files, module, moduleResolution) =>
   );
 
 const RUNTIME_NAMES = {
-  'homewizard-energy-api': ['P1Meter', 'pair', 'connect', 'discover', 'poll', 'HomeWizardError'],
+  'homewizard-energy-api': [
+    'P1Meter',
+    'pair',
+    'connect',
+    'discover',
+    'poll',
+    'HomeWizardError',
+    'createFileStore',
+    'createMemoryStore',
+  ],
   'homewizard-energy-api/v1': ['EnergySocketApi', 'P1MeterApi', 'HomeWizardEnergyDiscovery'],
   'homewizard-energy-api/telegram': ['parseTelegram'],
 };
@@ -86,20 +95,19 @@ function writeReadmeExamples() {
   const examples = [...readme.matchAll(/```typescript\n([\s\S]*?)```/g)].map(match => match[1]);
   const files = [];
 
-  const preamble = `import { readFile, writeFile } from 'node:fs/promises';
-import { connect, discover, HomeWizardError, isApiVersionAtLeast, isSameIdentifier, KwhMeter3Phase, pair, P1Meter, PlugInBattery, poll, type Credentials } from 'homewizard-energy-api';
+  const preamble = `import { connect, createFileStore, discover, HomeWizardError, isApiVersionAtLeast, isSameIdentifier, pair, P1Meter, PlugInBattery, poll, type Credentials, type CredentialsStore } from 'homewizard-energy-api';
 import { parseTelegram } from 'homewizard-energy-api/telegram';
 import { EnergySocketApi, HomeWizardEnergyDiscovery, P1MeterApi, WaterMeterApi } from 'homewizard-energy-api/v1';
 
 // What the examples assume to exist
 declare const credentials: Credentials;
+declare const config: { devices: Record<string, Credentials> };
 declare const p1: P1Meter;
 declare const battery: PlugInBattery;
 declare const controller: AbortController;
 declare const socket: EnergySocketApi;
 
-void [readFile, writeFile];
-void [connect, discover, HomeWizardError, isApiVersionAtLeast, isSameIdentifier, KwhMeter3Phase, pair, PlugInBattery, poll];
+void [connect, createFileStore, discover, HomeWizardError, isApiVersionAtLeast, isSameIdentifier, pair, PlugInBattery, poll];
 void [parseTelegram, HomeWizardEnergyDiscovery, P1MeterApi, WaterMeterApi];
 `;
 
