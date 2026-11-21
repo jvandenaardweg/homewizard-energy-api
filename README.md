@@ -36,29 +36,36 @@ It needs Node 22.19 or higher (version 1.x supports Node 14.18), and works with 
 
 ## Quick start
 
-Before your app can read a device, you pair it. The button press proves you have the device in your hands, so nobody else on the network can get a token. Press it within 2 minutes of calling `pair()`; on the kWh meters, hold it for 1 to 3 seconds.
+Every request to the device needs a token. The device only creates one after someone presses its button, so only a person with the device in their hands can give an app access, and nobody else on your network can read or control it. That step is called pairing. You pair once, store what you get back, and use it from then on.
+
+**1. Pair with the device.** Call `pair()` with the device's IP address and a name for your app:
 
 ```typescript
 import { pair } from 'homewizard-energy-api';
 
 const credentials = await pair('192.168.1.35', 'my-app');
-// {
-//   host: '192.168.1.35',
-//   token: '0123456789ABCDEF0123456789ABCDEF',
-//   identifier: 'appliance/p1dongle/5c2fafaabbcc'
-// }
 ```
 
-Store the credentials, and keep the token secret: it gives full access to the device (see [Storing the credentials](#storing-the-credentials)). Then use them to read the device:
+**2. Press the button on the device.** `pair()` waits up to 2 minutes for the press. On the kWh meters, hold the button for 1 to 3 seconds.
+
+**3. Store the credentials.** `pair()` returns everything your app needs to connect from then on:
+
+```json
+{
+  "host": "192.168.1.35",
+  "token": "0123456789ABCDEF0123456789ABCDEF",
+  "identifier": "appliance/p1dongle/5c2fafaabbcc"
+}
+```
+
+The token gives full access to the device, so keep it secret, and the device can't give it to you again. See [Storing the credentials](#storing-the-credentials).
+
+**4. Read the device.** Each time your app starts, create the device with the stored credentials. You don't pair again:
 
 ```typescript
 import { P1Meter } from 'homewizard-energy-api';
 
-const p1 = new P1Meter({
-  host: '192.168.1.35',
-  token: '0123456789ABCDEF0123456789ABCDEF',
-  identifier: 'appliance/p1dongle/5c2fafaabbcc',
-});
+const p1 = new P1Meter(credentials);
 
 const measurement = await p1.getMeasurement();
 console.log(`${measurement.power_w} W`); // -543 W
