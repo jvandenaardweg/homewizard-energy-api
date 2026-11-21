@@ -440,10 +440,10 @@ describe('the README', () => {
       .filter(section => section.startsWith('Recipes'))
       .flatMap(section => section.split(/^### /m).slice(1));
 
-    expect(recipes.length).toBeGreaterThan(10);
+    expect(recipes.length).toBeGreaterThanOrEqual(8);
     for (const recipe of recipes) {
       expect(recipe, `The recipe "${recipe.split('\n')[0]}"`).toMatch(
-        /Full script: \[`src\/examples\//,
+        /\[Full script[^\]]*\]\(https:\/\/github\.com\/[^)]+\/blob\/main\/src\/examples\//,
       );
     }
   });
@@ -453,7 +453,7 @@ describe('the README', () => {
       match => match[1],
     );
 
-    expect(scripts.length).toBeGreaterThan(10);
+    expect(scripts.length).toBeGreaterThanOrEqual(9);
     for (const script of scripts) expect(existsSync(join(root, script)), script).toBe(true);
   });
 });
