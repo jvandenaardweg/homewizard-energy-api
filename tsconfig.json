@@ -27,7 +27,11 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      // The examples import the package by its name, as users do, and run from the source with tsx
+      "homewizard-energy-api": ["./src/index.ts"],
+      "homewizard-energy-api/v1": ["./src/v1/index.ts"],
+      "homewizard-energy-api/telegram": ["./src/telegram/index.ts"]
     },
     "types": ["vitest/globals"]
   },

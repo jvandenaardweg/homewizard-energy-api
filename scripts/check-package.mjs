@@ -59,7 +59,16 @@ const typeCheck = (files, module, moduleResolution) =>
   );
 
 const RUNTIME_NAMES = {
-  'homewizard-energy-api': ['P1Meter', 'pair', 'connect', 'discover', 'poll', 'HomeWizardError'],
+  'homewizard-energy-api': [
+    'P1Meter',
+    'pair',
+    'connect',
+    'discover',
+    'poll',
+    'HomeWizardError',
+    'createFileStore',
+    'createMemoryStore',
+  ],
   'homewizard-energy-api/v1': ['EnergySocketApi', 'P1MeterApi', 'HomeWizardEnergyDiscovery'],
   'homewizard-energy-api/telegram': ['parseTelegram'],
 };
@@ -82,36 +91,49 @@ const loadScript = load =>
  * function, because the examples declare the same names. Its imports are checked in a file of their own.
  */
 function writeReadmeExamples() {
-  const readme = readFileSync(join(root, 'README.md'), 'utf8');
+  // The README and the API v1 docs, whose recipes moved there
+  const readme = ['README.md', join('docs', 'v1.md')]
+    .map(file => readFileSync(join(root, file), 'utf8'))
+    .join('\n');
   const examples = [...readme.matchAll(/```typescript\n([\s\S]*?)```/g)].map(match => match[1]);
   const files = [];
 
-  const preamble = `import { connect, discover, HomeWizardError, isApiVersionAtLeast, isSameIdentifier, pair, P1Meter, PlugInBattery, poll, type Credentials } from 'homewizard-energy-api';
+  const preamble = `import { connect, createFileStore, createMemoryStore, discover, HomeWizardError, isApiVersionAtLeast, isSameIdentifier, pair, P1Meter, PlugInBattery, poll, type Credentials, type CredentialsStore } from 'homewizard-energy-api';
 import { parseTelegram } from 'homewizard-energy-api/telegram';
-import { EnergySocketApi, HomeWizardEnergyDiscovery, P1MeterApi, WaterMeterApi } from 'homewizard-energy-api/v1';
+import { EnergySocketApi, ErrorCodes, HomeWizardEnergyApiResponseError, HomeWizardEnergyDiscovery, KwhMeter1PhaseApi, KwhMeter3PhaseApi, P1MeterApi, WaterMeterApi } from 'homewizard-energy-api/v1';
+import { Agent } from 'undici';
 
 // What the examples assume to exist
 declare const credentials: Credentials;
+declare const config: { devices: Record<string, Credentials> };
+declare const credentialsStore: CredentialsStore;
 declare const p1: P1Meter;
 declare const battery: PlugInBattery;
 declare const controller: AbortController;
 declare const socket: EnergySocketApi;
 
-void [connect, discover, HomeWizardError, isApiVersionAtLeast, isSameIdentifier, pair, PlugInBattery, poll];
-void [parseTelegram, HomeWizardEnergyDiscovery, P1MeterApi, WaterMeterApi];
+void [connect, createFileStore, createMemoryStore, discover, HomeWizardError, isApiVersionAtLeast, isSameIdentifier, pair, PlugInBattery, poll];
+void [parseTelegram, ErrorCodes, HomeWizardEnergyApiResponseError, HomeWizardEnergyDiscovery, KwhMeter1PhaseApi, KwhMeter3PhaseApi, P1MeterApi, WaterMeterApi, Agent];
 `;
 
   const functions = examples.map((example, index) => {
-    const lines = example.split('\n');
-    const imports = lines.filter(line => line.startsWith('import '));
+    // An import can span lines, until the line with its module
+    const imports = [];
+    const body = [];
+    let inImport = false;
+
+    for (const line of example.split('\n')) {
+      if (line.startsWith('import ')) inImport = true;
+      (inImport ? imports : body).push(inImport ? line : `  ${line}`);
+      // The line with the module ends the import, also with a comment after it
+      if (inImport && /(\bfrom\s+|^import\s+)['"][^'"]+['"]/.test(line)) inImport = false;
+    }
 
     if (imports.length) {
       const file = `readme-imports-${index + 1}.ts`;
       writeFileSync(join(projectDir, file), `${imports.join('\n')}\nexport {};\n`);
       files.push(file);
     }
-
-    const body = lines.filter(line => !line.startsWith('import ')).map(line => `  ${line}`);
 
     return `export async function example${index + 1}() {\n${body.join('\n')}\n}`;
   });
@@ -184,7 +206,7 @@ export const values = [P1Meter, EnergySocketApi, parseTelegram];
 
   const readme = writeReadmeExamples();
 
-  step(`type-check the ${readme.count} TypeScript examples of the README`, () =>
+  step(`type-check the ${readme.count} TypeScript examples of the README and docs/v1.md`, () =>
     typeCheck(readme.files, 'nodenext', 'nodenext'),
   );
 } finally {

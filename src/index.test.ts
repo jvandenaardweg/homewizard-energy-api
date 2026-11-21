@@ -16,6 +16,8 @@ describe('entry points', () => {
       'PlugInBattery',
       'ProductTypeList',
       'connect',
+      'createFileStore',
+      'createMemoryStore',
       'discover',
       'getCertificateIdentifier',
       'isApiVersionAtLeast',

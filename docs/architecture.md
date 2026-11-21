@@ -27,6 +27,7 @@ src/
   api-version.ts    # isApiVersionAtLeast()
   endpoints.ts      # one function per endpoint: (client, ...args) => Promise<T>
   pairing.ts        # pair(): asks for a token until the button is pressed
+  credentials-store.ts  # CredentialsStore, createFileStore() and createMemoryStore(): the credentials per key between runs
   poll.ts           # poll(fn): polls any method, with events or stream()
   websocket/        # DeviceSocket (subscriptions, reconnect, stream()), on a Connection (authorization, heartbeat)
   discovery.ts      # discover() on _homewizard._tcp, and connect()
@@ -36,7 +37,7 @@ src/
   telegram/         # the telegram parser
   v1/               # the API v1
   mocks/            # test fixtures, the mock agent, the mocked API and a local TLS and WebSocket server; v1/ holds the API v1 ones
-  examples/         # scripts to run against a real device
+  examples/         # the full script of each README recipe, run against a real device; examples.test.ts runs them on the mocks
 ```
 
 `src/shared` imports nothing from `src/v1` or the root, and the root imports nothing from `src/v1`. So `src/v1` can be deleted in one piece when HomeWizard removes the API v1. The tests hold to it too: the API v1 mocks and fixtures are in `src/mocks/v1`, which goes with it, and the other tests import from neither. The examples in `src/examples/v1` go with it too, since the type-check covers them.
@@ -67,7 +68,7 @@ The P1 meter was checked on hardware (API 2.2.0): pairing, every endpoint, the W
 
 ## Credentials and the certificate check
 
-`pair()` returns the credentials, `{ host, token, identifier }`, and the device classes take them as their first argument. The connection options (timeout, retries, logger) are the second.
+`pair()` returns the credentials, `{ host, token, identifier }`, and the device classes take them as their first argument. The connection options (timeout, retries, logger) are the second. A `CredentialsStore` keeps the credentials between runs under a key per device: `createFileStore()` in a JSON file, and `createMemoryStore()` in memory. The file store writes a temporary file with `0600` permissions, flushes it to disk and renames it over the file a symbolic link points to, or the file itself. Its calls take turns per real file, after following links, in a queue shared by all the stores of a process; separate processes aren't coordinated. An empty file, or one with only a byte order mark, has no entries yet. It checks an entry only when `get()` reads it, and writes the other entries back as they are, so one bad entry doesn't lock the store and fields a user added stay. The library itself never reads a store, so `pair()` and the device classes stay independent of where the credentials live.
 
 The identifier (`appliance/<type>/<serial>`) is what the device's certificate is issued to. Devices have a certificate from HomeWizard's own certificate authority, with the identifier as its Common Name instead of a hostname. Every connection, for requests and for the WebSocket, checks both: the certificate is signed by the HomeWizard CA, and its Common Name is the stored identifier. So the token only goes to the device that was paired. It works like SSH's `known_hosts`:
 
@@ -85,7 +86,7 @@ Tokens stay out of logs: every logged body goes through `redact()`.
 
 `src/transport-errors.ts` decides what a failure is. Its `toHomeWizardError()` turns what `Client.send()` and the WebSocket `Connection` catch into a `HomeWizardError`, with the original as `cause`. A `HomeWizardError` passes through as it is. On a request, a refused certificate becomes kind `certificate`, and anything else kind `network`. On the WebSocket it's always kind `socket`, because undici doesn't pass on why the connection failed. Its `requestErrors` are the errors for a timeout, an error status and invalid JSON, which `Client` passes to `requestWithTimeout()` and `readResponse()` in `src/shared/request.ts`. `readResponse()` checks the status and decodes the body. The API v1 passes its own errors from `src/v1/errors.ts`, and decodes through the protected methods of `BaseApi`, so a subclass can override them.
 
-The device classes, `pair()`, `connect()` and `discover()` throw a `HomeWizardError`, and the WebSocket emits one. Its `kind` says what went wrong (`response`, `timeout`, `network`, `certificate`, `pairing`, `socket`, `invalid`), and `code` has the device's error code. In TypeScript it's a union per kind, so checking `kind` narrows the fields.
+The device classes, `pair()`, `connect()`, `discover()` and the credentials stores throw a `HomeWizardError`, and the WebSocket emits one. Its `kind` says what went wrong (`response`, `timeout`, `network`, `certificate`, `pairing`, `socket`, `storage`, `invalid`), and `code` has the device's error code. In TypeScript it's a union per kind, so checking `kind` narrows the fields.
 
 ## Pushed data
 

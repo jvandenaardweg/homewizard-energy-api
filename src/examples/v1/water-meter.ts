@@ -1,14 +1,9 @@
-import { WaterMeterApi } from '../../v1';
+import { WaterMeterApi } from 'homewizard-energy-api/v1';
 
-const waterMeter = new WaterMeterApi('http://192.168.1.20');
+// Turn on the Local API setting for the Watermeter in the HomeWizard app first. It only has a local API when it's
+// powered over USB.
+const water = new WaterMeterApi('http://192.168.1.12');
 
-(async () => {
-  try {
-    // Get the data from the water meter
-    const data = await waterMeter.getData();
+const { total_liter_m3, active_liter_lpm } = await water.getData();
 
-    console.log(data);
-  } catch (err) {
-    console.error(err);
-  }
-})();
+console.log(`${total_liter_m3} m3 in total, now ${active_liter_lpm} l/min`);

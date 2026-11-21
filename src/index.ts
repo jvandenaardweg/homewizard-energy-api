@@ -13,6 +13,8 @@
 export { isApiVersionAtLeast } from './api-version';
 export type { Credentials, ConnectionOptions } from './client';
 export * from './devices';
+export { createFileStore, createMemoryStore } from './credentials-store';
+export type { CredentialsStore } from './credentials-store';
 export { connect, discover } from './discovery';
 export type { DiscoveredDevice, DiscoverOptions, DiscoveryResponse } from './discovery';
 export { HomeWizardError } from './errors';
