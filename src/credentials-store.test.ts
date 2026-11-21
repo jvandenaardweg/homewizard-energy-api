@@ -1,4 +1,14 @@
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  symlink,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -56,6 +66,16 @@ describe('createMemoryStore', () => {
       message: 'The credentials need a host, token and identifier',
     });
     await expect(store.set('p1', null as never)).rejects.toBeInstanceOf(HomeWizardError);
+  });
+
+  it('should refuse an empty host or token, and accept an empty identifier', async () => {
+    const store = createMemoryStore();
+
+    await expect(store.set('p1', { ...p1, host: '' })).rejects.toMatchObject({ kind: 'invalid' });
+    await expect(store.set('p1', { ...p1, token: '' })).rejects.toMatchObject({ kind: 'invalid' });
+
+    await store.set('p1', { ...p1, identifier: '' });
+    expect(await store.get('p1')).toStrictEqual({ ...p1, identifier: '' });
   });
 });
 
@@ -138,6 +158,66 @@ describe('createFileStore', () => {
       JSON.parse(`{"__proto__":${JSON.stringify(p1)}}`),
     );
   });
+
+  it('should keep both credentials when two stores of the same file set them at the same time', async () => {
+    await Promise.all([
+      createFileStore(path).set('p1', p1),
+      createFileStore(join(directory, '.', 'devices.json')).set('kwh', kwh),
+    ]);
+
+    expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({ p1, kwh });
+  });
+
+  it('should only throw for an invalid entry when its key is read', async () => {
+    await writeFile(path, JSON.stringify({ p1, heatPump: { host: '192.168.1.36' } }));
+    const store = createFileStore(path);
+
+    expect(await store.get('p1')).toStrictEqual(p1);
+    await expect(store.get('heatPump')).rejects.toMatchObject({
+      kind: 'storage',
+      path,
+      message: `The credentials of "heatPump" in ${path} need a host, token and identifier`,
+    });
+  });
+
+  it('should replace or remove an invalid entry', async () => {
+    await writeFile(path, JSON.stringify({ p1, heatPump: { host: '192.168.1.36' }, other: 1 }));
+    const store = createFileStore(path);
+
+    await store.set('heatPump', kwh);
+    expect(await store.get('heatPump')).toStrictEqual(kwh);
+
+    await store.delete('other');
+    expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({ p1, heatPump: kwh });
+  });
+
+  it('should keep the fields added to the other entries', async () => {
+    await writeFile(path, JSON.stringify({ kwh: { ...kwh, name: 'Garage' } }));
+    const store = createFileStore(path);
+
+    await store.set('p1', p1);
+
+    expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({
+      kwh: { ...kwh, name: 'Garage' },
+      p1,
+    });
+    expect(await store.get('kwh')).toStrictEqual(kwh);
+  });
+
+  it.skipIf(process.platform === 'win32')(
+    'should replace the file a symbolic link points to, and keep the link',
+    async () => {
+      const target = join(directory, 'secrets.json');
+      await writeFile(target, JSON.stringify({ kwh }));
+      await symlink(target, path);
+
+      await createFileStore(path).set('p1', p1);
+
+      expect((await lstat(path)).isSymbolicLink()).toBe(true);
+      expect(JSON.parse(await readFile(target, 'utf8'))).toStrictEqual({ kwh, p1 });
+      expect((await readdir(directory)).sort()).toStrictEqual(['devices.json', 'secrets.json']);
+    },
+  );
 
   it('should throw an invalid error without a path', () => {
     expect(() => createFileStore('')).toThrow(

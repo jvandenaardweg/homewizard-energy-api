@@ -43,9 +43,13 @@ import { createFileStore, pair, P1Meter } from 'homewizard-energy-api';
 
 const credentialsStore = createFileStore('devices.json');
 
-// The first run pairs: press the button on the device within 2 minutes
-const credentials = (await credentialsStore.get('p1')) ?? (await pair('192.168.1.35', 'my-app'));
-await credentialsStore.set('p1', credentials);
+let credentials = await credentialsStore.get('p1');
+
+if (!credentials) {
+  // The first run pairs: press the button on the device within 2 minutes
+  credentials = await pair('192.168.1.35', 'my-app');
+  await credentialsStore.set('p1', credentials);
+}
 
 const p1 = new P1Meter(credentials);
 const measurement = await p1.getMeasurement();
@@ -297,7 +301,7 @@ You pair a device once, by pressing its button, and `pair()` gives you everythin
 | `identifier` | Yes       | The token is only sent to a device whose certificate is issued to it. It can't be learned safely later.                             |
 | `host`       | Optional  | The IP address can change. Without it, [`discover()` and `connect()`](#find-a-device-after-its-ip-address-changed) find the device. |
 
-`createFileStore(path)` keeps them in a JSON file that only its owner can read, with an object per key, and `createMemoryStore()` keeps them in memory for tests. Both have `get(key)`, `set(key, credentials)` and `delete(key)`. On a platform with its own storage, such as the config store of Homebridge or Node-RED, a keychain or a secret manager on a server, implement the `CredentialsStore` interface with those three methods:
+`createFileStore(path)` keeps them in a JSON file that only its owner can read, with an object per key. It replaces the file in one step, so a crash or power loss never leaves half a file, and runs the calls on a file one at a time within a process. `createMemoryStore()` keeps them in memory for tests. Both have `get(key)`, `set(key, credentials)` and `delete(key)`. On a platform with its own storage, such as the config store of Homebridge or Node-RED, a keychain or a secret manager on a server, implement the `CredentialsStore` interface with those three methods:
 
 ```typescript
 const credentialsStore: CredentialsStore = {
