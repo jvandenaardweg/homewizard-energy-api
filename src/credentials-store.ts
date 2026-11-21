@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { open, readFile, realpath, rename, rm } from 'node:fs/promises';
+import { resolve } from 'node:path';
 
 import type { Credentials } from './client';
 import { HomeWizardError } from './errors';
@@ -12,8 +13,12 @@ import { HomeWizardError } from './errors';
  * @example
  * const credentialsStore = createFileStore('devices.json');
  *
- * const credentials = (await credentialsStore.get('p1')) ?? (await pair('192.168.1.35', 'my-app'));
- * await credentialsStore.set('p1', credentials);
+ * let credentials = await credentialsStore.get('p1');
+ *
+ * if (!credentials) {
+ *   credentials = await pair('192.168.1.35', 'my-app');
+ *   await credentialsStore.set('p1', credentials);
+ * }
  *
  * const p1 = new P1Meter(credentials);
  */
@@ -46,11 +51,21 @@ export function createMemoryStore(): CredentialsStore {
 
 /**
  * Keeps the credentials in a JSON file, with an object per key. The file is created on the first `set()`, readable
- * and writable by its owner only (`0600`, where the platform supports it), and replaced in one step on each change,
- * so a crash never leaves half a file. The calls on one store run one at a time.
+ * and writable by its owner only (`0600`, where the platform supports it), and replaced in one step on each change:
+ * the new file is written in full and flushed to disk before it takes the place of the old one, so a crash or a
+ * power loss leaves the old file or the new one, never half of one. When the path is a symbolic link, the file it
+ * points to is replaced.
  *
- * Throws a `HomeWizardError` of kind `storage` when the file can't be read or written, or isn't a file this store
- * wrote. Keep the file out of version control: its tokens give full access to the devices.
+ * The calls run one at a time per file, in all the stores of one process. Separate processes that change the same
+ * file at the same time can overwrite each other's change.
+ *
+ * Each entry is checked when it's read: `get()` throws for an entry without a host, token and identifier, while
+ * `set()` and `delete()` can still replace or remove it. Entries are written back as they are, so fields you add
+ * to an entry yourself stay, until `set()` replaces that entry.
+ *
+ * Throws a `HomeWizardError` of kind `storage` when the file can't be read or written, isn't a JSON object, or
+ * has an invalid entry under the key that's read. Keep the file out of version control: its tokens give full access
+ * to the devices.
  *
  * @example
  * const credentialsStore = createFileStore('devices.json');
@@ -67,23 +82,30 @@ export function createFileStore(path: string): CredentialsStore {
     throw new HomeWizardError('invalid', 'The path of the credentials file is required');
   }
 
-  let queue: Promise<unknown> = Promise.resolve();
+  const queueKey = resolve(path);
 
-  // Runs the calls one at a time, so two set() calls can't both read the file before either writes it
-  const serialize = <T>(fn: () => Promise<T>): Promise<T> => {
-    const result = queue.then(fn);
-    queue = result.catch(() => undefined);
-    return result;
-  };
-
-  const update = (change: (entries: Map<string, Credentials>) => boolean) =>
-    serialize(async () => {
+  const update = (change: (entries: Map<string, unknown>) => boolean) =>
+    serialize(queueKey, async () => {
       const entries = await readEntries(path);
       if (change(entries)) await writeEntries(path, entries);
     });
 
   return {
-    get: key => serialize(async () => (await readEntries(path)).get(key)),
+    get: key =>
+      serialize(queueKey, async () => {
+        const value = (await readEntries(path)).get(key);
+        if (value === undefined) return undefined;
+
+        if (!isCredentials(value)) {
+          throw new HomeWizardError(
+            'storage',
+            `The credentials of "${key}" in ${path} need a host, token and identifier`,
+            { path },
+          );
+        }
+
+        return toCredentials(value);
+      }),
     set: async (key, credentials) => {
       // Checked before the file is read, so a wrong argument is an `invalid` error, not a `storage` one
       const checked = toCredentials(credentials);
@@ -96,6 +118,26 @@ export function createFileStore(path: string): CredentialsStore {
   };
 }
 
+/** The last call on each file, by its absolute path, so the stores of one process take turns on a file. */
+const queues = new Map<string, Promise<unknown>>();
+
+/** Runs the calls on one file one at a time, so two set() calls can't both read the file before either writes it. */
+function serialize<T>(queueKey: string, fn: () => Promise<T>): Promise<T> {
+  const result = (queues.get(queueKey) ?? Promise.resolve()).then(fn);
+  const settled = result.then(
+    () => undefined,
+    () => undefined,
+  );
+
+  queues.set(queueKey, settled);
+  // Forgets the file once its last call is done, so the map only holds files that are in use
+  void settled.then(() => {
+    if (queues.get(queueKey) === settled) queues.delete(queueKey);
+  });
+
+  return result;
+}
+
 /** Returns a copy with only the fields of the credentials, or throws when they aren't credentials. */
 function toCredentials(value: unknown): Credentials {
   if (!isCredentials(value)) {
@@ -105,14 +147,22 @@ function toCredentials(value: unknown): Credentials {
   return { host: value.host, token: value.token, identifier: value.identifier };
 }
 
+/** The identifier may be empty, for a device used with `insecure: true`. */
 function isCredentials(value: unknown): value is Credentials {
   if (typeof value !== 'object' || value === null) return false;
 
   const { host, token, identifier } = value as Record<string, unknown>;
-  return typeof host === 'string' && typeof token === 'string' && typeof identifier === 'string';
+  return (
+    typeof host === 'string' &&
+    host !== '' &&
+    typeof token === 'string' &&
+    token !== '' &&
+    typeof identifier === 'string'
+  );
 }
 
-async function readEntries(path: string): Promise<Map<string, Credentials>> {
+/** Reads the entries as they are in the file, so an invalid one can still be replaced or removed. */
+async function readEntries(path: string): Promise<Map<string, unknown>> {
   let text: string;
 
   try {
@@ -141,33 +191,30 @@ async function readEntries(path: string): Promise<Map<string, Credentials>> {
   }
 
   // A Map, so a key such as "__proto__" stays a key
-  const entries = new Map<string, Credentials>();
-
-  for (const [key, value] of Object.entries(data)) {
-    if (!isCredentials(value)) {
-      throw new HomeWizardError(
-        'storage',
-        `The credentials of "${key}" in ${path} need a host, token and identifier`,
-        { path },
-      );
-    }
-    entries.set(key, toCredentials(value));
-  }
-
-  return entries;
+  return new Map(Object.entries(data));
 }
 
-async function writeEntries(path: string, entries: Map<string, Credentials>): Promise<void> {
+async function writeEntries(path: string, entries: Map<string, unknown>): Promise<void> {
+  // A symbolic link stays a link: the file it points to is replaced. A file that doesn't exist yet has no target.
+  const target = await realpath(path).catch(() => path);
   // Written next to the file and renamed over it, so readers see the old file or the new one, never half of one
-  const temporary = `${path}.${randomUUID()}.tmp`;
+  const temporary = `${target}.${randomUUID()}.tmp`;
 
   try {
-    await writeFile(temporary, `${JSON.stringify(Object.fromEntries(entries), null, 2)}\n`, {
-      mode: 0o600,
-    });
-    await rename(temporary, path);
+    const handle = await open(temporary, 'wx', 0o600);
+
+    try {
+      await handle.writeFile(`${JSON.stringify(Object.fromEntries(entries), null, 2)}\n`);
+      // On disk before the rename, so a power loss can't leave the new name on an empty file
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+
+    await rename(temporary, target);
   } catch (error) {
-    await rm(temporary, { force: true });
+    // A failed cleanup must not hide why the write failed
+    await Promise.allSettled([rm(temporary, { force: true })]);
     throw new HomeWizardError('storage', `Couldn't write the credentials file ${path}`, {
       path,
       cause: error,
