@@ -1,4 +1,6 @@
 import type { MockInstance } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { mockApiAgent } from '@/mocks/agent';
 import { mockTelegramResponse } from '@/mocks/data/telegram';
 import {
@@ -269,5 +271,33 @@ describe('examples of the API v1', () => {
 
     const { ip, txt } = mockDiscoveryResponse;
     expect(printed()).toStrictEqual([`${ip} ${txt.product_type} ${txt.product_name}`]);
+  });
+});
+
+describe('docs/v1.md', () => {
+  const root = join(__dirname, '..', '..', '..');
+  const docs = readFileSync(join(root, 'docs', 'v1.md'), 'utf8');
+
+  it('links each recipe to its full script', () => {
+    const recipes = docs
+      .split(/^## /m)
+      .filter(section => section.startsWith('Recipes'))
+      .flatMap(section => section.split(/^### /m).slice(1));
+
+    expect(recipes.length).toBeGreaterThanOrEqual(5);
+    for (const recipe of recipes) {
+      expect(recipe, `The recipe "${recipe.split('\n')[0]}"`).toMatch(
+        /\[Full script[^\]]*\]\(https:\/\/github\.com\/[^)]+\/blob\/main\/src\/examples\/v1\//,
+      );
+    }
+  });
+
+  it('links only to scripts that exist', () => {
+    const scripts = [...docs.matchAll(/\/blob\/main\/(src\/examples\/[^)\s]+)\)/g)].map(
+      match => match[1],
+    );
+
+    expect(scripts.length).toBeGreaterThanOrEqual(6);
+    for (const script of scripts) expect(existsSync(join(root, script)), script).toBe(true);
   });
 });
