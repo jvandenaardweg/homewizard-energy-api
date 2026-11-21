@@ -293,15 +293,71 @@ const credentials = await pair('192.168.1.35', 'my-app', {
 
 ### Storing the credentials
 
-You pair a device once, by pressing its button, and `pair()` gives you everything you need from then on. Store the credentials it returns, so your app can connect again after a restart without anyone walking to the device.
+You pair a device once, and `pair()` returns everything your app needs from then on. Store all three values, so your app can connect again after a restart without anyone walking to the device:
 
-| Value        | Store it? | Why                                                                                                                                 |
-| ------------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `token`      | Yes       | It's the proof that you paired, and the device can't return it again.                                                               |
-| `identifier` | Yes       | The token is only sent to a device whose certificate is issued to it. It can't be learned safely later.                             |
-| `host`       | Optional  | The IP address can change. Without it, [`discover()` and `connect()`](#find-a-device-after-its-ip-address-changed) find the device. |
+| Value        | Why                                                                                                                                               |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `token`      | It's the proof that you paired, and the device can't give it to you again. Keep it secret: it gives full access to the device.                    |
+| `identifier` | The token is only sent to a device whose certificate is issued to it, and it can't be learned safely later.                                       |
+| `host`       | Where to connect. When the IP address changes, [`discover()` and `connect()`](#find-a-device-after-its-ip-address-changed) find the device again. |
 
-`createFileStore(path)` keeps them in a JSON file that only its owner can read, with an object per key. It replaces the file in one step, so a crash or power loss never leaves half a file, and runs the calls on a file one at a time within a process. `createMemoryStore()` keeps them in memory for tests. Both have `get(key)`, `set(key, credentials)` and `delete(key)`. On a platform with its own storage, such as the config store of Homebridge or Node-RED, a keychain or a secret manager on a server, implement the `CredentialsStore` interface with those three methods:
+A credentials store keeps them per device, under a key you choose, such as `p1`. It has three methods: `get(key)`, `set(key, credentials)` and `delete(key)`.
+
+#### In a file
+
+`createFileStore(path)` keeps the credentials in a JSON file that only its owner can read. Pair each device once and store it under its own key:
+
+```typescript
+const credentialsStore = createFileStore('devices.json');
+
+await credentialsStore.set('p1', await pair('192.168.1.35', 'my-app'));
+await credentialsStore.set('heatPump', await pair('192.168.1.36', 'my-app'));
+```
+
+On every start after that, get each device by its key. `get()` returns `undefined` for a key that isn't stored:
+
+```typescript
+const credentialsStore = createFileStore('devices.json');
+
+const credentials = await credentialsStore.get('heatPump');
+if (!credentials) throw new Error('Pair the heat pump first');
+
+const heatPump = new KwhMeter3Phase(credentials);
+```
+
+The file store replaces the file in one step, so a crash or a power loss never leaves half a file, and the calls on one file take turns within a process. Keep the file out of version control.
+
+#### After the IP address changed
+
+Store the new address, so the next start connects straight away:
+
+```typescript
+for await (const found of discover({ timeout: 10000 })) {
+  if (!isSameIdentifier(found.txt.id, credentials.identifier)) continue;
+
+  const device = connect(found, credentials);
+  await credentialsStore.set('p1', { ...credentials, host: device.host });
+  break;
+}
+```
+
+#### When the token stops working
+
+Someone deleted the user on the device, or paired again with the same name. Delete the stored credentials, so the next start pairs again, as in the [quick start](#quick-start):
+
+```typescript
+try {
+  await p1.getMeasurement();
+} catch (error) {
+  if (error instanceof HomeWizardError && error.code === 'user:unauthorized') {
+    await credentialsStore.delete('p1');
+  }
+}
+```
+
+#### In your platform's storage
+
+On a platform with its own storage, such as the config of a Homebridge or Node-RED plugin, a keychain or a secret manager, implement the `CredentialsStore` interface:
 
 ```typescript
 const credentialsStore: CredentialsStore = {
@@ -313,6 +369,27 @@ const credentialsStore: CredentialsStore = {
     delete config.devices[key];
   },
 };
+```
+
+#### In environment variables
+
+On a server or in a container, you can skip the store and pass the values in. Pair once with a script, and put the values in the environment:
+
+```typescript
+const p1 = new P1Meter({
+  host: process.env.HOMEWIZARD_HOST!,
+  token: process.env.HOMEWIZARD_TOKEN!,
+  identifier: process.env.HOMEWIZARD_IDENTIFIER!,
+});
+```
+
+#### In tests
+
+`createMemoryStore()` has the same methods, and keeps the credentials in memory until the process ends:
+
+```typescript
+const credentialsStore = createMemoryStore();
+await credentialsStore.set('p1', credentials);
 ```
 
 The library never logs the token. To revoke a token, delete its user with `users.delete('local/my-app')`.
