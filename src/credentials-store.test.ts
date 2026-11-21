@@ -21,10 +21,10 @@ const p1 = {
   identifier: 'appliance/p1dongle/5c2fafaabbcc',
 };
 
-const kwh = {
+const battery = {
   host: '192.168.1.36',
   token: 'FEDCBA9876543210FEDCBA9876543210',
-  identifier: 'appliance/energymeter/5c2fafddeeff',
+  identifier: 'appliance/battery/5c2fafddeeff',
 };
 
 describe('createMemoryStore', () => {
@@ -34,14 +34,14 @@ describe('createMemoryStore', () => {
     expect(await store.get('p1')).toBeUndefined();
 
     await store.set('p1', p1);
-    await store.set('kwh', kwh);
+    await store.set('battery', battery);
     expect(await store.get('p1')).toStrictEqual(p1);
-    expect(await store.get('kwh')).toStrictEqual(kwh);
+    expect(await store.get('battery')).toStrictEqual(battery);
 
     await store.delete('p1');
     await store.delete('missing');
     expect(await store.get('p1')).toBeUndefined();
-    expect(await store.get('kwh')).toStrictEqual(kwh);
+    expect(await store.get('battery')).toStrictEqual(battery);
   });
 
   it('should store a copy with only the fields of the credentials', async () => {
@@ -101,11 +101,11 @@ describe('createFileStore', () => {
     const store = createFileStore(path);
 
     await store.set('p1', p1);
-    await store.set('kwh', { ...kwh, extra: true } as never);
+    await store.set('battery', { ...battery, extra: true } as never);
 
-    expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({ p1, kwh });
+    expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({ p1, battery });
     expect(await readFile(path, 'utf8')).toMatch(/^\{\n {2}"p1": \{\n/);
-    expect(await store.get('kwh')).toStrictEqual(kwh);
+    expect(await store.get('battery')).toStrictEqual(battery);
   });
 
   it('should read the file another store wrote', async () => {
@@ -143,9 +143,9 @@ describe('createFileStore', () => {
   it('should keep both credentials when they are set at the same time', async () => {
     const store = createFileStore(path);
 
-    await Promise.all([store.set('p1', p1), store.set('kwh', kwh)]);
+    await Promise.all([store.set('p1', p1), store.set('battery', battery)]);
 
-    expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({ p1, kwh });
+    expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({ p1, battery });
   });
 
   it('should keep a key such as "__proto__" as a key', async () => {
@@ -162,59 +162,59 @@ describe('createFileStore', () => {
   it('should keep both credentials when two stores of the same file set them at the same time', async () => {
     await Promise.all([
       createFileStore(path).set('p1', p1),
-      createFileStore(join(directory, '.', 'devices.json')).set('kwh', kwh),
+      createFileStore(join(directory, '.', 'devices.json')).set('battery', battery),
     ]);
 
-    expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({ p1, kwh });
+    expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({ p1, battery });
   });
 
   it('should only throw for an invalid entry when its key is read', async () => {
-    await writeFile(path, JSON.stringify({ p1, heatPump: { host: '192.168.1.36' } }));
+    await writeFile(path, JSON.stringify({ p1, battery: { host: '192.168.1.36' } }));
     const store = createFileStore(path);
 
     expect(await store.get('p1')).toStrictEqual(p1);
-    await expect(store.get('heatPump')).rejects.toMatchObject({
+    await expect(store.get('battery')).rejects.toMatchObject({
       kind: 'storage',
       path,
-      message: `The credentials of "heatPump" in ${path} need a host, token and identifier`,
+      message: `The credentials of "battery" in ${path} need a host, token and identifier`,
     });
   });
 
   it('should replace or remove an invalid entry', async () => {
-    await writeFile(path, JSON.stringify({ p1, heatPump: { host: '192.168.1.36' }, other: 1 }));
+    await writeFile(path, JSON.stringify({ p1, battery: { host: '192.168.1.36' }, other: 1 }));
     const store = createFileStore(path);
 
-    await store.set('heatPump', kwh);
-    expect(await store.get('heatPump')).toStrictEqual(kwh);
+    await store.set('battery', battery);
+    expect(await store.get('battery')).toStrictEqual(battery);
 
     await store.delete('other');
-    expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({ p1, heatPump: kwh });
+    expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({ p1, battery });
   });
 
   it('should keep the fields added to the other entries', async () => {
-    await writeFile(path, JSON.stringify({ kwh: { ...kwh, name: 'Garage' } }));
+    await writeFile(path, JSON.stringify({ battery: { ...battery, name: 'Living room' } }));
     const store = createFileStore(path);
 
     await store.set('p1', p1);
 
     expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({
-      kwh: { ...kwh, name: 'Garage' },
+      battery: { ...battery, name: 'Living room' },
       p1,
     });
-    expect(await store.get('kwh')).toStrictEqual(kwh);
+    expect(await store.get('battery')).toStrictEqual(battery);
   });
 
   it.skipIf(process.platform === 'win32')(
     'should replace the file a symbolic link points to, and keep the link',
     async () => {
       const target = join(directory, 'secrets.json');
-      await writeFile(target, JSON.stringify({ kwh }));
+      await writeFile(target, JSON.stringify({ battery }));
       await symlink(target, path);
 
       await createFileStore(path).set('p1', p1);
 
       expect((await lstat(path)).isSymbolicLink()).toBe(true);
-      expect(JSON.parse(await readFile(target, 'utf8'))).toStrictEqual({ kwh, p1 });
+      expect(JSON.parse(await readFile(target, 'utf8'))).toStrictEqual({ battery, p1 });
       expect((await readdir(directory)).sort()).toStrictEqual(['devices.json', 'secrets.json']);
     },
   );

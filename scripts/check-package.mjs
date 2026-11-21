@@ -95,7 +95,7 @@ function writeReadmeExamples() {
   const examples = [...readme.matchAll(/```typescript\n([\s\S]*?)```/g)].map(match => match[1]);
   const files = [];
 
-  const preamble = `import { connect, createFileStore, createMemoryStore, discover, HomeWizardError, isApiVersionAtLeast, isSameIdentifier, KwhMeter3Phase, pair, P1Meter, PlugInBattery, poll, type Credentials, type CredentialsStore } from 'homewizard-energy-api';
+  const preamble = `import { connect, createFileStore, createMemoryStore, discover, HomeWizardError, isApiVersionAtLeast, isSameIdentifier, pair, P1Meter, PlugInBattery, poll, type Credentials, type CredentialsStore } from 'homewizard-energy-api';
 import { parseTelegram } from 'homewizard-energy-api/telegram';
 import { EnergySocketApi, HomeWizardEnergyDiscovery, P1MeterApi, WaterMeterApi } from 'homewizard-energy-api/v1';
 
@@ -108,7 +108,7 @@ declare const battery: PlugInBattery;
 declare const controller: AbortController;
 declare const socket: EnergySocketApi;
 
-void [connect, createFileStore, createMemoryStore, discover, HomeWizardError, isApiVersionAtLeast, isSameIdentifier, KwhMeter3Phase, pair, PlugInBattery, poll];
+void [connect, createFileStore, createMemoryStore, discover, HomeWizardError, isApiVersionAtLeast, isSameIdentifier, pair, PlugInBattery, poll];
 void [parseTelegram, HomeWizardEnergyDiscovery, P1MeterApi, WaterMeterApi];
 `;
 
