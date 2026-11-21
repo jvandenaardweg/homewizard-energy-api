@@ -14,6 +14,8 @@ import { ErrorCode } from './types';
  *   aborted (`reason: 'aborted'`).
  * - `socket`: the WebSocket failed or the device sent an error over it, with its `code`. A WebSocket connection
  *   that fails on the certificate is kind `socket` too, because undici doesn't pass on why it failed.
+ * - `storage`: a credentials store couldn't read or write its file, or the file isn't one it wrote. `path` has the
+ *   file, and `cause` the error.
  * - `invalid`: the arguments or options can't work, for example a missing identifier or an `http://` host.
  */
 export type HomeWizardErrorKind = keyof HomeWizardErrorFields;
@@ -54,6 +56,10 @@ export interface HomeWizardErrorFields {
   socket: {
     /** The error code from the device, when it sent one. */
     code?: ErrorCode;
+  };
+  storage: {
+    /** The path of the credentials file. */
+    path: string;
   };
   invalid: object;
 }

@@ -27,6 +27,7 @@ src/
   api-version.ts    # isApiVersionAtLeast()
   endpoints.ts      # one function per endpoint: (client, ...args) => Promise<T>
   pairing.ts        # pair(): asks for a token until the button is pressed
+  credentials-store.ts  # CredentialsStore, createFileStore() and createMemoryStore(): the credentials per key between runs
   poll.ts           # poll(fn): polls any method, with events or stream()
   websocket/        # DeviceSocket (subscriptions, reconnect, stream()), on a Connection (authorization, heartbeat)
   discovery.ts      # discover() on _homewizard._tcp, and connect()
@@ -67,7 +68,7 @@ The P1 meter was checked on hardware (API 2.2.0): pairing, every endpoint, the W
 
 ## Credentials and the certificate check
 
-`pair()` returns the credentials, `{ host, token, identifier }`, and the device classes take them as their first argument. The connection options (timeout, retries, logger) are the second.
+`pair()` returns the credentials, `{ host, token, identifier }`, and the device classes take them as their first argument. The connection options (timeout, retries, logger) are the second. A `CredentialsStore` keeps the credentials between runs under a key per device: `createFileStore()` in a JSON file, written to a temporary file and renamed over it with `0600` permissions, one call at a time, and `createMemoryStore()` in memory. The library itself never reads a store, so `pair()` and the device classes stay independent of where the credentials live.
 
 The identifier (`appliance/<type>/<serial>`) is what the device's certificate is issued to. Devices have a certificate from HomeWizard's own certificate authority, with the identifier as its Common Name instead of a hostname. Every connection, for requests and for the WebSocket, checks both: the certificate is signed by the HomeWizard CA, and its Common Name is the stored identifier. So the token only goes to the device that was paired. It works like SSH's `known_hosts`:
 
@@ -85,7 +86,7 @@ Tokens stay out of logs: every logged body goes through `redact()`.
 
 `src/transport-errors.ts` decides what a failure is. Its `toHomeWizardError()` turns what `Client.send()` and the WebSocket `Connection` catch into a `HomeWizardError`, with the original as `cause`. A `HomeWizardError` passes through as it is. On a request, a refused certificate becomes kind `certificate`, and anything else kind `network`. On the WebSocket it's always kind `socket`, because undici doesn't pass on why the connection failed. Its `requestErrors` are the errors for a timeout, an error status and invalid JSON, which `Client` passes to `requestWithTimeout()` and `readResponse()` in `src/shared/request.ts`. `readResponse()` checks the status and decodes the body. The API v1 passes its own errors from `src/v1/errors.ts`, and decodes through the protected methods of `BaseApi`, so a subclass can override them.
 
-The device classes, `pair()`, `connect()` and `discover()` throw a `HomeWizardError`, and the WebSocket emits one. Its `kind` says what went wrong (`response`, `timeout`, `network`, `certificate`, `pairing`, `socket`, `invalid`), and `code` has the device's error code. In TypeScript it's a union per kind, so checking `kind` narrows the fields.
+The device classes, `pair()`, `connect()` and `discover()` throw a `HomeWizardError`, and the WebSocket emits one. Its `kind` says what went wrong (`response`, `timeout`, `network`, `certificate`, `pairing`, `socket`, `storage`, `invalid`), and `code` has the device's error code. In TypeScript it's a union per kind, so checking `kind` narrows the fields.
 
 ## Pushed data
 
