@@ -219,6 +219,109 @@ describe('createFileStore', () => {
     },
   );
 
+  it.skipIf(process.platform === 'win32')(
+    "should create the file a symbolic link points to when it doesn't exist yet, and keep the link",
+    async () => {
+      await mkdir(join(directory, 'secure'));
+      const target = join(directory, 'secure', 'devices.json');
+      await symlink(target, path);
+
+      await createFileStore(path).set('p1', p1);
+
+      expect((await lstat(path)).isSymbolicLink()).toBe(true);
+      expect(JSON.parse(await readFile(target, 'utf8'))).toStrictEqual({ p1 });
+    },
+  );
+
+  it.skipIf(process.platform === 'win32')(
+    'should keep both credentials when a store of a link and one of its file set them at the same time',
+    async () => {
+      const target = join(directory, 'secrets.json');
+      await writeFile(target, '{}');
+      await symlink(target, path);
+
+      await Promise.all([
+        createFileStore(path).set('p1', p1),
+        createFileStore(target).set('battery', battery),
+      ]);
+
+      expect(JSON.parse(await readFile(target, 'utf8'))).toStrictEqual({ p1, battery });
+    },
+  );
+
+  it.skipIf(process.platform === 'win32')(
+    'should keep both credentials when stores reach a new file through a linked folder at the same time',
+    async () => {
+      await mkdir(join(directory, 'real'));
+      await symlink(join(directory, 'real'), join(directory, 'linked'));
+
+      await Promise.all([
+        createFileStore(join(directory, 'linked', 'devices.json')).set('p1', p1),
+        createFileStore(join(directory, 'real', 'devices.json')).set('battery', battery),
+      ]);
+
+      expect(
+        JSON.parse(await readFile(join(directory, 'real', 'devices.json'), 'utf8')),
+      ).toStrictEqual({
+        p1,
+        battery,
+      });
+    },
+  );
+
+  it.skipIf(process.platform === 'win32')(
+    "should throw a storage error when the path can't be resolved, and leave the link",
+    async () => {
+      const loop = join(directory, 'loop.json');
+      await symlink(loop, path);
+      await symlink(path, loop);
+      const store = createFileStore(path);
+
+      await expect(store.set('p1', p1)).rejects.toMatchObject({
+        kind: 'storage',
+        path,
+        message: `Couldn't resolve the credentials file ${path}`,
+        cause: { code: 'ELOOP' },
+      });
+      await expect(store.get('p1')).rejects.toMatchObject({ kind: 'storage' });
+      expect((await lstat(path)).isSymbolicLink()).toBe(true);
+    },
+  );
+
+  it('should keep using the file it was created for after the working directory changes', async () => {
+    const cwd = process.cwd();
+    process.chdir(directory);
+
+    try {
+      const store = createFileStore('devices.json');
+      process.chdir(tmpdir());
+      await store.set('p1', p1);
+    } finally {
+      process.chdir(cwd);
+    }
+
+    expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({ p1 });
+  });
+
+  it.each([
+    ['an empty file', ''],
+    ['a file with only whitespace', ' \n'],
+    ['a file with only a byte order mark', '\uFEFF'],
+  ])('should read %s as a file without credentials', async (_name, content) => {
+    await writeFile(path, content);
+    const store = createFileStore(path);
+
+    expect(await store.get('p1')).toBeUndefined();
+    await store.set('p1', p1);
+    expect(JSON.parse(await readFile(path, 'utf8'))).toStrictEqual({ p1 });
+  });
+
+  it('should read a file that starts with a byte order mark', async () => {
+    await writeFile(path, `\uFEFF${JSON.stringify({ p1 })}`);
+
+    expect(await createFileStore(path).get('p1')).toStrictEqual(p1);
+  });
+
   it('should throw an invalid error without a path', () => {
     expect(() => createFileStore('')).toThrow(
       expect.objectContaining({ kind: 'invalid' }) as unknown as Error,

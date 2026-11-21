@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { open, readFile, realpath, rename, rm } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { open, readFile, readlink, realpath, rename, rm } from 'node:fs/promises';
+import { basename, dirname, join, resolve } from 'node:path';
 
 import type { Credentials } from './client';
 import { HomeWizardError } from './errors';
@@ -54,12 +54,12 @@ export function createMemoryStore(): CredentialsStore {
  * and writable by its owner only (`0600`, where the platform supports it), and replaced in one step on each change:
  * the new file is written in full and flushed to disk before it takes the place of the old one, so a crash or a
  * power loss leaves the old file or the new one, never half of one. When the path is a symbolic link, the file it
- * points to is replaced.
+ * points to is replaced, or created, and the link stays. A relative path is resolved when the store is created.
  *
- * The calls run one at a time per file, in all the stores of one process. Separate processes that change the same
- * file at the same time can overwrite each other's change.
+ * The calls run one at a time per file, in all the stores of one process, also when they reach the file through a
+ * link. Separate processes that change the same file at the same time can overwrite each other's change.
  *
- * Each entry is checked when it's read: `get()` throws for an entry without a host, token and identifier, while
+ * An empty file, or one with only a byte order mark, has no credentials yet. Each entry is checked when it's read: `get()` throws for an entry without a host, token and identifier, while
  * `set()` and `delete()` can still replace or remove it. Entries are written back as they are, so fields you add
  * to an entry yourself stay, until `set()` replaces that entry.
  *
@@ -82,18 +82,25 @@ export function createFileStore(path: string): CredentialsStore {
     throw new HomeWizardError('invalid', 'The path of the credentials file is required');
   }
 
-  const queueKey = resolve(path);
+  // Resolved now, so a later process.chdir() doesn't move the file
+  const absolute = resolve(path);
+
+  /** Runs `fn` on the real file, in turn with every other call on that file in this process. */
+  const withFile = async <T>(fn: (file: string) => Promise<T>): Promise<T> => {
+    const file = await resolveFile(absolute, path);
+    return serialize(file, () => fn(file));
+  };
 
   const update = (change: (entries: Map<string, unknown>) => boolean) =>
-    serialize(queueKey, async () => {
-      const entries = await readEntries(path);
-      if (change(entries)) await writeEntries(path, entries);
+    withFile(async file => {
+      const entries = await readEntries(file, path);
+      if (change(entries)) await writeEntries(file, path, entries);
     });
 
   return {
     get: key =>
-      serialize(queueKey, async () => {
-        const value = (await readEntries(path)).get(key);
+      withFile(async file => {
+        const value = (await readEntries(file, path)).get(key);
         if (value === undefined) return undefined;
 
         if (!isCredentials(value)) {
@@ -118,7 +125,32 @@ export function createFileStore(path: string): CredentialsStore {
   };
 }
 
-/** The last call on each file, by its absolute path, so the stores of one process take turns on a file. */
+/**
+ * Returns the file the store reads and replaces: the path itself, or the file a symbolic link points to, also when
+ * that file doesn't exist yet. Every store on the same file gets the same path, so their calls take turns.
+ */
+async function resolveFile(absolute: string, path: string): Promise<string> {
+  try {
+    return await realpath(absolute);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw new HomeWizardError('storage', `Couldn't resolve the credentials file ${path}`, {
+        path,
+        cause: error,
+      });
+    }
+  }
+
+  // The file doesn't exist yet. When the path is a link to it, the link's target is the file to create.
+  const link = await readlink(absolute).catch(() => undefined);
+  if (link !== undefined) return resolveFile(resolve(dirname(absolute), link), path);
+
+  // The folder may be a link too
+  const folder = await realpath(dirname(absolute)).catch(() => dirname(absolute));
+  return join(folder, basename(absolute));
+}
+
+/** The last call on each file, by its real path, so the stores of one process take turns on a file. */
 const queues = new Map<string, Promise<unknown>>();
 
 /** Runs the calls on one file one at a time, so two set() calls can't both read the file before either writes it. */
@@ -162,11 +194,11 @@ function isCredentials(value: unknown): value is Credentials {
 }
 
 /** Reads the entries as they are in the file, so an invalid one can still be replaced or removed. */
-async function readEntries(path: string): Promise<Map<string, unknown>> {
+async function readEntries(file: string, path: string): Promise<Map<string, unknown>> {
   let text: string;
 
   try {
-    text = await readFile(path, 'utf8');
+    text = await readFile(file, 'utf8');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return new Map();
     throw new HomeWizardError('storage', `Couldn't read the credentials file ${path}`, {
@@ -174,6 +206,10 @@ async function readEntries(path: string): Promise<Map<string, unknown>> {
       cause: error,
     });
   }
+
+  // An editor on Windows can save a byte order mark, and `touch` an empty file: neither has entries yet
+  text = text.replace(/^\uFEFF/, '');
+  if (text.trim() === '') return new Map();
 
   let data: unknown;
 
@@ -194,11 +230,13 @@ async function readEntries(path: string): Promise<Map<string, unknown>> {
   return new Map(Object.entries(data));
 }
 
-async function writeEntries(path: string, entries: Map<string, unknown>): Promise<void> {
-  // A symbolic link stays a link: the file it points to is replaced. A file that doesn't exist yet has no target.
-  const target = await realpath(path).catch(() => path);
+async function writeEntries(
+  file: string,
+  path: string,
+  entries: Map<string, unknown>,
+): Promise<void> {
   // Written next to the file and renamed over it, so readers see the old file or the new one, never half of one
-  const temporary = `${target}.${randomUUID()}.tmp`;
+  const temporary = `${file}.${randomUUID()}.tmp`;
 
   try {
     const handle = await open(temporary, 'wx', 0o600);
@@ -211,7 +249,7 @@ async function writeEntries(path: string, entries: Map<string, unknown>): Promis
       await handle.close();
     }
 
-    await rename(temporary, target);
+    await rename(temporary, file);
   } catch (error) {
     // A failed cleanup must not hide why the write failed
     await Promise.allSettled([rm(temporary, { force: true })]);

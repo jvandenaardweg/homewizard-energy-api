@@ -126,3 +126,4 @@ research_notes/
 
 # Credentials the examples store (tokens give full access to the devices)
 devices.json
+devices.json.*.tmp
