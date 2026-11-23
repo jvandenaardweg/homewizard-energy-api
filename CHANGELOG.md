@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.1.0](https://github.com/jvandenaardweg/homewizard-energy-api/compare/3.0.2...3.1.0) (2026-11-23)
+
+### Features
+
+* add credential stores ([696fdea](https://github.com/jvandenaardweg/homewizard-energy-api/commit/696fdea1f8436580a73831490c8b54315371d656))
+
+### Bug Fixes
+
+* make the credentials file store safe against bad entries, crashes and shared files ([aaac1f7](https://github.com/jvandenaardweg/homewizard-energy-api/commit/aaac1f76dee1748f472c4432b9d56fdb1e5c0607))
+* make the file store follow links and read empty files, and the examples restore what they change ([d00d18a](https://github.com/jvandenaardweg/homewizard-energy-api/commit/d00d18a866c6855f23c16351d219a242991bd3a7))
+
+### Documentation
+
+* add a live updates recipe for the Energy Socket ([45a1967](https://github.com/jvandenaardweg/homewizard-energy-api/commit/45a1967bfd8940ce2960f5f5c035ff6a5b9b6b6e))
+* explain pairing and why to store the credentials ([f4ba710](https://github.com/jvandenaardweg/homewizard-energy-api/commit/f4ba710d3fb17055c448a6f2afb5e1bd53196832))
+* explain pairing in the quick start ([9fcef72](https://github.com/jvandenaardweg/homewizard-energy-api/commit/9fcef727bc9b0ae1c3e54700e73b9a9a5cdf77a2))
+* link each recipe to a full example script, and run every example in the tests ([43d1dbf](https://github.com/jvandenaardweg/homewizard-energy-api/commit/43d1dbf9b7e27da2eac5e8874c232f45e7f5c7e6))
+* make the README easier to scan ([58888b0](https://github.com/jvandenaardweg/homewizard-energy-api/commit/58888b0e2aad337c8aaa53f655155e1f5413b7d0))
+* name the store credentialsStore in the examples ([045af3a](https://github.com/jvandenaardweg/homewizard-energy-api/commit/045af3aadd1de8bb7ed67657ec7042f0e675db7e))
+* pair and store the credentials in one quick start example ([b5e3a84](https://github.com/jvandenaardweg/homewizard-energy-api/commit/b5e3a84481533a0ecc44e75519fedea8a709ca06))
+* split storing the credentials into examples per situation ([cef6c18](https://github.com/jvandenaardweg/homewizard-energy-api/commit/cef6c18ab3decd5d4ce9b6794d6ed62e70d66eb4))
+* store the credentials per device in the quick start ([e254fa7](https://github.com/jvandenaardweg/homewizard-energy-api/commit/e254fa73d91a4183df2cb4ce9cfcc8b278715109))
+* use the Plug-In Battery as the second device in the store examples ([7832878](https://github.com/jvandenaardweg/homewizard-energy-api/commit/783287842ccdab605a0067b24352cde3a71159cf))
+
 ## [3.0.2](https://github.com/jvandenaardweg/homewizard-energy-api/compare/3.0.1...3.0.2) (2026-11-18)
 
 ### Bug Fixes
